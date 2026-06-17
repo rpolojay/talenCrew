@@ -467,14 +467,3 @@ img { max-width: 100%; display: block; }
     text-align: center;
     font-size: 0.85rem;
     color: rgba(255,255,255,0.5);
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-    .hero .container {
-        grid-template-columns: 1fr;
-    }
-    .hero-content h1 {
-        font-size: 2.2rem;
-    }
-    .comparativa {
