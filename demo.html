@@ -288,7 +288,7 @@
   <div class="pitch">
     <div class="eyebrow"><span class="dot"></span>DEMO EN VIVO · TALENCREW</div>
     <h1>Tu negocio, <em>respondiendo</em><br>las 24 horas.</h1>
-    <p class="lead">Este es un agente de IA real conectado a una clínica de ejemplo. Pregúntale sobre citas, especialidades o precios — así habla con tus clientes, todos los días, sin descanso.</p>
+    <p class="lead">Este es un agente de IA conectado a una clínica de ejemplo. Pregúntale sobre citas, especialidades o precios — así habla con tus clientes, todos los días, sin descanso.</p>
 
     <div class="stat-row">
       <div class="stat">
@@ -342,21 +342,26 @@
 </div>
 
 <script>
-const SYSTEM_PROMPT = `Eres el asistente virtual de "Clínica Vitalis", una clínica médica ficticia de demostración en Colombia, creada por TalenCrew para mostrar a dueños de negocios cómo funciona un agente de IA.
+const CANNED_RESPONSES = [
+  { keys: ['dermatolog'], reply: 'Con gusto. Para Dermatología tenemos disponibilidad este jueves a las 10:00am y viernes a las 3:00pm. La consulta con especialista tiene un valor de $120.000 COP. ¿Te gustaría que te agende alguno de estos horarios?' },
+  { keys: ['cuanto cuesta', 'cuánto cuesta', 'precio', 'valor', 'consulta general'], reply: 'Claro que sí. La consulta de Medicina General tiene un valor de $80.000 COP, y la consulta con especialista (Dermatología, Ginecología) es de $120.000 COP. La primera cita de Pediatría cuesta $100.000 COP. ¿Para cuál te gustaría agendar?' },
+  { keys: ['sabado', 'sábado', 'fin de semana'], reply: 'Sí, atendemos los sábados de 8:00am a 1:00pm. De lunes a viernes nuestro horario es de 7:00am a 7:00pm. Los domingos permanecemos cerrados. ¿Te gustaría agendar una cita para este sábado?' },
+  { keys: ['cita', 'agendar', 'turno', 'reservar'], reply: 'Con gusto te ayudo a agendar. ¿Me confirmas tu nombre completo, la especialidad que necesitas, y 2-3 horarios que te queden bien? Nuestro equipo confirma por este mismo WhatsApp en menos de 1 hora.' },
+  { keys: ['eps', 'seguro', 'compensar', 'sura', 'famisanar'], reply: 'Trabajamos con las EPS Sura, Compensar y Famisanar. El valor del copago depende de tu plan específico. ¿Con cuál EPS estás afiliado para confirmarte el detalle?' },
+  { keys: ['ubicacion', 'ubicación', 'direccion', 'dirección', 'donde queda', 'dónde queda'], reply: 'Estamos ubicados en la Carrera 15 #93-45, Bogotá. ¿Te gustaría que te comparta cómo llegar o agendar una cita?' },
+  { keys: ['especialidad', 'especialidades', 'que atienden', 'qué atienden'], reply: 'Contamos con Medicina General, Dermatología, Pediatría, Ginecología y Odontología. ¿Sobre cuál te gustaría más información?' },
+  { keys: ['pediatria', 'pediatría', 'niño', 'niña', 'bebe', 'bebé'], reply: 'Para Pediatría, la primera cita tiene un valor de $100.000 COP. Atendemos de lunes a viernes de 7:00am a 7:00pm y sábados de 8:00am a 1:00pm. ¿Te gustaría agendar?' },
+];
 
-INFORMACIÓN DE LA CLÍNICA (usa esto para responder):
-- Especialidades: Medicina General, Dermatología, Pediatría, Ginecología, Odontología
-- Horario: Lunes a Viernes 7am-7pm, Sábados 8am-1pm. Cerrado domingos.
-- Precios: Consulta general $80.000 COP, especialista $120.000 COP, primera cita pediatría $100.000 COP
-- Ubicación: Carrera 15 #93-45, Bogotá
-- Aceptan EPS: Sura, Compensar, Famisanar (consulta de copago varía)
-- Para agendar: pides nombre completo, especialidad deseada, y 2-3 horarios preferidos, luego dices que "el equipo confirma por este mismo WhatsApp en menos de 1 hora"
+const FALLBACK_REPLY = 'Buena pregunta — para darte el detalle exacto, te recomiendo escribirnos directo y con gusto uno de nuestros asesores te ayuda. Mientras tanto, ¿quieres que te cuente sobre nuestras especialidades, precios u horarios?';
 
-TONO: Cálido, profesional, colombiano (usa "con gusto", "claro que sí"), conciso — máximo 3 líneas por respuesta. Nunca inventes información médica específica (diagnósticos, dosis) — si preguntan algo médico real, di que eso lo evalúa el doctor en consulta.
-
-Actúa como el asistente real de la clínica, sin romper el personaje.`;
-
-let conversationHistory = [];
+function findCannedReply(userMessage) {
+  const lower = userMessage.toLowerCase();
+  for (const item of CANNED_RESPONSES) {
+    if (item.keys.some(k => lower.includes(k))) return item.reply;
+  }
+  return FALLBACK_REPLY;
+}
 
 function addMessage(text, sender) {
   const messagesDiv = document.getElementById('messages');
@@ -382,26 +387,11 @@ function removeTyping() {
   if (t) t.remove();
 }
 
-async function callClaude(userMessage) {
-  conversationHistory.push({ role: 'user', content: userMessage });
-
-  try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system: SYSTEM_PROMPT,
-        messages: conversationHistory,
-      })
-    });
-    const data = await response.json();
-    const reply = data.reply || "Disculpa, ¿puedes repetir tu pregunta?";
-    conversationHistory.push({ role: 'assistant', content: reply });
-    return reply;
-  } catch (err) {
-    console.error(err);
-    return "Disculpa, tuve un problema técnico. ¿Puedes intentar de nuevo?";
-  }
+function getReply(userMessage) {
+  const delay = 1400 + Math.random() * 1600;
+  return new Promise(resolve => {
+    setTimeout(() => resolve(findCannedReply(userMessage)), delay);
+  });
 }
 
 async function sendMessage() {
@@ -416,7 +406,7 @@ async function sendMessage() {
   addMessage(text, 'user');
   addTyping();
 
-  const reply = await callClaude(text);
+  const reply = await getReply(text);
 
   removeTyping();
   addMessage(reply, 'bot');
