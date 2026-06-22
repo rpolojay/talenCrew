@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo: Asistente IA para tu Negocio — TalenCrew</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --sage: #2f5d50;
+    --sage-light: #4a7c6a;
+    --cream: #faf7f1;
+    --paper: #fff;
+    --ink: #1a2421;
+    --ink-soft: #5c6b66;
+    --line: #e3ded3;
+    --accent: #c9a25c;
+    --bubble-user: #2f5d50;
+    --bubble-bot: #f1ede3;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .stage {
+    width: 100%;
+    max-width: 1040px;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 32px;
+    align-items: start;
+  }
+
+  @media (max-width: 860px) {
+    .stage { grid-template-columns: 1fr; }
+  }
+
+  .pitch { padding: 12px 8px; }
+
+  .pitch .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--sage);
+    background: rgba(47,93,80,0.08);
+    border: 1px solid rgba(47,93,80,0.15);
+    border-radius: 100px;
+    padding: 6px 14px;
+    margin-bottom: 24px;
+  }
+
+  .pitch .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74,222,128,0.2);
+  }
+
+  .pitch h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(32px, 4vw, 44px);
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+
+  .pitch h1 em { font-style: italic; color: var(--sage); }
+
+  .pitch p.lead {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    max-width: 460px;
+    margin-bottom: 36px;
+  }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 36px;
+    max-width: 460px;
+  }
+
+  .stat { border-left: 2px solid var(--accent); padding-left: 14px; }
+
+  .stat .num {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+
+  .stat .label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  .try-list { display: flex; flex-direction: column; gap: 10px; max-width: 460px; }
+
+  .try-list .heading {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+
+  .try-chip {
+    text-align: left;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .try-chip:hover { border-color: var(--sage); transform: translateX(2px); }
+
+  .cta-row { margin-top: 32px; max-width: 460px; }
+
+  .cta-row a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--sage);
+    color: #fff;
+    padding: 13px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .phone {
+    background: var(--paper);
+    border-radius: 24px;
+    border: 1px solid var(--line);
+    box-shadow: 0 24px 60px -20px rgba(26,36,33,0.25);
+    overflow: hidden;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .phone-header {
+    background: var(--sage);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .phone-header .avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .phone-header .who { flex: 1; }
+  .phone-header .name { color: #fff; font-weight: 600; font-size: 14.5px; }
+  .phone-header .status {
+    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 1px;
+  }
+  .phone-header .status .pulse { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(47,93,80,0.06) 1px, transparent 0) 0 0/16px 16px,
+      var(--cream);
+  }
+
+  .msg {
+    max-width: 82%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.55;
+    animation: rise 0.25s ease;
+  }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .msg.bot { background: var(--bubble-bot); color: var(--ink); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .msg.user { background: var(--bubble-user); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+
+  .msg.typing { display: flex; gap: 4px; align-items: center; padding: 13px 16px; }
+  .msg.typing span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--ink-soft);
+    opacity: 0.4;
+    animation: blink 1.2s infinite ease-in-out;
+  }
+  .msg.typing span:nth-child(2) { animation-delay: 0.2s; }
+  .msg.typing span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes blink {
+    0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  .composer {
+    flex-shrink: 0;
+    border-top: 1px solid var(--line);
+    padding: 12px 14px;
+    display: flex;
+    gap: 8px;
+    background: var(--paper);
+  }
+
+  .composer input {
+    flex: 1;
+    border: 1px solid var(--line);
+    background: var(--cream);
+    border-radius: 100px;
+    padding: 11px 16px;
+    font-size: 13.5px;
+    font-family: inherit;
+    outline: none;
+    color: var(--ink);
+  }
+
+  .composer input:focus { border-color: var(--sage); }
+
+  .composer button {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--sage);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+
+  .composer button:hover { background: var(--sage-light); }
+  .composer button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .powered { text-align: center; font-size: 10.5px; color: var(--ink-soft); padding: 8px 0 4px; background: var(--paper); }
+  .powered b { color: var(--sage); }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="pitch">
+    <div class="eyebrow"><span class="dot"></span>DEMO EN VIVO · TALENCREW</div>
+    <h1>Tu negocio, <em>respondiendo</em><br>las 24 horas.</h1>
+    <p class="lead">Este es un agente de IA conectado a una clínica de ejemplo. Pregúntale sobre citas, especialidades o precios — así habla con tus clientes, todos los días, sin descanso.</p>
+
+    <div class="stat-row">
+      <div class="stat">
+        <div class="num">2-8s</div>
+        <div class="label">Tiempo de respuesta</div>
+      </div>
+      <div class="stat">
+        <div class="num">24/7</div>
+        <div class="label">Disponibilidad</div>
+      </div>
+      <div class="stat">
+        <div class="num">5 días</div>
+        <div class="label">Para implementar</div>
+      </div>
+    </div>
+
+    <div class="try-list">
+      <div class="heading">Prueba preguntando</div>
+      <button class="try-chip" onclick="sendPreset('¿Tienen disponibilidad para una cita de dermatología esta semana?')">¿Tienen disponibilidad para dermatología esta semana?</button>
+      <button class="try-chip" onclick="sendPreset('¿Cuánto cuesta una consulta general?')">¿Cuánto cuesta una consulta general?</button>
+      <button class="try-chip" onclick="sendPreset('¿Atienden los sábados?')">¿Atienden los sábados?</button>
+    </div>
+
+    <div class="cta-row">
+      <a href="https://wa.me/573188678747?text=Hola%2C%20vi%20el%20demo%20del%20asistente%20IA%20y%20quiero%20uno%20para%20mi%20negocio">Quiero esto para mi negocio →</a>
+    </div>
+  </div>
+
+  <div class="phone">
+    <div class="phone-header">
+      <div class="avatar">🩺</div>
+      <div class="who">
+        <div class="name">Clínica Vitalis</div>
+        <div class="status"><span class="pulse"></span>Asistente IA · en línea</div>
+      </div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="msg bot">¡Hola! 👋 Soy el asistente virtual de Clínica Vitalis. Puedo ayudarte a agendar una cita, resolver dudas sobre especialidades o darte información de precios. ¿En qué te ayudo hoy?</div>
+    </div>
+
+    <div class="composer">
+      <input type="text" id="userInput" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter') sendMessage()">
+      <button onclick="sendMessage()" id="sendBtn" aria-label="Enviar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="powered">Construido por <b>TalenCrew</b> · Agentes IA para WhatsApp</div>
+  </div>
+
+</div>
+
+<script>
+const CANNED_RESPONSES = [
+  { keys: ['dermatolog'], reply: 'Con gusto. Para Dermatología tenemos disponibilidad este jueves a las 10:00am y viernes a las 3:00pm. La consulta con especialista tiene un valor de $120.000 COP. ¿Te gustaría que te agende alguno de estos horarios?' },
+  { keys: ['cuanto cuesta', 'cuánto cuesta', 'precio', 'valor', 'consulta general'], reply: 'Claro que sí. La consulta de Medicina General tiene un valor de $80.000 COP, y la consulta con especialista (Dermatología, Ginecología) es de $120.000 COP. La primera cita de Pediatría cuesta $100.000 COP. ¿Para cuál te gustaría agendar?' },
+  { keys: ['sabado', 'sábado', 'fin de semana'], reply: 'Sí, atendemos los sábados de 8:00am a 1:00pm. De lunes a viernes nuestro horario es de 7:00am a 7:00pm. Los domingos permanecemos cerrados. ¿Te gustaría agendar una cita para este sábado?' },
+  { keys: ['cita', 'agendar', 'turno', 'reservar'], reply: 'Con gusto te ayudo a agendar. ¿Me confirmas tu nombre completo, la especialidad que necesitas, y 2-3 horarios que te queden bien? Nuestro equipo confirma por este mismo WhatsApp en menos de 1 hora.' },
+  { keys: ['eps', 'seguro', 'compensar', 'sura', 'famisanar'], reply: 'Trabajamos con las EPS Sura, Compensar y Famisanar. El valor del copago depende de tu plan específico. ¿Con cuál EPS estás afiliado para confirmarte el detalle?' },
+  { keys: ['ubicacion', 'ubicación', 'direccion', 'dirección', 'donde queda', 'dónde queda'], reply: 'Estamos ubicados en la Carrera 15 #93-45, Bogotá. ¿Te gustaría que te comparta cómo llegar o agendar una cita?' },
+  { keys: ['especialidad', 'especialidades', 'que atienden', 'qué atienden'], reply: 'Contamos con Medicina General, Dermatología, Pediatría, Ginecología y Odontología. ¿Sobre cuál te gustaría más información?' },
+  { keys: ['pediatria', 'pediatría', 'niño', 'niña', 'bebe', 'bebé'], reply: 'Para Pediatría, la primera cita tiene un valor de $100.000 COP. Atendemos de lunes a viernes de 7:00am a 7:00pm y sábados de 8:00am a 1:00pm. ¿Te gustaría agendar?' },
+];
+
+const FALLBACK_REPLY = 'Buena pregunta — para darte el detalle exacto, te recomiendo escribirnos directo y con gusto uno de nuestros asesores te ayuda. Mientras tanto, ¿quieres que te cuente sobre nuestras especialidades, precios u horarios?';
+
+function findCannedReply(userMessage) {
+  const lower = userMessage.toLowerCase();
+  for (const item of CANNED_RESPONSES) {
+    if (item.keys.some(k => lower.includes(k))) return item.reply;
+  }
+  return FALLBACK_REPLY;
+}
+
+function addMessage(text, sender) {
+  const messagesDiv = document.getElementById('messages');
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'msg ' + sender;
+  msgDiv.textContent = text;
+  messagesDiv.appendChild(msgDiv);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function addTyping() {
+  const messagesDiv = document.getElementById('messages');
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'msg bot typing';
+  typingDiv.id = 'typingIndicator';
+  typingDiv.innerHTML = '<span></span><span></span><span></span>';
+  messagesDiv.appendChild(typingDiv);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typingIndicator');
+  if (t) t.remove();
+}
+
+function getReply(userMessage) {
+  const delay = 1400 + Math.random() * 1600;
+  return new Promise(resolve => {
+    setTimeout(() => resolve(findCannedReply(userMessage)), delay);
+  });
+}
+
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const sendBtn = document.getElementById('sendBtn');
+  sendBtn.disabled = true;
+  input.value = '';
+
+  addMessage(text, 'user');
+  addTyping();
+
+  const reply = await getReply(text);
+
+  removeTyping();
+  addMessage(reply, 'bot');
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+function sendPreset(text) {
+  document.getElementById('userInput').value = text;
+  sendMessage();
+}
+</script>
+
+</body>
+</html>

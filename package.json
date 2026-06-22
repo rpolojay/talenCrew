@@ -1,0 +1,16 @@
+{
+  "name": "talencrew-aistudio",
+  "version": "1.0.0",
+  "description": "``` talencrew-aistudio/ ├── README.md          ← You are here ├── index.html         ← Main website (bilingual EN/ES) ├── firebase.json      ← Firebase hosting config ├── .firebaserc        ← Firebase project config └── prompts.md         ← AI prompts to customize your site ```",
+  "main": "functions/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^5.0.2"
+  }
+}

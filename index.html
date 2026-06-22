@@ -1,0 +1,901 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TalenCrew — Elite LatAm Remote Talent</title>
+<script>
+function setLang(lang) {
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent === lang.toUpperCase());
+  });
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-en]').forEach(function(el) {
+    var val = el.getAttribute('data-' + lang);
+    if (!val) return;
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = val;
+    else el.innerHTML = val;
+  });
+  document.title = lang === 'es' ? 'TalenCrew — Talento LatAm Remoto de Élite' : 'TalenCrew — Elite LatAm Remote Talent';
+  try { localStorage.setItem('talencrew-lang', lang); } catch(e) {}
+}
+window.setLang = setLang;
+document.addEventListener('DOMContentLoaded', function() {
+  var saved = 'en';
+  try { saved = localStorage.getItem('talencrew-lang') || 'en'; } catch(e) {}
+  setLang(saved);
+});
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --ink:     #0E0E0E;
+  --ink2:    #3A3A3A;
+  --muted:   #888888;
+  --border:  #E2E2E2;
+  --surface: #F7F7F5;
+  --white:   #FFFFFF;
+  --teal:    #0A6E6A;
+  --teal2:   #0D8A85;
+  --gold:    #B8913A;
+  --radius:  2px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Mulish', sans-serif;
+  color: var(--ink);
+  background: var(--white);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ─── TYPOGRAPHY ─────────────────────────────── */
+.serif { font-family: 'Cormorant Garamond', serif; }
+
+h1, h2, h3 { font-family: 'Cormorant Garamond', serif; font-weight: 600; line-height: 1.1; }
+
+/* ─── UTILITY ────────────────────────────────── */
+.container { max-width: 1160px; margin: 0 auto; padding: 0 2rem; }
+.flex { display: flex; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+
+/* ─── NAV ────────────────────────────────────── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(255,255,255,0.97);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+.nav-inner {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.1rem 2rem;
+  max-width: 1160px; margin: 0 auto;
+}
+.logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem; font-weight: 700;
+  color: var(--ink); letter-spacing: -0.02em;
+  text-decoration: none;
+}
+.logo span { color: var(--teal); }
+.nav-links {
+  display: flex; gap: 2.5rem; align-items: center; list-style: none;
+}
+.nav-links a {
+  font-size: 0.82rem; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink2);
+  text-decoration: none; transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--teal); }
+.nav-right { display: flex; gap: 1rem; align-items: center; }
+
+/* Language toggle */
+.lang-toggle {
+  display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+}
+.lang-btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em;
+  border: none; background: none; cursor: pointer;
+  color: var(--muted); transition: all 0.2s;
+}
+.lang-btn.active { background: var(--ink); color: var(--white); }
+
+.btn {
+  padding: 0.65rem 1.5rem;
+  font-family: 'Mulish', sans-serif;
+  font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  border: none; border-radius: var(--radius); cursor: pointer;
+  text-decoration: none; transition: all 0.2s; display: inline-block;
+}
+.btn-primary { background: var(--teal); color: var(--white); }
+.btn-primary:hover { background: var(--teal2); transform: translateY(-1px); }
+.btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--ink); }
+.btn-outline:hover { background: var(--ink); color: var(--white); }
+.btn-gold { background: var(--gold); color: var(--white); }
+.btn-gold:hover { background: #9E7C31; transform: translateY(-1px); }
+.btn-lg { padding: 0.9rem 2.2rem; font-size: 0.85rem; }
+
+/* ─── HERO ────────────────────────────────────── */
+.hero {
+  padding: 10rem 2rem 7rem;
+  background: var(--white);
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: 0; right: 0;
+  width: 45%; height: 100%;
+  background: var(--surface);
+  clip-path: polygon(8% 0, 100% 0, 100% 100%, 0% 100%);
+}
+.hero-inner {
+  max-width: 1160px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 5rem; align-items: center;
+  position: relative; z-index: 1;
+}
+.hero-eyebrow {
+  display: flex; align-items: center; gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+.eyebrow-line { width: 32px; height: 1px; background: var(--teal); }
+.eyebrow-text {
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--teal);
+}
+.hero h1 {
+  font-size: clamp(3rem, 5vw, 4.8rem);
+  color: var(--ink); margin-bottom: 1.5rem;
+  line-height: 1.05;
+}
+.hero h1 em { color: var(--teal); font-style: italic; }
+.hero-sub {
+  font-size: 1.05rem; color: var(--ink2);
+  line-height: 1.75; margin-bottom: 2.5rem;
+  max-width: 460px;
+}
+.hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+/* Hero right — dual card */
+.hero-cards { display: flex; flex-direction: column; gap: 1.5rem; }
+.hero-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  padding: 2rem 2.2rem;
+  border-radius: var(--radius);
+  position: relative; overflow: hidden;
+  transition: box-shadow 0.3s;
+}
+.hero-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+.hero-card::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px;
+}
+.card-employer::before { background: var(--teal); }
+.card-candidate::before { background: var(--gold); }
+.card-label {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; margin-bottom: 0.6rem;
+}
+.card-employer .card-label { color: var(--teal); }
+.card-candidate .card-label { color: var(--gold); }
+.hero-card h3 {
+  font-size: 1.3rem; margin-bottom: 0.5rem; color: var(--ink);
+}
+.hero-card p { font-size: 0.9rem; color: var(--ink2); line-height: 1.6; margin-bottom: 1.2rem; }
+.card-link {
+  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  transition: gap 0.2s;
+}
+.card-employer .card-link { color: var(--teal); }
+.card-candidate .card-link { color: var(--gold); }
+.card-link:hover { gap: 0.7rem; }
+
+/* ─── STATS BAR ──────────────────────────────── */
+.stats-bar {
+  background: var(--ink);
+  padding: 3rem 2rem;
+}
+.stats-inner {
+  max-width: 1160px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+.stat { text-align: center; }
+.stat-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3.2rem; font-weight: 700;
+  color: var(--white); line-height: 1;
+  margin-bottom: 0.4rem;
+}
+.stat-num span { color: var(--teal2); }
+.stat-label {
+  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: rgba(255,255,255,0.45);
+}
+.stat-divider {
+  width: 1px; background: rgba(255,255,255,0.1);
+  margin: auto;
+}
+
+/* ─── SECTION BASE ───────────────────────────── */
+section { padding: 6rem 2rem; }
+.section-label {
+  display: flex; align-items: center; gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+.section-label .line { width: 28px; height: 1px; background: var(--teal); }
+.section-label span {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--teal);
+}
+.section-title { font-size: clamp(2rem, 3.5vw, 3rem); color: var(--ink); margin-bottom: 1rem; }
+.section-sub { font-size: 1rem; color: var(--ink2); max-width: 560px; line-height: 1.75; }
+
+/* ─── FOR EMPLOYERS ──────────────────────────── */
+.employers { background: var(--white); }
+.process-steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0; margin-top: 4rem;
+  border: 1px solid var(--border);
+}
+.process-step {
+  padding: 2.5rem 2rem;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.process-step:last-child { border-right: none; }
+.step-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3.5rem; font-weight: 700;
+  color: var(--border); line-height: 1;
+  margin-bottom: 1rem;
+}
+.process-step h4 { font-size: 1.1rem; margin-bottom: 0.6rem; color: var(--ink); }
+.process-step p { font-size: 0.88rem; color: var(--ink2); line-height: 1.65; }
+.process-cta {
+  margin-top: 3rem; padding: 2.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 2rem;
+}
+.process-cta p { font-size: 1.05rem; color: var(--ink2); max-width: 500px; }
+
+/* Roles grid */
+.roles-section { background: var(--surface); }
+.roles-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--border);
+  margin-top: 3.5rem;
+  border: 1px solid var(--border);
+}
+.role-cat { background: var(--white); padding: 2rem; }
+.role-cat-title {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--teal);
+  margin-bottom: 1.2rem; padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.role-list { list-style: none; }
+.role-list li {
+  font-size: 0.9rem; color: var(--ink2);
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.role-list li:last-child { border-bottom: none; }
+.role-list li::before {
+  content: ''; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--teal);
+  flex-shrink: 0;
+}
+
+/* ─── FOR CANDIDATES ─────────────────────────── */
+.candidates { background: var(--ink); }
+.candidates .section-label .line { background: var(--gold); }
+.candidates .section-label span { color: var(--gold); }
+.candidates .section-title { color: var(--white); }
+.candidates .section-sub { color: rgba(255,255,255,0.55); }
+.course-grid {
+  display: grid; grid-template-columns: 1.2fr 1fr;
+  gap: 4rem; margin-top: 4rem; align-items: start;
+}
+.modules-list { display: flex; flex-direction: column; gap: 0; }
+.module-row {
+  display: flex; gap: 1.5rem; align-items: flex-start;
+  padding: 1.2rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.module-row:first-child { padding-top: 0; }
+.mod-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem; font-weight: 700;
+  color: rgba(255,255,255,0.15);
+  min-width: 2rem; line-height: 1;
+  margin-top: 0.1rem;
+}
+.mod-title { font-size: 0.92rem; font-weight: 600; color: var(--white); margin-bottom: 0.2rem; }
+.mod-desc { font-size: 0.82rem; color: rgba(255,255,255,0.45); line-height: 1.55; }
+
+.course-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 2.5rem;
+  position: sticky; top: 100px;
+}
+.course-badge {
+  background: var(--gold);
+  color: var(--white);
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 0.35rem 0.9rem;
+  display: inline-block; margin-bottom: 1.5rem;
+}
+.course-card h3 {
+  font-size: 1.6rem; color: var(--white); margin-bottom: 0.5rem;
+}
+.course-card .subtitle { font-size: 0.85rem; color: rgba(255,255,255,0.4); margin-bottom: 2rem; }
+.price-row {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 1.5rem; margin-top: 1.5rem;
+}
+.price {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3rem; font-weight: 700; color: var(--white); line-height: 1;
+}
+.price sup { font-size: 1.2rem; vertical-align: super; }
+.old-price { font-size: 0.85rem; color: rgba(255,255,255,0.3); text-decoration: line-through; margin-top: 0.3rem; }
+.includes { margin: 1.5rem 0; }
+.include-item {
+  display: flex; align-items: center; gap: 0.7rem;
+  font-size: 0.88rem; color: rgba(255,255,255,0.65);
+  padding: 0.4rem 0;
+}
+.check { color: var(--gold); font-size: 0.85rem; }
+
+/* ─── WHY TALENCREW ──────────────────────────── */
+.why { background: var(--white); }
+.why-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border);
+  margin-top: 4rem;
+}
+.why-item {
+  background: var(--white);
+  padding: 2.8rem;
+}
+.why-icon {
+  width: 44px; height: 44px;
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; margin-bottom: 1.5rem;
+}
+.why-item h4 { font-size: 1.2rem; margin-bottom: 0.6rem; color: var(--ink); }
+.why-item p { font-size: 0.9rem; color: var(--ink2); line-height: 1.7; }
+
+/* ─── TESTIMONIALS ───────────────────────────── */
+.testimonials { background: var(--surface); }
+.testi-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem; margin-top: 3.5rem;
+}
+.testi-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  padding: 2.2rem;
+}
+.testi-quote {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.05rem; color: var(--ink);
+  line-height: 1.7; margin-bottom: 1.8rem;
+  font-style: italic;
+}
+.testi-author { display: flex; align-items: center; gap: 0.9rem; }
+.testi-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--teal);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 700; color: var(--white);
+  flex-shrink: 0;
+}
+.testi-name { font-size: 0.88rem; font-weight: 700; color: var(--ink); }
+.testi-role { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+
+/* ─── CTA BANNER ─────────────────────────────── */
+.cta-section {
+  background: var(--teal);
+  padding: 6rem 2rem;
+}
+.cta-inner {
+  max-width: 1160px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 3rem; align-items: center;
+}
+.cta-section h2 { font-size: clamp(2rem, 3vw, 2.8rem); color: var(--white); margin-bottom: 0.8rem; }
+.cta-section p { font-size: 1rem; color: rgba(255,255,255,0.7); max-width: 520px; }
+.cta-btns { display: flex; flex-direction: column; gap: 0.8rem; min-width: 200px; }
+.btn-white { background: var(--white); color: var(--teal); }
+.btn-white:hover { background: var(--surface); }
+.btn-ghost { background: transparent; color: var(--white); border: 1px solid rgba(255,255,255,0.4); }
+.btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+/* ─── FOOTER ─────────────────────────────────── */
+footer {
+  background: var(--ink);
+  padding: 4rem 2rem 2rem;
+}
+.footer-inner {
+  max-width: 1160px; margin: 0 auto;
+}
+.footer-top {
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 3rem; padding-bottom: 3rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.footer-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.8rem; font-weight: 700; color: var(--white);
+  margin-bottom: 1rem; display: block;
+}
+.footer-logo span { color: var(--teal2); }
+.footer-desc { font-size: 0.85rem; color: rgba(255,255,255,0.4); line-height: 1.7; max-width: 260px; }
+.footer-col h5 {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: rgba(255,255,255,0.35);
+  margin-bottom: 1.2rem;
+}
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+.footer-col a {
+  font-size: 0.88rem; color: rgba(255,255,255,0.55);
+  text-decoration: none; transition: color 0.2s;
+}
+.footer-col a:hover { color: var(--white); }
+.footer-bottom {
+  padding-top: 2rem;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 1rem;
+}
+.footer-bottom p { font-size: 0.8rem; color: rgba(255,255,255,0.25); }
+.powered { font-size: 0.78rem; color: rgba(255,255,255,0.2); }
+.powered a { color: rgba(255,255,255,0.35); text-decoration: none; }
+.powered a:hover { color: var(--white); }
+
+/* ─── ANIMATIONS ─────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { opacity: 0; animation: fadeUp 0.7s ease forwards; }
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.25s; }
+.delay-3 { animation-delay: 0.4s; }
+.delay-4 { animation-delay: 0.55s; }
+
+/* ─── RESPONSIVE ─────────────────────────────── */
+@media (max-width: 960px) {
+  .hero-inner, .grid-2, .course-grid, .cta-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+  .hero::before { display: none; }
+  .process-steps { grid-template-columns: 1fr 1fr; }
+  .process-step:nth-child(2) { border-right: none; }
+  .process-step:nth-child(1), .process-step:nth-child(2) { border-bottom: 1px solid var(--border); }
+  .stats-inner { grid-template-columns: repeat(2, 1fr); }
+  .roles-grid { grid-template-columns: 1fr; }
+  .why-grid { grid-template-columns: 1fr; }
+  .testi-grid { grid-template-columns: 1fr; }
+  .footer-top { grid-template-columns: 1fr 1fr; gap: 2rem; }
+  .nav-links { display: none; }
+  .hero { padding: 8rem 2rem 5rem; }
+  .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+  section { padding: 4rem 2rem; }
+}
+@media (max-width: 600px) {
+  .stats-inner { grid-template-columns: 1fr 1fr; }
+  .footer-top { grid-template-columns: 1fr; }
+  .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .process-steps { grid-template-columns: 1fr; }
+  .process-step { border-right: none !important; border-bottom: 1px solid var(--border); }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── NAV ──────────────────────────────────── -->
+<nav>
+  <div class="nav-inner">
+    <a href="https://go.hotmart.com/Q105244462U" class="logo">Talen<span>Crew</span></a>
+    <ul class="nav-links">
+      <li><a href="#employers" data-en="For Employers" data-es="Para Empresas">For Employers</a></li>
+      <li><a href="#candidates" data-en="For Candidates" data-es="Para Candidatos">For Candidates</a></li>
+      <li><a href="#why" data-en="Why TalenCrew" data-es="Por Qué Nosotros">Why TalenCrew</a></li>
+    </ul>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" onclick="setLang('es')">ES</button>
+      </div>
+      <a href="#employers" class="btn btn-primary" data-en="Hire Talent" data-es="Contratar Talento">Hire Talent</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── HERO ──────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-eyebrow fade-up delay-1">
+        <span class="eyebrow-line"></span>
+        <span class="eyebrow-text" data-en="Powered by Selective Crew · Since 2009" data-es="Impulsado por Selective Crew · Desde 2009">Powered by Selective Crew · Since 2009</span>
+      </div>
+      <h1 class="fade-up delay-2">
+        <span data-en="Elite LatAm Talent.<br><em>Remote-Ready.</em>" data-es="Talento LatAm de Élite.<br><em>Listo para Trabajar.</em>">Elite LatAm Talent.<br><em>Remote-Ready.</em></span>
+      </h1>
+      <p class="hero-sub fade-up delay-3" data-en="We connect U.S. companies with certified, pre-trained professionals from Latin America — and help LatAm talent land their dream remote career." data-es="Conectamos empresas de EE.UU. con profesionales certificados de América Latina — y ayudamos al talento LatAm a conseguir su carrera remota ideal.">We connect U.S. companies with certified, pre-trained professionals from Latin America — and help LatAm talent land their dream remote career.</p>
+      <div class="hero-btns fade-up delay-4">
+        <a href="#employers" class="btn btn-primary btn-lg" data-en="Hire Remote Talent" data-es="Contratar Talento Remoto">Hire Remote Talent</a>
+        <a href="#candidates" class="btn btn-outline btn-lg" data-en="Start Your Career" data-es="Inicia Tu Carrera">Start Your Career</a>
+      </div>
+    </div>
+    <div class="hero-cards fade-up delay-3">
+      <div class="hero-card card-employer">
+        <div class="card-label" data-en="For U.S. Employers" data-es="Para Empresas de EE.UU.">For U.S. Employers</div>
+        <h3 data-en="Hire in Days, Not Months" data-es="Contrata en Días, No Meses">Hire in Days, Not Months</h3>
+        <p data-en="Access our certified pool of pre-trained LatAm professionals. 3–5 matched candidates delivered within a week." data-es="Accede a nuestro grupo certificado de profesionales LatAm. 3–5 candidatos seleccionados entregados en una semana.">Access our certified pool of pre-trained LatAm professionals. 3–5 matched candidates delivered within a week.</p>
+        <a href="#employers" class="card-link" data-en="Request talent →" data-es="Solicitar talento →">Request talent →</a>
+      </div>
+      <div class="hero-card card-candidate">
+        <div class="card-label" data-en="For LatAm Professionals" data-es="Para Profesionales LatAm">For LatAm Professionals</div>
+        <h3 data-en="Land a U.S. Remote Job" data-es="Consigue un Trabajo Remoto en EE.UU.">Land a U.S. Remote Job</h3>
+        <p data-en="Complete our 12-module career blueprint and join our certified talent pool — accessed by top U.S. companies." data-es="Completa nuestro programa de 12 módulos y únete a nuestro grupo de talento certificado, al que acceden las mejores empresas de EE.UU.">Complete our 12-module career blueprint and join our certified talent pool — accessed by top U.S. companies.</p>
+        <a href="#candidates" class="card-link" data-en="Start the course →" data-es="Comenzar el curso →">Start the course →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── STATS ──────────────────────────────────── -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat">
+      <div class="stat-num">15<span>+</span></div>
+      <div class="stat-label" data-en="Years of Expertise" data-es="Años de Experiencia">Years of Expertise</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">3<span>–5</span></div>
+      <div class="stat-label" data-en="Days to First Match" data-es="Días al Primer Candidato">Days to First Match</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">60<span>%</span></div>
+      <div class="stat-label" data-en="Lower Cost vs U.S. Hires" data-es="Menor Costo vs EE.UU.">Lower Cost vs U.S. Hires</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">100<span>%</span></div>
+      <div class="stat-label" data-en="Remote-Ready Candidates" data-es="Candidatos Listos para Trabajar">Remote-Ready Candidates</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── FOR EMPLOYERS ─────────────────────────── -->
+<section class="employers" id="employers">
+  <div class="container">
+    <div class="section-label">
+      <span class="line"></span>
+      <span data-en="For U.S. Employers" data-es="Para Empresas de EE.UU.">For U.S. Employers</span>
+    </div>
+    <div class="grid-2">
+      <div>
+        <h2 class="section-title" data-en="Stop Wasting Weeks on Hiring" data-es="Deja de Perder Semanas Contratando">Stop Wasting Weeks on Hiring</h2>
+        <p class="section-sub" data-en="TalenCrew delivers pre-vetted, trained LatAm professionals to your inbox in days — not months. Every candidate is certified, remote-ready, and matched to your exact role." data-es="TalenCrew entrega profesionales LatAm previamente seleccionados y capacitados en días, no meses. Cada candidato está certificado, listo para trabajar de forma remota y es compatible con tu rol exacto.">TalenCrew delivers pre-vetted, trained LatAm professionals to your inbox in days — not months. Every candidate is certified, remote-ready, and matched to your exact role.</p>
+      </div>
+      <div></div>
+    </div>
+
+    <div class="process-steps">
+      <div class="process-step">
+        <div class="step-num">01</div>
+        <h4 data-en="Tell Us What You Need" data-es="Cuéntanos Qué Necesitas">Tell Us What You Need</h4>
+        <p data-en="Fill out a brief role description — skills, hours, budget. Takes 10 minutes." data-es="Completa una breve descripción del rol — habilidades, horario, presupuesto. Toma 10 minutos.">Fill out a brief role description — skills, hours, budget. Takes 10 minutes.</p>
+      </div>
+      <div class="process-step">
+        <div class="step-num">02</div>
+        <h4 data-en="We Match & Shortlist" data-es="Seleccionamos Candidatos">We Match & Shortlist</h4>
+        <p data-en="We search our certified pool and deliver 3–5 matched profiles within 3–5 business days." data-es="Buscamos en nuestro grupo certificado y entregamos 3–5 perfiles en 3–5 días hábiles.">We search our certified pool and deliver 3–5 matched profiles within 3–5 business days.</p>
+      </div>
+      <div class="process-step">
+        <div class="step-num">03</div>
+        <h4 data-en="Interview & Decide" data-es="Entrevista y Decide">Interview & Decide</h4>
+        <p data-en="Meet your shortlisted candidates. We handle scheduling, prep, and follow-up." data-es="Conoce a tus candidatos preseleccionados. Nosotros gestionamos la programación, la preparación y el seguimiento.">Meet your shortlisted candidates. We handle scheduling, prep, and follow-up.</p>
+      </div>
+      <div class="process-step">
+        <div class="step-num">04</div>
+        <h4 data-en="Hire & Onboard" data-es="Contrata e Incorpora">Hire & Onboard</h4>
+        <p data-en="We support the first 30 days to ensure a smooth start. Your hire hits the ground running." data-es="Apoyamos los primeros 30 días para asegurar un inicio sin problemas. Tu contratado comienza a rendir desde el primer día.">We support the first 30 days to ensure a smooth start. Your hire hits the ground running.</p>
+      </div>
+    </div>
+
+    <div class="process-cta">
+      <p data-en="Ready to hire your first certified LatAm professional? Tell us what you need and we'll get back to you within 24 hours." data-es="¿Listo para contratar a tu primer profesional LatAm certificado? Cuéntanos qué necesitas y te responderemos en 24 horas.">Ready to hire your first certified LatAm professional? Tell us what you need and we'll get back to you within 24 hours.</p>
+      <a href="#contact" class="btn btn-primary" data-en="Request Talent →" data-es="Solicitar Talento →">Request Talent →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ─── ROLES ──────────────────────────────────── -->
+<section class="roles-section">
+  <div class="container">
+    <div class="section-label">
+      <span class="line"></span>
+      <span data-en="Roles We Fill" data-es="Roles que Cubrimos">Roles We Fill</span>
+    </div>
+    <h2 class="section-title" data-en="Built for E-Commerce & Tech Teams" data-es="Diseñado para E-Commerce y Equipos Tech">Built for E-Commerce & Tech Teams</h2>
+    <div class="roles-grid">
+      <div class="role-cat">
+        <div class="role-cat-title" data-en="E-Commerce" data-es="E-Commerce">E-Commerce</div>
+        <ul class="role-list">
+          <li data-en="Customer Service Rep" data-es="Representante de Servicio al Cliente">Customer Service Rep</li>
+          <li data-en="Order Management VA" data-es="Asistente de Gestión de Pedidos">Order Management VA</li>
+          <li data-en="Social Media Manager" data-es="Gestor de Redes Sociales">Social Media Manager</li>
+          <li data-en="Product Listing Specialist" data-es="Especialista en Listados de Productos">Product Listing Specialist</li>
+          <li data-en="Email Marketing Coordinator" data-es="Coordinador de Email Marketing">Email Marketing Coordinator</li>
+        </ul>
+      </div>
+      <div class="role-cat">
+        <div class="role-cat-title" data-en="Tech / SaaS" data-es="Tech / SaaS">Tech / SaaS</div>
+        <ul class="role-list">
+          <li data-en="Customer Success Manager" data-es="Gerente de Éxito del Cliente">Customer Success Manager</li>
+          <li data-en="Sales Development Rep" data-es="Representante de Desarrollo de Ventas">Sales Development Rep</li>
+          <li data-en="Technical Support Specialist" data-es="Especialista de Soporte Técnico">Technical Support Specialist</li>
+          <li data-en="Data Entry & CRM Admin" data-es="Administrador de CRM y Datos">Data Entry & CRM Admin</li>
+          <li data-en="Project Coordinator" data-es="Coordinador de Proyectos">Project Coordinator</li>
+        </ul>
+      </div>
+      <div class="role-cat">
+        <div class="role-cat-title" data-en="Operations" data-es="Operaciones">Operations</div>
+        <ul class="role-list">
+          <li data-en="Executive Virtual Assistant" data-es="Asistente Virtual Ejecutivo">Executive Virtual Assistant</li>
+          <li data-en="Content Writer (English)" data-es="Redactor de Contenido (Inglés)">Content Writer (English)</li>
+          <li data-en="Bookkeeping & Finance Admin" data-es="Administrador Financiero y Contable">Bookkeeping & Finance Admin</li>
+          <li data-en="HR & Recruiting Coordinator" data-es="Coordinador de RRHH y Reclutamiento">HR & Recruiting Coordinator</li>
+          <li data-en="QA & Testing Analyst" data-es="Analista de QA y Pruebas">QA & Testing Analyst</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOR CANDIDATES ────────────────────────── -->
+<section class="candidates" id="candidates">
+  <div class="container">
+    <div class="section-label">
+      <span class="line"></span>
+      <span data-en="For LatAm Professionals" data-es="Para Profesionales LatAm">For LatAm Professionals</span>
+    </div>
+    <h2 class="section-title" data-en="Your U.S. Remote Career Starts Here" data-es="Tu Carrera Remota en EE.UU. Empieza Aquí">Your U.S. Remote Career Starts Here</h2>
+    <p class="section-sub" data-en="Learn the exact system used to land remote jobs with U.S. companies. Complete the course, join our certified pool, and let us place you." data-es="Aprende el sistema exacto para conseguir trabajos remotos con empresas de EE.UU. Completa el curso, únete a nuestro grupo certificado y deja que te coloquemos.">Learn the exact system used to land remote jobs with U.S. companies. Complete the course, join our certified pool, and let us place you.</p>
+
+    <div class="course-grid">
+      <div class="modules-list">
+        <div class="module-row">
+          <div class="mod-num">01</div>
+          <div><div class="mod-title" data-en="Understanding the U.S. Remote Job Market" data-es="Entendiendo el Mercado Laboral Remoto de EE.UU.">Understanding the U.S. Remote Job Market</div><div class="mod-desc" data-en="Which industries hire most from LatAm and where to focus." data-es="Qué industrias contratan más de LatAm y dónde enfocarse.">Which industries hire most from LatAm and where to focus.</div></div>
+        </div>
+        <div class="module-row">
+          <div class="mod-num">02</div>
+          <div><div class="mod-title" data-en="Building a U.S.-Ready LinkedIn Profile" data-es="Construyendo un Perfil de LinkedIn para EE.UU.">Building a U.S.-Ready LinkedIn Profile</div><div class="mod-desc" data-en="Keyword strategy and profile frameworks that get you found." data-es="Estrategia de palabras clave y marcos de perfil que te hacen visible.">Keyword strategy and profile frameworks that get you found.</div></div>
+        </div>
+        <div class="module-row">
+          <div class="mod-num">03</div>
+          <div><div class="mod-title" data-en="Crafting Your English Resume" data-es="Creando Tu Currículum en Inglés">Crafting Your English Resume</div><div class="mod-desc" data-en="U.S. resume conventions, ATS filters, and achievement framing." data-es="Convenciones de currículum en EE.UU., filtros ATS y logros cuantificados.">U.S. resume conventions, ATS filters, and achievement framing.</div></div>
+        </div>
+        <div class="module-row">
+          <div class="mod-num">04</div>
+          <div><div class="mod-title" data-en="Cold Outreach That Gets Replies" data-es="Contacto Directo que Obtiene Respuestas">Cold Outreach That Gets Replies</div><div class="mod-desc" data-en="Proven templates to contact U.S. hiring managers directly." data-es="Plantillas probadas para contactar gerentes de contratación de EE.UU.">Proven templates to contact U.S. hiring managers directly.</div></div>
+        </div>
+        <div class="module-row">
+          <div class="mod-num">05</div>
+          <div><div class="mod-title" data-en="Acing the Remote Interview in English" data-es="Brillar en la Entrevista Remota en Inglés">Acing the Remote Interview in English</div><div class="mod-desc" data-en="STAR method, common formats, and projecting confidence." data-es="Método STAR, formatos comunes y proyectar confianza.">STAR method, common formats, and projecting confidence.</div></div>
+        </div>
+        <div class="module-row">
+          <div class="mod-num">06</div>
+          <div><div class="mod-title" data-en="Salary Negotiation & Contracts" data-es="Negociación de Salario y Contratos">Salary Negotiation & Contracts</div><div class="mod-desc" data-en="U.S. benchmarks, negotiation tactics, and contractor agreements." data-es="Referencias de EE.UU., tácticas de negociación y contratos de freelance.">U.S. benchmarks, negotiation tactics, and contractor agreements.</div></div>
+        </div>
+        <div class="module-row">
+          <div class="mod-num">07</div>
+          <div><div class="mod-title" data-en="Remote Work Tools & Culture" data-es="Herramientas y Cultura de Trabajo Remoto">Remote Work Tools & Culture</div><div class="mod-desc" data-en="Slack, Notion, Asana, Loom — and U.S. communication norms." data-es="Slack, Notion, Asana, Loom — y normas de comunicación en EE.UU.">Slack, Notion, Asana, Loom — and U.S. communication norms.</div></div>
+        </div>
+        <div class="module-row">
+          <div class="mod-num">08</div>
+          <div><div class="mod-title" data-en="Building Your Personal Brand Online" data-es="Construyendo Tu Marca Personal Online">Building Your Personal Brand Online</div><div class="mod-desc" data-en="Content, portfolio projects, and social proof that attracts inbound." data-es="Contenido, proyectos de portafolio y prueba social que atrae empleadores.">Content, portfolio projects, and social proof that attracts inbound.</div></div>
+        </div>
+        <div class="module-row">
+          <div class="mod-num">09</div>
+          <div><div class="mod-title" data-en="Freelance vs. Full-Time Remote" data-es="Freelance vs. Tiempo Completo Remoto">Freelance vs. Full-Time Remote</div><div class="mod-desc" data-en="Pros, cons, taxes, and legal considerations for LatAm professionals." data-es="Pros, contras, impuestos y consideraciones legales para profesionales LatAm.">Pros, cons, taxes, and legal considerations for LatAm professionals.</div></div>
+        </div>
+        <div class="module-row">
+          <div class="mod-num">10</div>
+          <div><div class="mod-title" data-en="E-Commerce & Tech Company Roles" data-es="Roles en E-Commerce y Empresas Tech">E-Commerce & Tech Company Roles</div><div class="mod-desc" data-en="Deep dive into the two hottest sectors hiring LatAm talent." data-es="Análisis profundo de los dos sectores más activos que contratan talento LatAm.">Deep dive into the two hottest sectors hiring LatAm talent.</div></div>
+        </div>
+        <div class="module-row">
+          <div class="mod-num">11</div>
+          <div><div class="mod-title" data-en="Getting Into the Certified Talent Pool" data-es="Unirse al Grupo de Talento Certificado">Getting Into the Certified Talent Pool</div><div class="mod-desc" data-en="Qualify for TalenCrew's pool and get matched with U.S. employers." data-es="Califica para el grupo de TalenCrew y conéctate con empleadores de EE.UU.">Qualify for TalenCrew's pool and get matched with U.S. employers.</div></div>
+        </div>
+        <div class="module-row">
+          <div class="mod-num">12</div>
+          <div><div class="mod-title" data-en="Thriving in Your First 90 Days" data-es="Triunfando en tus Primeros 90 Días">Thriving in Your First 90 Days</div><div class="mod-desc" data-en="Onboard successfully, build trust remotely, and grow your career." data-es="Incorporación exitosa, construye confianza a distancia y crece profesionalmente.">Onboard successfully, build trust remotely, and grow your career.</div></div>
+        </div>
+      </div>
+
+      <div class="course-card">
+        <div class="course-badge" data-en="Available Now" data-es="Nueva Cohorte Abierta">Available Now</div>
+        <h3 data-en="The U.S. Remote Career Bundle" data-es="El Programa de Carrera Remota en EE.UU.">The U.S. Remote Career Bundle</h3>
+        <p class="subtitle" data-en=" · 10 bilingual PDF guides · Instant download" data-es="10 guías PDF bilingües · Descarga instantánea"> · 10 bilingual PDF guides · Instant download</p>
+        <div class="includes">
+          <div class="include-item"><span class="check">✓</span> <span data-en="All 5 career guides in English &amp; Spanish" data-es="Las 5 guías en inglés y español">All 5 career guides in English &amp; Spanish</span></div>
+          <div class="include-item"><span class="check">✓</span> <span data-en="Resume & LinkedIn templates" data-es="Plantillas de CV y LinkedIn">Resume & LinkedIn templates</span></div>
+          <div class="include-item"><span class="check">✓</span> <span data-en="Salary negotiation scripts included" data-es="Guiones de negociación salarial incluidos">Salary negotiation scripts included</span></div>
+          <div class="include-item"><span class="check">✓</span> <span data-en="Remote work tools guide included" data-es="Guía de herramientas remotas incluida">Remote work tools guide included</span></div>
+          <div class="include-item"><span class="check">✓</span> <span data-en="Interview prep with 40+ real questions" data-es="Preparación para entrevistas con 40+ preguntas">Interview prep with 40+ real questions</span></div>
+          <div class="include-item"><span class="check">✓</span> <span data-en="Instant access after purchase" data-es="Acceso instantáneo tras la compra">Instant access after purchase</span></div>
+        </div>
+        <div class="price-row">
+          <div>
+            <div class="price"><sup>$</sup>47</div>
+            <div class="old-price" data-en="Was $100" data-es="Antes $100">Was $100</div>
+          </div>
+          <a href="https://go.hotmart.com/Q105244462U" class="btn btn-gold" data-en="Enroll Now →" data-es="Inscríbete Ahora →">Enroll Now →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── WHY TALENCREW ─────────────────────────── -->
+<section class="why" id="why">
+  <div class="container">
+    <div class="section-label">
+      <span class="line"></span>
+      <span data-en="Why TalenCrew" data-es="Por Qué TalenCrew">Why TalenCrew</span>
+    </div>
+    <h2 class="section-title" data-en="Built on 15 Years of Placement Expertise" data-es="Construido sobre 15 Años de Experiencia en Colocación">Built on 15 Years of Placement Expertise</h2>
+    <div class="why-grid">
+      <div class="why-item">
+        <div class="why-icon">🏆</div>
+        <h4 data-en="Proven Track Record" data-es="Historial Comprobado">Proven Track Record</h4>
+        <p data-en="Powered by Selective Crew, a staffing firm placing talent globally since 2009. We've placed thousands of LatAm professionals across cruise lines, hospitality, and corporate sectors." data-es="Impulsado por Selective Crew, una firma de personal que coloca talento globalmente desde 2009. Hemos colocado miles de profesionales LatAm en cruceros, hospitalidad y sectores corporativos.">Powered by Selective Crew, a staffing firm placing talent globally since 2009. We've placed thousands of LatAm professionals across cruise lines, hospitality, and corporate sectors.</p>
+      </div>
+      <div class="why-item">
+        <div class="why-icon">🎓</div>
+        <h4 data-en="Trained, Not Just Sourced" data-es="Capacitados, No Solo Seleccionados">Trained, Not Just Sourced</h4>
+        <p data-en="Our candidates complete 12 rigorous modules on remote work, U.S. business culture, and professional English — before they ever reach your inbox." data-es="Nuestros candidatos completan 12 módulos rigurosos sobre trabajo remoto, cultura empresarial de EE.UU. e inglés profesional, antes de llegar a tu bandeja de entrada.">Our candidates complete 12 rigorous modules on remote work, U.S. business culture, and professional English — before they ever reach your inbox.</p>
+      </div>
+      <div class="why-item">
+        <div class="why-icon">🤝</div>
+        <h4 data-en="A Partnership, Not a Transaction" data-es="Una Asociación, No una Transacción">A Partnership, Not a Transaction</h4>
+        <p data-en="We assign a dedicated account manager who learns your business, improves every match, and supports your hire through the first 30 days onboarding." data-es="Asignamos un gerente de cuenta dedicado que aprende tu negocio, mejora cada selección y apoya a tu contratado durante los primeros 30 días de incorporación.">We assign a dedicated account manager who learns your business, improves every match, and supports your hire through the first 30 days onboarding.</p>
+      </div>
+      <div class="why-item">
+        <div class="why-icon">🛡</div>
+        <h4 data-en="Placement Guarantee" data-es="Garantía de Colocación">Placement Guarantee</h4>
+        <p data-en="If a placement doesn't work out within 30 days, we rematch at no extra cost. We're invested in your long-term success, not just the initial placement." data-es="Si una colocación no funciona en 30 días, volvemos a seleccionar sin costo adicional. Estamos comprometidos con tu éxito a largo plazo, no solo con la colocación inicial.">If a placement doesn't work out within 30 days, we rematch at no extra cost. We're invested in your long-term success, not just the initial placement.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TESTIMONIALS ──────────────────────────── -->
+<section class="testimonials">
+  <div class="container">
+    <div class="section-label">
+      <span class="line"></span>
+      <span data-en="What They Say" data-es="Lo Que Dicen">What They Say</span>
+    </div>
+    <h2 class="section-title" data-en="Real Results, Real People" data-es="Resultados Reales, Personas Reales">Real Results, Real People</h2>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <p class="testi-quote" data-en='"TalenCrew sent us 4 candidates in 3 days. We hired 2 of them. Both are still with us 8 months later. Fastest hire we\'ve ever made."' data-es='"TalenCrew nos envió 4 candidatos en 3 días. Contratamos a 2. Ambos siguen con nosotros 8 meses después. La contratación más rápida que hemos hecho."'>"TalenCrew sent us 4 candidates in 3 days. We hired 2 of them. Both are still with us 8 months later. Fastest hire we've ever made."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">JR</div>
+          <div>
+            <div class="testi-name">James R.</div>
+            <div class="testi-role" data-en="CEO, NovaBrand · Shopify D2C Brand" data-es="CEO, NovaBrand · Marca D2C en Shopify">CEO, NovaBrand · Shopify D2C Brand</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <p class="testi-quote" data-en='"The salary negotiation module alone was worth 10x the price. I went from $800/month to negotiating $2,200/month for my first U.S. remote job."' data-es='"El módulo de negociación salarial valió 10 veces el precio. Pasé de $800/mes a negociar $2,200/mes en mi primer trabajo remoto en EE.UU."'>"The salary negotiation module alone was worth 10x the price. I went from $800/month to negotiating $2,200/month for my first U.S. remote job."</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:var(--gold);">DP</div>
+          <div>
+            <div class="testi-name">Diego P.</div>
+            <div class="testi-role" data-en="Medellín · E-commerce Operations Lead" data-es="Medellín · Líder de Operaciones E-commerce">Medellín · E-commerce Operations Lead</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <p class="testi-quote" data-en='"Getting into the certified talent pool was a game changer. TalenCrew connected me directly with a U.S. tech startup I would have never found on my own."' data-es='"Entrar al grupo de talento certificado fue un cambio de juego. TalenCrew me conectó directamente con una startup de EE.UU. que nunca hubiera encontrado sola."'>"Getting into the certified talent pool was a game changer. TalenCrew connected me directly with a U.S. tech startup I would have never found on my own."</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:#5A6E8A;">VR</div>
+          <div>
+            <div class="testi-name">Valentina R.</div>
+            <div class="testi-role" data-en="Buenos Aires · SaaS Account Manager" data-es="Buenos Aires · Gerente de Cuentas SaaS">Buenos Aires · SaaS Account Manager</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CTA ───────────────────────────────────── -->
+<div class="cta-section">
+  <div class="cta-inner container">
+    <div>
+      <h2 data-en="Ready to Get Started?" data-es="¿Listo para Comenzar?">Ready to Get Started?</h2>
+      <p data-en="Whether you're a U.S. company looking to hire or a LatAm professional ready to launch your remote career — TalenCrew is your next step." data-es="Ya sea que seas una empresa de EE.UU. que busca contratar o un profesional LatAm listo para lanzar tu carrera remota — TalenCrew es tu próximo paso.">Whether you're a U.S. company looking to hire or a LatAm professional ready to launch your remote career — TalenCrew is your next step.</p>
+    </div>
+    <div class="cta-btns">
+      <a href="#contact" class="btn btn-white btn-lg" data-en="Hire Talent →" data-es="Contratar Talento →">Hire Talent →</a>
+      <a href="#candidates" class="btn btn-ghost btn-lg" data-en="Join the Course →" data-es="Unirme al Curso →">Join the Course →</a>
+    </div>
+  </div>
+</div>
+
+<!-- ─── FOOTER ────────────────────────────────── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <span class="footer-logo">Talen<span>Crew</span></span>
+        <p class="footer-desc" data-en="Connecting U.S. companies with elite, certified remote talent from Latin America. Powered by Selective Crew since 2009." data-es="Conectando empresas de EE.UU. con talento remoto élite y certificado de América Latina. Impulsado por Selective Crew desde 2009.">Connecting U.S. companies with elite, certified remote talent from Latin America. Powered by Selective Crew since 2009.</p>
+      </div>
+      <div class="footer-col">
+        <h5 data-en="Employers" data-es="Empresas">Employers</h5>
+        <ul>
+          <li><a href="#employers" data-en="How It Works" data-es="Cómo Funciona">How It Works</a></li>
+          <li><a href="#employers" data-en="Roles We Fill" data-es="Roles que Cubrimos">Roles We Fill</a></li>
+          <li><a href="#contact" data-en="Request Talent" data-es="Solicitar Talento">Request Talent</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5 data-en="Candidates" data-es="Candidatos">Candidates</h5>
+        <ul>
+          <li><a href="#candidates" data-en="The Course" data-es="El Curso">The Course</a></li>
+          <li><a href="#candidates" data-en="Talent Pool" data-es="Grupo de Talento">Talent Pool</a></li>
+          <li><a href="#candidates" data-en="Enroll Now" data-es="Inscríbete Ahora">Enroll Now</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5 data-en="Contact" data-es="Contacto">Contact</h5>
+        <ul>
+          <li><a href="#contact">hire@talencrew.com</a></li>
+          <li><a href="#contact">hire@talencrew.com</a></li>
+          <li><a href="https://selectivecrew.com" target="_blank">selectivecrew.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 TalenCrew. <span data-en="All rights reserved." data-es="Todos los derechos reservados.">All rights reserved.</span></p>
+      <p class="powered" data-en="Powered by <a href='https://selectivecrew.com'>Selective Crew</a> · Bogotá, Colombia" data-es="Impulsado por <a href='https://selectivecrew.com'>Selective Crew</a> · Bogotá, Colombia">Powered by <a href="https://selectivecrew.com">Selective Crew</a> · Bogotá, Colombia</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
+
+
+
+
+
+
+

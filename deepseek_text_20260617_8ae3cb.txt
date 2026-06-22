@@ -1,0 +1,8 @@
+talenCrew/
+├── index.html          ← El código de la landing page
+├── css/
+│   └── style.css       ← Estilos (puedes usar el que ya está en el HTML)
+├── js/
+│   └── main.js         ← JavaScript (puedes dejarlo vacío o con funciones básicas)
+└── assets/
+    └── images/         ← Logos, iconos, capturas de pantalla
