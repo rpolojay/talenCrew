@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TalenCrew — Admin Panel</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0f1117; color: #fff; }
+
+    /* SIDEBAR */
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
+      background: #1a1d27; border-right: 1px solid #2a2d3a;
+      display: flex; flex-direction: column; padding: 24px 0;
+    }
+    .sidebar-logo {
+      font-size: 20px; font-weight: 800; color: #fff;
+      padding: 0 24px 24px; border-bottom: 1px solid #2a2d3a;
+    }
+    .sidebar-logo span { color: #25D366; }
+    .nav { padding: 16px 12px; flex: 1; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px;
+      font-size: 14px; font-weight: 500; color: #9ca3af;
+      cursor: pointer; transition: all 0.15s; margin-bottom: 4px;
+      text-decoration: none;
+    }
+    .nav-item:hover { background: #2a2d3a; color: #fff; }
+    .nav-item.active { background: #25D366; color: #fff; }
+    .sidebar-footer {
+      padding: 16px 24px; border-top: 1px solid #2a2d3a;
+      font-size: 12px; color: #6b7280;
+    }
+    .btn-logout {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: #ef4444; cursor: pointer;
+      background: none; border: none; font-family: inherit;
+      padding: 8px 0; margin-top: 8px;
+    }
+
+    /* MAIN */
+    .main { margin-left: 240px; padding: 32px; min-height: 100vh; }
+
+    /* HEADER */
+    .page-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 32px;
+    }
+    .page-title { font-size: 24px; font-weight: 700; }
+    .page-sub { font-size: 14px; color: #6b7280; margin-top: 4px; }
+    .btn {
+      padding: 10px 20px; border-radius: 8px; font-size: 14px;
+      font-weight: 600; cursor: pointer; border: none; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: #25D366; color: #fff; }
+    .btn-primary:hover { background: #1da85c; }
+
+    /* STATS */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 16px; margin-bottom: 32px;
+    }
+    .stat-card {
+      background: #1a1d27; border: 1px solid #2a2d3a;
+      border-radius: 12px; padding: 20px;
+    }
+    .stat-label { font-size: 12px; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 32px; font-weight: 700; color: #fff; }
+    .stat-change { font-size: 12px; color: #25D366; margin-top: 4px; }
+
+    /* TABLE */
+    .section { margin-bottom: 32px; }
+    .section-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .section-title { font-size: 16px; font-weight: 700; }
+    .table-wrap {
+      background: #1a1d27; border: 1px solid #2a2d3a;
+      border-radius: 12px; overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; padding: 12px 16px;
+      font-size: 11px; font-weight: 700; color: #6b7280;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid #2a2d3a;
+    }
+    td {
+      padding: 14px 16px; font-size: 14px; color: #d1d5db;
+      border-bottom: 1px solid #1f2230;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #1f2230; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 100px;
+      font-size: 11px; font-weight: 700;
+    }
+    .badge-active { background: rgba(37,211,102,0.15); color: #25D366; }
+    .badge-inactive { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .badge-pending { background: rgba(251,191,36,0.15); color: #fbbf24; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      display: none; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #1a1d27; border: 1px solid #2a2d3a;
+      border-radius: 16px; padding: 32px; width: 100%;
+      max-width: 520px; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 24px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 12px; font-weight: 600; color: #9ca3af; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input, textarea, select {
+      width: 100%; padding: 10px 14px;
+      background: #0f1117; border: 1px solid #2a2d3a;
+      border-radius: 8px; font-size: 14px; color: #fff;
+      font-family: inherit; outline: none;
+    }
+    input:focus, textarea:focus, select:focus { border-color: #25D366; }
+    textarea { resize: vertical; min-height: 120px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+    .btn-cancel { background: #2a2d3a; color: #9ca3af; }
+    .btn-cancel:hover { background: #343748; }
+
+    .empty-state {
+      text-align: center; padding: 48px; color: #6b7280; font-size: 14px;
+    }
+
+    .action-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 12px; font-weight: 600; padding: 4px 10px;
+      border-radius: 6px; font-family: inherit;
+    }
+    .action-edit { color: #60a5fa; background: rgba(96,165,250,0.1); }
+    .action-delete { color: #ef4444; background: rgba(239,68,68,0.1); margin-left: 4px; }
+    .action-toggle-on { color: #25D366; background: rgba(37,211,102,0.1); }
+    .action-toggle-off { color: #fbbf24; background: rgba(251,191,36,0.1); }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">Talen<span>Crew</span></div>
+  <nav class="nav">
+    <a class="nav-item active" onclick="showSection('clients')">👥 Clientes</a>
+    <a class="nav-item" onclick="showSection('bots')">🤖 Bots</a>
+    <a class="nav-item" onclick="showSection('onboarding')">➕ Nuevo Cliente</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div id="userEmail" style="margin-bottom: 4px;"></div>
+    <button class="btn-logout" onclick="logout()">⬅ Cerrar sesión</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- CLIENTS SECTION -->
+  <div id="section-clients">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Clientes</div>
+        <div class="page-sub">Gestiona todos los clientes activos de TalenCrew</div>
+      </div>
+      <button class="btn btn-primary" onclick="showSection('onboarding')">+ Nuevo Cliente</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Clientes</div>
+        <div class="stat-value" id="statTotal">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Bots Activos</div>
+        <div class="stat-value" id="statActive">0</div>
+        <div class="stat-change">✓ Funcionando</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Ingresos/mes</div>
+        <div class="stat-value" id="statRevenue">$0</div>
+        <div class="stat-change">COP</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pendientes</div>
+        <div class="stat-value" id="statPending">0</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Lista de Clientes</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Negocio</th>
+              <th>Contacto</th>
+              <th>Plan</th>
+              <th>Bot Status</th>
+              <th>Mensual</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="clientsTable">
+            <tr><td colspan="6" class="empty-state">Cargando clientes...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTS SECTION -->
+  <div id="section-bots" style="display:none;">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Bots de IA</div>
+        <div class="page-sub">Gestiona los system prompts y configuración de cada bot</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>WhatsApp Phone ID</th>
+            <th>Status</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="botsTable">
+          <tr><td colspan="4" class="empty-state">Cargando bots...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ONBOARDING SECTION -->
+  <div id="section-onboarding" style="display:none;">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Nuevo Cliente</div>
+        <div class="page-sub">Registra un nuevo cliente y configura su bot automáticamente</div>
+      </div>
+    </div>
+    <div style="max-width: 600px; background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 16px; padding: 32px;">
+      <div class="form-group">
+        <label>Nombre del Negocio *</label>
+        <input type="text" id="ob_bizName" placeholder="Ej: Clínica Vitalis" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Contacto *</label>
+          <input type="text" id="ob_contact" placeholder="Nombre del dueño" />
+        </div>
+        <div class="form-group">
+          <label>WhatsApp *</label>
+          <input type="text" id="ob_whatsapp" placeholder="+57 300 000 0000" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="ob_email" placeholder="cliente@email.com" />
+        </div>
+        <div class="form-group">
+          <label>Plan</label>
+          <select id="ob_plan">
+            <option value="basico">Básico — $900K setup / $350K/mes</option>
+            <option value="avanzado">Avanzado — $1.5M setup / $550K/mes</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>WhatsApp Phone ID (de Meta)</label>
+        <input type="text" id="ob_phoneId" placeholder="Ej: 123450543044836" />
+      </div>
+      <div class="form-group">
+        <label>System Prompt del Bot *</label>
+        <textarea id="ob_prompt" placeholder="Eres el asistente virtual de [Negocio]. Tu función es..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Nicho</label>
+        <select id="ob_niche">
+          <option value="clinica">Clínica / Salud</option>
+          <option value="inmobiliaria">Inmobiliaria</option>
+          <option value="ecommerce">E-commerce / Tienda</option>
+          <option value="salon">Salón de Belleza</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width:100%; margin-top: 8px;" onclick="createClient()">
+        Crear Cliente y Configurar Bot
+      </button>
+      <div id="ob_msg" style="margin-top: 12px; font-size: 13px; display: none;"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- EDIT BOT MODAL -->
+<div class="modal-overlay" id="editBotModal">
+  <div class="modal">
+    <div class="modal-title">✏️ Editar System Prompt</div>
+    <input type="hidden" id="edit_botId" />
+    <div class="form-group">
+      <label>Nombre del Bot</label>
+      <input type="text" id="edit_botName" readonly style="opacity:0.5;" />
+    </div>
+    <div class="form-group">
+      <label>System Prompt</label>
+      <textarea id="edit_prompt" style="min-height: 200px;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="closeModal('editBotModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePrompt()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const ALLOWED_EMAILS = ['seacrewagency@gmail.com', 'hola@talencrew.com'];
+
+  const app = initializeApp({
+    apiKey: "AIzaSyD-WlfKXja9SvWqhArUHkkJdn5JXQLxohg",
+    authDomain: "gen-lang-client-0598503352.firebaseapp.com",
+    projectId: "gen-lang-client-0598503352",
+    storageBucket: "gen-lang-client-0598503352.firebasestorage.app",
+    messagingSenderId: "869550093470",
+    appId: "1:869550093470:web:7bb6989d149af7038db78f"
+  });
+
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Auth check
+  onAuthStateChanged(auth, (user) => {
+    if (!user || !ALLOWED_EMAILS.includes(user.email)) {
+      window.location.href = 'login.html';
+    } else {
+      document.getElementById('userEmail').textContent = user.email;
+      loadClients();
+      loadBots();
+    }
+  });
+
+  // NAVIGATION
+  window.showSection = (name) => {
+    ['clients','bots','onboarding'].forEach(s => {
+      document.getElementById('section-' + s).style.display = s === name ? 'block' : 'none';
+    });
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    event.target.classList.add('active');
+  };
+
+  // LOGOUT
+  window.logout = async () => {
+    await signOut(auth);
+    window.location.href = 'login.html';
+  };
+
+  // LOAD CLIENTS
+  async function loadClients() {
+    const snap = await getDocs(collection(db, 'clients'));
+    const tbody = document.getElementById('clientsTable');
+    const clients = [];
+    snap.forEach(d => clients.push({ id: d.id, ...d.data() }));
+
+    // Stats
+    document.getElementById('statTotal').textContent = clients.length;
+    const active = clients.filter(c => c.isActive).length;
+    document.getElementById('statActive').textContent = active;
+    document.getElementById('statPending').textContent = clients.filter(c => !c.isActive).length;
+    const revenue = clients.filter(c => c.isActive).reduce((sum, c) => sum + (c.plan === 'avanzado' ? 550000 : 350000), 0);
+    document.getElementById('statRevenue').textContent = '$' + revenue.toLocaleString('es-CO');
+
+    if (clients.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No hay clientes aún. ¡Agrega el primero!</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = clients.map(c => `
+      <tr>
+        <td><strong>${c.businessName || '—'}</strong><br><small style="color:#6b7280">${c.niche || ''}</small></td>
+        <td>${c.contactName || '—'}<br><small style="color:#6b7280">${c.whatsapp || ''}</small></td>
+        <td>${c.plan === 'avanzado' ? 'Avanzado' : 'Básico'}</td>
+        <td><span class="badge ${c.isActive ? 'badge-active' : 'badge-pending'}">${c.isActive ? '● Activo' : '○ Pendiente'}</span></td>
+        <td>${c.plan === 'avanzado' ? '$550.000' : '$350.000'}</td>
+        <td>
+          <button class="action-btn ${c.isActive ? 'action-toggle-off' : 'action-toggle-on'}" onclick="toggleClient('${c.id}', ${c.isActive})">${c.isActive ? 'Desactivar' : 'Activar'}</button>
+          <button class="action-btn action-delete" onclick="deleteClient('${c.id}')">Eliminar</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // LOAD BOTS
+  async function loadBots() {
+    const snap = await getDocs(collection(db, 'bots'));
+    const tbody = document.getElementById('botsTable');
+    const bots = [];
+    snap.forEach(d => bots.push({ id: d.id, ...d.data() }));
+
+    if (bots.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No hay bots configurados.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = bots.map(b => `
+      <tr>
+        <td><strong>${b.botName || '—'}</strong></td>
+        <td><code style="font-size:12px;color:#9ca3af">${b.whatsappPhoneId || '—'}</code></td>
+        <td><span class="badge ${b.isActive ? 'badge-active' : 'badge-inactive'}">${b.isActive ? '● Activo' : '○ Inactivo'}</span></td>
+        <td>
+          <button class="action-btn action-edit" onclick="editBot('${b.id}', '${b.botName}', \`${(b.systemPrompt||'').replace(/`/g,"'")}\`)">✏️ Editar Prompt</button>
+          <button class="action-btn ${b.isActive ? 'action-toggle-off' : 'action-toggle-on'}" onclick="toggleBot('${b.id}', ${b.isActive})">${b.isActive ? 'Desactivar' : 'Activar'}</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // CREATE CLIENT
+  window.createClient = async () => {
+    const bizName = document.getElementById('ob_bizName').value.trim();
+    const contact = document.getElementById('ob_contact').value.trim();
+    const whatsapp = document.getElementById('ob_whatsapp').value.trim();
+    const email = document.getElementById('ob_email').value.trim();
+    const plan = document.getElementById('ob_plan').value;
+    const phoneId = document.getElementById('ob_phoneId').value.trim();
+    const prompt = document.getElementById('ob_prompt').value.trim();
+    const niche = document.getElementById('ob_niche').value;
+    const msg = document.getElementById('ob_msg');
+
+    if (!bizName || !contact || !whatsapp || !prompt) {
+      msg.style.display = 'block';
+      msg.style.color = '#ef4444';
+      msg.textContent = 'Por favor completa los campos obligatorios (*)';
+      return;
+    }
+
+    try {
+      msg.style.display = 'block';
+      msg.style.color = '#fbbf24';
+      msg.textContent = 'Creando cliente...';
+
+      await addDoc(collection(db, 'clients'), {
+        businessName: bizName, contactName: contact,
+        whatsapp, email, plan, niche, isActive: false,
+        createdAt: serverTimestamp()
+      });
+
+      if (phoneId) {
+        await addDoc(collection(db, 'bots'), {
+          botName: bizName, whatsappPhoneId: phoneId,
+          systemPrompt: prompt, isActive: false,
+          createdAt: serverTimestamp()
+        });
+      }
+
+      msg.style.color = '#25D366';
+      msg.textContent = '✓ Cliente creado exitosamente. Bot configurado en Firestore.';
+      ['ob_bizName','ob_contact','ob_whatsapp','ob_email','ob_phoneId','ob_prompt'].forEach(id => document.getElementById(id).value = '');
+      loadClients();
+      loadBots();
+    } catch (err) {
+      msg.style.color = '#ef4444';
+      msg.textContent = 'Error: ' + err.message;
+    }
+  };
+
+  // TOGGLE CLIENT
+  window.toggleClient = async (id, current) => {
+    await updateDoc(doc(db, 'clients', id), { isActive: !current });
+    loadClients();
+  };
+
+  // DELETE CLIENT
+  window.deleteClient = async (id) => {
+    if (!confirm('¿Eliminar este cliente?')) return;
+    await deleteDoc(doc(db, 'clients', id));
+    loadClients();
+  };
+
+  // EDIT BOT
+  window.editBot = (id, name, prompt) => {
+    document.getElementById('edit_botId').value = id;
+    document.getElementById('edit_botName').value = name;
+    document.getElementById('edit_prompt').value = prompt;
+    document.getElementById('editBotModal').classList.add('open');
+  };
+
+  // SAVE PROMPT
+  window.savePrompt = async () => {
+    const id = document.getElementById('edit_botId').value;
+    const prompt = document.getElementById('edit_prompt').value;
+    await updateDoc(doc(db, 'bots', id), { systemPrompt: prompt });
+    closeModal('editBotModal');
+    loadBots();
+  };
+
+  // TOGGLE BOT
+  window.toggleBot = async (id, current) => {
+    await updateDoc(doc(db, 'bots', id), { isActive: !current });
+    loadBots();
+  };
+
+  // MODAL
+  window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+</script>
+
+</body>
+</html>
