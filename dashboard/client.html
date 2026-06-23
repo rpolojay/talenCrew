@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TalenCrew — Mi Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #25D366;
+      --green-dark: #1da85c;
+      --bg: #0f1117;
+      --card: #1a1d27;
+      --border: #2a2d3a;
+      --text: #fff;
+      --muted: #6b7280;
+      --danger: #ef4444;
+      --warning: #fbbf24;
+    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+    /* TOPBAR */
+    .topbar {
+      background: var(--card); border-bottom: 1px solid var(--border);
+      padding: 14px 20px; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-logo { font-size: 18px; font-weight: 800; }
+    .topbar-logo span { color: var(--green); }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .topbar-email { font-size: 12px; color: var(--muted); }
+    .btn-logout { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; }
+
+    /* NAV TABS */
+    .tabs { display: flex; gap: 4px; padding: 16px 20px 0; border-bottom: 1px solid var(--border); overflow-x: auto; }
+    .tab { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
+    .tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+    /* MAIN */
+    .main { padding: 20px; max-width: 1000px; margin: 0 auto; }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+    @media (min-width: 600px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .stat-value { font-size: 28px; font-weight: 700; }
+    .stat-sub { font-size: 11px; color: var(--green); margin-top: 4px; }
+
+    /* BOT STATUS */
+    .bot-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .bot-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .bot-info p { font-size: 13px; color: var(--muted); }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+    .badge-active { background: rgba(37,211,102,0.15); color: var(--green); }
+    .badge-inactive { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+    /* TABLE */
+    .section-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 500px; }
+    th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    td { padding: 12px 14px; font-size: 13px; color: #d1d5db; border-bottom: 1px solid #1f2230; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #1f2230; }
+    .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+
+    /* CONVERSATION BUBBLE */
+    .conv-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .conv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .conv-name { font-size: 13px; font-weight: 700; }
+    .conv-time { font-size: 11px; color: var(--muted); }
+    .bubble-row { display: flex; flex-direction: column; gap: 6px; }
+    .bubble { padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.5; max-width: 85%; }
+    .bubble-user { background: #2a2d3a; color: #d1d5db; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .bubble-bot { background: rgba(37,211,102,0.12); color: #d1fae5; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .bubble-label { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+    .bubble-user-wrap { align-self: flex-start; }
+    .bubble-bot-wrap { align-self: flex-end; text-align: right; }
+
+    /* LOGIN */
+    .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 400px; text-align: center; }
+    .login-logo { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+    .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+    .btn-google { width: 100%; padding: 13px; background: #fff; color: #1a1d27; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: inherit; }
+    .btn-google:hover { background: #f3f4f6; }
+    .login-error { margin-top: 14px; font-size: 13px; color: var(--danger); display: none; }
+
+    /* HIDDEN */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">Talen<span style="color:var(--green)">Crew</span></div>
+    <div class="login-sub">Portal de Cliente · Accede con tu cuenta</div>
+    <button class="btn-google" onclick="signIn()">
+      <svg width="16" height="16" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Continuar con Google
+    </button>
+    <div class="login-error" id="loginError">No tienes acceso. Contacta a TalenCrew.</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashView" class="hidden">
+  <div class="topbar">
+    <div class="topbar-logo">Talen<span>Crew</span></div>
+    <div class="topbar-right">
+      <span class="topbar-email" id="topEmail"></span>
+      <button class="btn-logout" onclick="signOut()">Salir</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('overview', this)">📊 Resumen</button>
+    <button class="tab" onclick="showTab('conversations', this)">💬 Conversaciones</button>
+    <button class="tab" onclick="showTab('leads', this)">👥 Leads</button>
+  </div>
+
+  <div class="main">
+
+    <!-- OVERVIEW -->
+    <div id="tab-overview">
+      <div id="botStatusCard" class="bot-card">
+        <div class="bot-info">
+          <h3 id="botName">Cargando...</h3>
+          <p id="botPhone">WhatsApp Phone ID: —</p>
+        </div>
+        <span class="badge badge-inactive" id="botBadge">○ Inactivo</span>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Mensajes</div>
+          <div class="stat-value" id="statMsgs">0</div>
+          <div class="stat-sub">Respondidos por el bot</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Leads Capturados</div>
+          <div class="stat-value" id="statLeads">0</div>
+          <div class="stat-sub">Contactos únicos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Hoy</div>
+          <div class="stat-value" id="statToday">0</div>
+          <div class="stat-sub">Mensajes hoy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Esta Semana</div>
+          <div class="stat-value" id="statWeek">0</div>
+          <div class="stat-sub">Mensajes 7 días</div>
+        </div>
+      </div>
+
+      <div class="section-title">Últimas conversaciones</div>
+      <div id="recentConvs"></div>
+    </div>
+
+    <!-- CONVERSATIONS -->
+    <div id="tab-conversations" class="hidden">
+      <div class="section-title">Todas las Conversaciones</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Usuario</th><th>Mensaje</th><th>Respuesta del Bot</th><th>Fecha</th></tr></thead>
+          <tbody id="convsTable"><tr><td colspan="4" class="empty-state">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LEADS -->
+    <div id="tab-leads" class="hidden">
+      <div class="section-title">Leads Capturados</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nombre</th><th>Teléfono</th><th>Primer Mensaje</th><th>Mensajes</th><th>Último Contacto</th></tr></thead>
+          <tbody id="leadsTable"><tr><td colspan="5" class="empty-state">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, collection, query, where, getDocs, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const app = initializeApp({
+    apiKey: "AIzaSyCLvjCxWXivE-THeoPw56rPDo9PXavsIHQ",
+    authDomain: "gen-lang-client-0598503352.firebaseapp.com",
+    projectId: "gen-lang-client-0598503352",
+    storageBucket: "gen-lang-client-0598503352.firebasestorage.app",
+    messagingSenderId: "869550093470",
+    appId: "1:869550093470:web:7bb6989d149af7038db78f"
+  });
+
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  let currentBot = null;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('dashView').classList.add('hidden');
+      return;
+    }
+
+    // Find client by email
+    const clientSnap = await getDocs(query(collection(db, 'clients'), where('email', '==', user.email)));
+
+    if (clientSnap.empty) {
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('loginError').textContent = 'No tienes acceso. Contacta a TalenCrew en hola@talencrew.com';
+      await fbSignOut(auth);
+      return;
+    }
+
+    const clientData = clientSnap.docs[0].data();
+
+    // Find bot by phoneId
+    const botSnap = await getDocs(collection(db, 'bots'));
+    let botData = null;
+    botSnap.forEach(d => {
+      if (!botData) botData = { id: d.id, ...d.data() };
+    });
+
+    currentBot = botData;
+
+    document.getElementById('loginView').classList.add('hidden');
+    document.getElementById('dashView').classList.remove('hidden');
+    document.getElementById('topEmail').textContent = user.email;
+
+    if (botData) {
+      document.getElementById('botName').textContent = botData.botName || clientData.businessName;
+      document.getElementById('botPhone').textContent = 'WhatsApp ID: ' + (botData.whatsappPhoneId || '—');
+      const badge = document.getElementById('botBadge');
+      badge.textContent = botData.isActive ? '● Activo' : '○ Inactivo';
+      badge.className = 'badge ' + (botData.isActive ? 'badge-active' : 'badge-inactive');
+    }
+
+    loadData(botData?.whatsappPhoneId);
+  });
+
+  async function loadData(phoneId) {
+    if (!phoneId) return;
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Load conversations
+    const convSnap = await getDocs(query(
+      collection(db, 'conversations'),
+      where('phoneId', '==', phoneId)
+    ));
+
+    const convs = [];
+    convSnap.forEach(d => convs.push({ id: d.id, ...d.data() }));
+    convs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+    // Stats
+    document.getElementById('statMsgs').textContent = convs.length;
+    document.getElementById('statToday').textContent = convs.filter(c => {
+      const ts = c.timestamp?.seconds ? new Date(c.timestamp.seconds * 1000) : null;
+      return ts && ts >= todayStart;
+    }).length;
+    document.getElementById('statWeek').textContent = convs.filter(c => {
+      const ts = c.timestamp?.seconds ? new Date(c.timestamp.seconds * 1000) : null;
+      return ts && ts >= weekStart;
+    }).length;
+
+    // Recent convs (overview)
+    const recent = convs.slice(0, 5);
+    const recentEl = document.getElementById('recentConvs');
+    if (recent.length === 0) {
+      recentEl.innerHTML = '<div class="empty-state" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:32px;">Aún no hay conversaciones. El bot comenzará a registrarlas cuando reciba mensajes.</div>';
+    } else {
+      recentEl.innerHTML = recent.map(c => {
+        const ts = c.timestamp?.seconds ? new Date(c.timestamp.seconds * 1000).toLocaleString('es-CO') : '—';
+        return `
+          <div class="conv-card">
+            <div class="conv-header">
+              <span class="conv-name">📱 ${c.userName || c.userPhone || '—'}</span>
+              <span class="conv-time">${ts}</span>
+            </div>
+            <div class="bubble-row">
+              <div class="bubble-user-wrap"><div class="bubble-label">Usuario</div><div class="bubble bubble-user">${c.userMessage || '—'}</div></div>
+              <div class="bubble-bot-wrap"><div class="bubble-label">Bot</div><div class="bubble bubble-bot">${c.botReply || '—'}</div></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // All convs table
+    const convsTable = document.getElementById('convsTable');
+    if (convs.length === 0) {
+      convsTable.innerHTML = '<tr><td colspan="4" class="empty-state">No hay conversaciones aún.</td></tr>';
+    } else {
+      convsTable.innerHTML = convs.map(c => {
+        const ts = c.timestamp?.seconds ? new Date(c.timestamp.seconds * 1000).toLocaleString('es-CO') : '—';
+        return `<tr>
+          <td>${c.userName || c.userPhone || '—'}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.userMessage || '—'}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.botReply || '—'}</td>
+          <td style="white-space:nowrap">${ts}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Leads
+    const leadsSnap = await getDocs(query(
+      collection(db, 'leads'),
+      where('phoneId', '==', phoneId)
+    ));
+
+    const leads = [];
+    leadsSnap.forEach(d => leads.push({ id: d.id, ...d.data() }));
+    leads.sort((a, b) => (b.lastSeen?.seconds || 0) - (a.lastSeen?.seconds || 0));
+
+    document.getElementById('statLeads').textContent = leads.length;
+
+    const leadsTable = document.getElementById('leadsTable');
+    if (leads.length === 0) {
+      leadsTable.innerHTML = '<tr><td colspan="5" class="empty-state">No hay leads aún.</td></tr>';
+    } else {
+      leadsTable.innerHTML = leads.map(l => {
+        const last = l.lastSeen?.seconds ? new Date(l.lastSeen.seconds * 1000).toLocaleString('es-CO') : '—';
+        return `<tr>
+          <td>${l.userName || '—'}</td>
+          <td>${l.userPhone || '—'}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.firstMessage || '—'}</td>
+          <td>${l.messageCount || 0}</td>
+          <td style="white-space:nowrap">${last}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  window.signIn = async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  window.signOut = async () => {
+    await fbSignOut(auth);
+  };
+
+  window.showTab = (name, el) => {
+    ['overview', 'conversations', 'leads'].forEach(t => {
+      document.getElementById('tab-' + t).classList.toggle('hidden', t !== name);
+    });
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  };
+</script>
+
+</body>
+</html>
