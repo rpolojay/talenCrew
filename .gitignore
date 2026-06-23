@@ -1,0 +1,15 @@
+# Firebase secrets - never commit these
+dashboard/config.js
+config.js
+
+# Node
+node_modules/
+
+# Firebase
+.firebase/
+firebase-debug.log
+
+# Environment
+.env
+.env.local
+.env.production
