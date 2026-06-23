@@ -287,8 +287,8 @@ REGLAS:
       sucEl.innerHTML = `✅ <strong>¡Tu bot está activo!</strong><br>
         Tu prueba gratuita termina el <strong>${trialEndsAt.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'})}</strong>.<br>
         Accede a tu dashboard en: <a href="/dashboard/client.html" style="color:#065f46;font-weight:600;">app.talencrew.com/dashboard/client.html</a>`;
-      sucEl.style.display = 'block';
       btn.textContent = '✓ Bot Activado';
+setTimeout(() => { window.location.href = '/success.html'; }, 2000);
 
     } catch (err) {
       errEl.textContent = 'Error al activar: ' + err.message;
