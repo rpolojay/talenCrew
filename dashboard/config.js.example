@@ -1,0 +1,12 @@
+// config.js — Firebase environment variables
+// IMPORTANT: Copy this file to config.js and fill in your real values.
+// DO NOT commit config.js to the repository (it is in .gitignore).
+
+window.__ENV__ = {
+  FIREBASE_API_KEY: "YOUR_FIREBASE_API_KEY",
+  FIREBASE_AUTH_DOMAIN: "gen-lang-client-0598503352.firebaseapp.com",
+  FIREBASE_PROJECT_ID: "gen-lang-client-0598503352",
+  FIREBASE_STORAGE_BUCKET: "gen-lang-client-0598503352.firebasestorage.app",
+  FIREBASE_MESSAGING_SENDER_ID: "YOUR_MESSAGING_SENDER_ID",
+  FIREBASE_APP_ID: "YOUR_APP_ID"
+};
