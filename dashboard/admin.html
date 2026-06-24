@@ -75,6 +75,36 @@
     .action-delete { color: #ef4444; background: rgba(239,68,68,0.1); margin-left: 4px; }
     .action-toggle-on { color: #25D366; background: rgba(37,211,102,0.1); }
     .action-toggle-off { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    @media (max-width: 768px) {
+  .sidebar {
+    position: fixed; bottom: 0; top: auto;
+    left: 0; right: 0; width: 100%;
+    height: 60px; flex-direction: row;
+    padding: 0; border-right: none;
+    border-top: 1px solid #2a2d3a;
+    z-index: 100;
+  }
+  .sidebar-logo { display: none; }
+  .nav {
+    display: flex; flex-direction: row;
+    padding: 0; gap: 0; flex: 1;
+  }
+  .nav-item {
+    flex: 1; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 8px 4px; margin-bottom: 0;
+    font-size: 10px; gap: 3px; border-radius: 0;
+  }
+  .sidebar-footer { display: none; }
+  .main { margin-left: 0; padding: 16px; padding-bottom: 80px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .form-row { grid-template-columns: 1fr; }
+  table { font-size: 12px; }
+  th, td { padding: 8px 10px; }
+  .page-title { font-size: 18px; }
+  .stat-value { font-size: 24px; }
+  .modal { padding: 20px 16px; }
+}
   </style>
 </head>
 <body>
