@@ -6,6 +6,33 @@
     <title>TalenCrew — Agentes IA para WhatsApp en Colombia</title>
     <meta name="description" content="Agentes de IA para WhatsApp en Colombia. Atiende clientes, califica leads y agenda citas 24/7. Precios desde $900.000 COP." />
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+  /* ===== FIX RESPONSIVE ANDROID ===== */
+  html, body { overflow-x: hidden; max-width: 100%; }
+  * { max-width: 100%; box-sizing: border-box; }
+  img, svg { height: auto; }
+
+  @media (max-width: 900px) {
+    /* Demo chat: apilar en vez de 2 columnas */
+    .section [style*="grid-template-columns: 1fr 380px"] {
+      grid-template-columns: 1fr !important;
+    }
+    /* Chat del demo: ancho completo y alto auto */
+    .section [style*="height: 520px"] {
+      height: 480px !important;
+      max-width: 100% !important;
+    }
+    /* "Por qué TalenCrew": 3 columnas → 1 */
+    .section [style*="grid-template-columns: repeat(3, 1fr)"] {
+      grid-template-columns: 1fr !important;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .container { padding-left: 16px !important; padding-right: 16px !important; }
+    .hero-chat-mock { max-width: 100% !important; }
+  }
+</style>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>" />
 </head>
 <body>
