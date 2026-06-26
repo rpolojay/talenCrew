@@ -13,16 +13,13 @@
   img, svg { height: auto; }
 
   @media (max-width: 900px) {
-    /* Demo chat: apilar en vez de 2 columnas */
     .section [style*="grid-template-columns: 1fr 380px"] {
       grid-template-columns: 1fr !important;
     }
-    /* Chat del demo: ancho completo y alto auto */
     .section [style*="height: 520px"] {
       height: 480px !important;
       max-width: 100% !important;
     }
-    /* "Por qué TalenCrew": 3 columnas → 1 */
     .section [style*="grid-template-columns: repeat(3, 1fr)"] {
       grid-template-columns: 1fr !important;
     }
@@ -235,25 +232,10 @@
 </section>
 
 <script>
-const DEMO_RESPONSES = [
-    { keys: ['dermatolog'], reply: 'Con gusto. Para Dermatología tenemos disponibilidad este jueves a las 10:00am y viernes a las 3:00pm. La consulta con especialista tiene un valor de $120.000 COP. ¿Te gustaría que te agende alguno de estos horarios?' },
-    { keys: ['cuanto cuesta', 'cuánto cuesta', 'precio', 'valor', 'consulta general'], reply: 'Claro que sí. La consulta de Medicina General tiene un valor de $80.000 COP, y la consulta con especialista (Dermatología, Ginecología) es de $120.000 COP. La primera cita de Pediatría cuesta $100.000 COP. ¿Para cuál te gustaría agendar?' },
-    { keys: ['sabado', 'sábado', 'fin de semana'], reply: 'Sí, atendemos los sábados de 8:00am a 1:00pm. De lunes a viernes nuestro horario es de 7:00am a 7:00pm. Los domingos permanecemos cerrados. ¿Te gustaría agendar una cita para este sábado?' },
-    { keys: ['cita', 'agendar', 'turno', 'reservar'], reply: 'Con gusto te ayudo a agendar. ¿Me confirmas tu nombre completo, la especialidad que necesitas, y 2-3 horarios que te queden bien? Nuestro equipo confirma por este mismo WhatsApp en menos de 1 hora.' },
-    { keys: ['especialidad', 'especialidades', 'que tienen', 'qué tienen', 'que atienden', 'qué atienden'], reply: 'Contamos con Medicina General, Dermatología, Pediatría, Ginecología y Odontología. ¿Sobre cuál te gustaría más información?' },
-    { keys: ['pediatria', 'pediatría', 'niño', 'niña', 'bebe', 'bebé'], reply: 'Para Pediatría, la primera cita tiene un valor de $100.000 COP. Atendemos de lunes a viernes de 7:00am a 7:00pm y sábados de 8:00am a 1:00pm. ¿Te gustaría agendar?' },
-    { keys: ['eps', 'seguro', 'compensar', 'sura', 'famisanar'], reply: 'Trabajamos con las EPS Sura, Compensar y Famisanar. El valor del copago depende de tu plan específico. ¿Con cuál EPS estás afiliado?' },
-    { keys: ['ubicacion', 'ubicación', 'direccion', 'dirección', 'donde', 'dónde'], reply: 'Estamos ubicados en la Carrera 15 #93-45, Bogotá. ¿Te gustaría agendar una cita?' },
-];
-const DEMO_FALLBACK = 'Buena pregunta — para darte el detalle exacto, te recomiendo escribirnos directo y con gusto uno de nuestros asesores te ayuda. Mientras tanto, ¿quieres que te cuente sobre nuestras especialidades, precios u horarios?';
-
-function findDemoReply(msg) {
-    const lower = msg.toLowerCase();
-    for (const item of DEMO_RESPONSES) {
-        if (item.keys.some(k => lower.includes(k))) return item.reply;
-    }
-    return DEMO_FALLBACK;
-}
+// ===== DEMO CONECTADO A LA IA REAL =====
+const DEMO_API = 'https://us-central1-gen-lang-client-0598503352.cloudfunctions.net/talencrew-bot';
+const DEMO_PHONE_ID = '123450543044836';
+const demoUserId = 'web_demo_' + Math.random().toString(36).substring(2, 10);
 
 function addDemoMessage(text, sender) {
     const container = document.getElementById('demoMessages');
@@ -299,9 +281,24 @@ async function sendDemoMessage() {
     input.value = '';
     addDemoMessage(text, 'user');
     addDemoTyping();
-    await new Promise(r => setTimeout(r, 1400 + Math.random() * 1400));
-    removeDemoTyping();
-    addDemoMessage(findDemoReply(text), 'bot');
+    try {
+        const res = await fetch(DEMO_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone_id: DEMO_PHONE_ID,
+                message: text,
+                user_phone: demoUserId,
+                user_name: 'Visitante Web'
+            })
+        });
+        const data = await res.json();
+        removeDemoTyping();
+        addDemoMessage(data.reply || 'Disculpa, hubo un problema. Intenta de nuevo.', 'bot');
+    } catch (e) {
+        removeDemoTyping();
+        addDemoMessage('Disculpa, hubo un problema de conexión. Intenta de nuevo.', 'bot');
+    }
     btn.disabled = false;
     input.focus();
 }
@@ -311,7 +308,8 @@ function sendDemoPreset(text) {
     sendDemoMessage();
 }
 </script>
-    <!-- ===== CASO REAL: SELECTIVECREW ===== -->
+
+<!-- ===== CASO REAL: SELECTIVECREW ===== -->
 <section class="section">
     <div class="container">
         <h2 class="section-title">En <span style="color: var(--green-primary);">acción ahora mismo</span></h2>
@@ -346,6 +344,7 @@ function sendDemoPreset(text) {
         </div>
     </div>
 </section>
+
 <!-- ===== PRECIOS ===== -->
 <section id="precios" class="section bg-gray">
     <div class="container">
