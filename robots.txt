@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /success.html
+
+Sitemap: https://talencrew.com/sitemap.xml
