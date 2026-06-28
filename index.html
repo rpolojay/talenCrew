@@ -184,9 +184,9 @@
                         style="text-align: left; background: #fff; border: 1px solid var(--gray-200); border-radius: 10px; padding: 12px 16px; font-size: 13.5px; color: var(--gray-800); cursor: pointer; font-family: inherit; transition: border-color 0.15s;">
                         ¿Atienden los sábados?
                     </button>
-                    <button onclick="sendDemoPreset('¿Qué especialidades tienen?')"
+                    <button onclick="sendDemoPreset('Quiero agendar una cita')"
                         style="text-align: left; background: #fff; border: 1px solid var(--gray-200); border-radius: 10px; padding: 12px 16px; font-size: 13.5px; color: var(--gray-800); cursor: pointer; font-family: inherit; transition: border-color 0.15s;">
-                        ¿Qué especialidades tienen?
+                        Quiero agendar una cita
                     </button>
                 </div>
                 <div style="margin-top: 32px; padding: 20px; background: var(--gray-50, #f9f9f9); border-radius: 10px; border: 1px solid var(--gray-200);">
@@ -237,22 +237,31 @@ const DEMO_API = 'https://us-central1-gen-lang-client-0598503352.cloudfunctions.
 const DEMO_PHONE_ID = '123450543044836';
 const demoUserId = 'web_demo_' + Math.random().toString(36).substring(2, 10);
 
+function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function linkify(s) {
+    return escapeHtml(s).replace(/(https?:\/\/[^\s]+)/g,
+        '<a href="$1" target="_blank" rel="noopener" style="color:#0A6E6A;text-decoration:underline;font-weight:600;">$1</a>');
+}
+
 function addDemoMessage(text, sender) {
     const container = document.getElementById('demoMessages');
     const div = document.createElement('div');
-    div.style.cssText = `max-width: 82%; padding: 10px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.55; animation: fadeIn 0.25s ease;`;
+    div.style.cssText = `max-width: 82%; padding: 10px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.55; animation: fadeIn 0.25s ease; word-break: break-word;`;
     if (sender === 'user') {
         div.style.background = '#0A6E6A';
         div.style.color = '#fff';
         div.style.alignSelf = 'flex-end';
         div.style.borderBottomRightRadius = '4px';
+        div.textContent = text;
     } else {
         div.style.background = '#e8e4da';
         div.style.color = '#1a2421';
         div.style.alignSelf = 'flex-start';
         div.style.borderBottomLeftRadius = '4px';
+        div.innerHTML = linkify(text);
     }
-    div.textContent = text;
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
 }
