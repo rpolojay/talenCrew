@@ -591,3 +591,22 @@ img { max-width: 100%; display: block; }
   font-weight: bold;
   font-size: 1.2rem;
 }
+
+/* ===== FIX CARDS BENEFICIOS ===== */
+#beneficios {
+  text-align: center;
+}
+.card {
+  min-width: 250px;
+  flex: 1 1 250px;
+}
+@media (max-width: 768px) {
+  .card {
+    max-width: 100% !important;
+    min-width: unset;
+  }
+  .grid-beneficios {
+    flex-direction: column;
+    align-items: center;
+  }
+}
