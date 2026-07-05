@@ -499,3 +499,50 @@ img { max-width: 100%; display: block; }
         justify-content: center;
     }
 }
+
+/* ===== RESPONSIVE ANDROID - SECCIONES NUEVAS ===== */
+@media (max-width: 768px) {
+    /* 3 Pasos */
+    div[style*="grid-template-columns: repeat(3, 1fr)"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Beneficios */
+    div[style*="grid-template-columns: repeat(2, 1fr)"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Gancho visual */
+    div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Hero H1 más pequeño */
+    .hero-content h1 {
+        font-size: 1.8rem !important;
+    }
+
+    /* CTA botones full width en móvil */
+    .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .hero-actions a {
+        text-align: center;
+    }
+
+    /* Padding general reducido */
+    .section {
+        padding: 40px 0;
+    }
+
+    /* Imagen gancho visual centrada */
+    img[alt="Persona feliz mirando su celular"] {
+        max-width: 100% !important;
+    }
+
+    /* CTA verde padding reducido */
+    section[style*="linear-gradient"] {
+        padding: 40px 16px !important;
+    }
+}
