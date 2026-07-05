@@ -546,3 +546,48 @@ img { max-width: 100%; display: block; }
         padding: 40px 16px !important;
     }
 }
+
+/* ===== BENEFICIOS CARDS MODERNAS ===== */
+#beneficios {
+  padding: 60px 20px;
+  background-color: #f9f9f9;
+  text-align: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.grid-beneficios {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 40px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.card {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  width: 100%;
+  max-width: 300px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+.card:hover {
+  transform: translateY(-10px);
+}
+.card h3 {
+  color: #25d366;
+  margin-bottom: 15px;
+}
+.cta-button {
+  display: inline-block;
+  margin-top: 40px;
+  padding: 15px 30px;
+  background-color: #25d366;
+  color: white;
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
