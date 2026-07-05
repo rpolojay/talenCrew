@@ -3,4 +3,4 @@ Allow: /
 Disallow: /dashboard/
 Disallow: /success.html
 
-Sitemap: https://talencrew.com/sitemap.xml
+Sitemap: https://veloiapp.com/sitemap.xml
