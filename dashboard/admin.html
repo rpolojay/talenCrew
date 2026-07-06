@@ -322,7 +322,7 @@
     const active = clients.filter(c => c.isActive).length;
     document.getElementById('statActive').textContent = active;
     document.getElementById('statPending').textContent = clients.filter(c => !c.isActive).length;
-    const revenue = clients.filter(c => c.isActive).reduce((sum, c) => sum + (c.plan === 'avanzado' ? 550000 : 350000), 0);
+    const revenue = clients.filter(c => c.isActive && !c.isTrial).reduce((sum, c) => sum + (c.plan === 'avanzado' ? 550000 : 350000), 0);
     document.getElementById('statRevenue').textContent = '$' + revenue.toLocaleString('es-CO');
 
     if (clients.length === 0) {
