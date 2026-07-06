@@ -305,7 +305,7 @@
     }).length;
 
     // Recent convs (overview)
-    const recent = convs.slice(0, 5);
+    const recent = convs;
     const recentEl = document.getElementById('recentConvs');
     if (recent.length === 0) {
       recentEl.innerHTML = '<div class="empty-state" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:32px;">Aún no hay conversaciones. El bot comenzará a registrarlas cuando reciba mensajes.</div>';
