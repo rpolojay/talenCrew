@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TalenCrew — Admin Panel</title>
+  <title>VeloiApp — Admin Panel</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', system-ui, sans-serif; background: #0f1117; color: #fff; }
@@ -66,6 +66,11 @@
     input:focus, textarea:focus, select:focus { border-color: #25D366; }
     textarea { resize: vertical; min-height: 120px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .check-item { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
+    .check-circle { width: 28px; height: 28px; border-radius: 50%; background: #2a2d3a; border: 2px solid #3a3d4a; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
+    .check-circle.done { background: #25D366; border-color: #25D366; color: #fff; }
+    .check-title { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+    .check-sub { font-size: 11px; color: #6b7280; line-height: 1.4; }
     .modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
     .btn-cancel { background: #2a2d3a; color: #9ca3af; }
     .btn-cancel:hover { background: #343748; }
@@ -128,7 +133,7 @@
     <div class="page-header">
       <div>
         <div class="page-title">Clientes</div>
-        <div class="page-sub">Gestiona todos los clientes activos de TalenCrew</div>
+        <div class="page-sub">Gestiona todos los clientes activos de VeloiApp</div>
       </div>
       <button class="btn btn-primary" onclick="showSection('onboarding', null)">+ Nuevo Cliente</button>
     </div>
@@ -163,36 +168,90 @@
 
   <div id="section-onboarding" style="display:none;">
     <div class="page-header">
-      <div><div class="page-title">Nuevo Cliente</div><div class="page-sub">Registra un nuevo cliente y configura su bot automáticamente</div></div>
+      <div><div class="page-title">Nuevo Cliente</div><div class="page-sub">Completa el formulario — el system prompt se genera automaticamente</div></div>
     </div>
-    <div style="max-width: 600px; background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 16px; padding: 32px;">
-      <div class="form-group"><label>Nombre del Negocio *</label><input type="text" id="ob_bizName" placeholder="Ej: Clínica Vitalis" /></div>
-      <div class="form-row">
-        <div class="form-group"><label>Contacto *</label><input type="text" id="ob_contact" placeholder="Nombre del dueño" /></div>
-        <div class="form-group"><label>WhatsApp *</label><input type="text" id="ob_whatsapp" placeholder="+57 300 000 0000" /></div>
+    <div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start;">
+
+      <!-- FORMULARIO -->
+      <div style="background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 16px; padding: 32px;">
+        <div style="font-size: 13px; font-weight: 700; color: #25D366; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">Informacion del Negocio</div>
+        <div class="form-group"><label>Nombre del Negocio *</label><input type="text" id="ob_bizName" placeholder="Ej: Clinica Dental Sonrisa" oninput="generatePrompt()" /></div>
+        <div class="form-row">
+          <div class="form-group"><label>Contacto *</label><input type="text" id="ob_contact" placeholder="Nombre del dueno" /></div>
+          <div class="form-group"><label>WhatsApp *</label><input type="text" id="ob_whatsapp" placeholder="+57 300 000 0000" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Email</label><input type="email" id="ob_email" placeholder="cliente@email.com" /></div>
+          <div class="form-group"><label>Nicho</label>
+            <select id="ob_niche" onchange="generatePrompt()">
+              <option value="clinica">Clinica / Salud</option>
+              <option value="dental">Clinica Dental</option>
+              <option value="estetica">Clinica Estetica</option>
+              <option value="inmobiliaria">Inmobiliaria</option>
+              <option value="salon">Salon de Belleza</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label>Servicios principales</label><input type="text" id="ob_services" placeholder="Ej: Limpieza dental, blanqueamiento, ortodoncia" oninput="generatePrompt()" /></div>
+        <div class="form-row">
+          <div class="form-group"><label>Horario de atencion</label><input type="text" id="ob_hours" placeholder="Lun-Vie 8am-6pm, Sab 8am-1pm" oninput="generatePrompt()" /></div>
+          <div class="form-group"><label>Ubicacion</label><input type="text" id="ob_location" placeholder="Calle 100 #15-20, Bogota" oninput="generatePrompt()" /></div>
+        </div>
+        <div class="form-group"><label>Precios de referencia</label><input type="text" id="ob_prices" placeholder="Consulta $50.000, Limpieza $120.000" oninput="generatePrompt()" /></div>
+
+        <div style="border-top: 1px solid #2a2d3a; margin: 20px 0;"></div>
+        <div style="font-size: 13px; font-weight: 700; color: #25D366; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">Configuracion Tecnica</div>
+        <div class="form-row">
+          <div class="form-group"><label>Plan</label>
+            <select id="ob_plan">
+              <option value="trial">Trial 7 dias gratis</option>
+              <option value="basico">Basico — $900K + $350K/mes</option>
+              <option value="avanzado">Avanzado — $1.5M + $550K/mes</option>
+            </select>
+          </div>
+          <div class="form-group"><label>WhatsApp Phone ID</label><input type="text" id="ob_phoneId" placeholder="Ej: 123450543044836" /></div>
+        </div>
+        <div class="form-group"><label>System Prompt (auto-generado, editable)</label><textarea id="ob_prompt" style="min-height: 180px; font-size: 12px;" placeholder="Se genera automaticamente al llenar el formulario..."></textarea></div>
+        <button class="btn btn-primary" style="width:100%; margin-top: 8px;" onclick="createClient()">Crear Cliente y Activar Bot</button>
+        <div id="ob_msg" style="margin-top: 12px; font-size: 13px; display: none;"></div>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label>Email</label><input type="email" id="ob_email" placeholder="cliente@email.com" /></div>
-        <div class="form-group"><label>Plan</label>
-          <select id="ob_plan">
-            <option value="basico">Básico — $900K setup / $350K/mes</option>
-            <option value="avanzado">Avanzado — $1.5M setup / $550K/mes</option>
-          </select>
+
+      <!-- CHECKLIST -->
+      <div style="background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 16px; padding: 24px; position: sticky; top: 24px;">
+        <div style="font-size: 13px; font-weight: 700; color: #25D366; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">Checklist Onboarding</div>
+        <div id="checklist">
+          <div class="check-item" id="chk1">
+            <div class="check-circle" onclick="toggleCheck('chk1')">1</div>
+            <div><div class="check-title">Reunion inicial (15-30 min)</div><div class="check-sub">Recopilar info del negocio, servicios y precios</div></div>
+          </div>
+          <div class="check-item" id="chk2">
+            <div class="check-circle" onclick="toggleCheck('chk2')">2</div>
+            <div><div class="check-title">Obtener Phone Number ID</div><div class="check-sub">Desde Meta Business Manager del cliente</div></div>
+          </div>
+          <div class="check-item" id="chk3">
+            <div class="check-circle" onclick="toggleCheck('chk3')">3</div>
+            <div><div class="check-title">Configurar bot en Firestore</div><div class="check-sub">Crear documento con system prompt personalizado</div></div>
+          </div>
+          <div class="check-item" id="chk4">
+            <div class="check-circle" onclick="toggleCheck('chk4')">4</div>
+            <div><div class="check-title">Prueba de funcionamiento</div><div class="check-sub">Enviar mensaje de prueba al numero del cliente</div></div>
+          </div>
+          <div class="check-item" id="chk5">
+            <div class="check-circle" onclick="toggleCheck('chk5')">5</div>
+            <div><div class="check-title">Seguimiento dia 3 y dia 7</div><div class="check-sub">Reporte de conversaciones y propuesta de contrato</div></div>
+          </div>
+        </div>
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #2a2d3a;">
+          <div style="font-size: 11px; color: #6b7280; margin-bottom: 8px;">INSTRUCCIONES META</div>
+          <div style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
+            1. business.facebook.com<br/>
+            2. Configuracion → Cuentas WhatsApp<br/>
+            3. Agregar numero → Verificar con SMS<br/>
+            4. Copiar Phone Number ID
+          </div>
         </div>
       </div>
-      <div class="form-group"><label>WhatsApp Phone ID (de Meta)</label><input type="text" id="ob_phoneId" placeholder="Ej: 123450543044836" /></div>
-      <div class="form-group"><label>System Prompt del Bot *</label><textarea id="ob_prompt" placeholder="Eres el asistente virtual de [Negocio]. Tu función es..."></textarea></div>
-      <div class="form-group"><label>Nicho</label>
-        <select id="ob_niche">
-          <option value="clinica">Clínica / Salud</option>
-          <option value="inmobiliaria">Inmobiliaria</option>
-          <option value="ecommerce">E-commerce / Tienda</option>
-          <option value="salon">Salón de Belleza</option>
-          <option value="otro">Otro</option>
-        </select>
-      </div>
-      <button class="btn btn-primary" style="width:100%; margin-top: 8px;" onclick="createClient()">Crear Cliente y Configurar Bot</button>
-      <div id="ob_msg" style="margin-top: 12px; font-size: 13px; display: none;"></div>
     </div>
   </div>
 
@@ -216,7 +275,7 @@
   import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-  const ALLOWED_EMAILS = ['seacrewagency@gmail.com', 'hola@talencrew.com'];
+  const ALLOWED_EMAILS = ['seacrewagency@gmail.com', 'hola@veloiapp.com'];
 
   const app = initializeApp({
     apiKey: "AIzaSyCLvjCxWXivE-THeoPw56rPDo9PXavsIHQ",
@@ -310,6 +369,39 @@
     `).join('');
   }
 
+
+  window.toggleCheck = (id) => {
+    const circle = document.querySelector("#" + id + " .check-circle");
+    circle.classList.toggle("done");
+    circle.textContent = circle.classList.contains("done") ? "✓" : id.replace("chk","");
+  };
+
+  window.generatePrompt = () => {
+    const biz = document.getElementById("ob_bizName").value || "[Nombre del Negocio]";
+    const niche = document.getElementById("ob_niche").value;
+    const services = document.getElementById("ob_services").value || "[servicios]";
+    const hours = document.getElementById("ob_hours").value || "[horario]";
+    const location = document.getElementById("ob_location").value || "[ubicacion]";
+    const prices = document.getElementById("ob_prices").value || "[precios]";
+    const nicheMap = { clinica:"clinica medica", dental:"clinica dental", estetica:"clinica estetica", inmobiliaria:"inmobiliaria", salon:"salon de belleza", otro:"negocio" };
+    const prompt = `Eres el asistente virtual de ${biz}, una ${nicheMap[niche] || "empresa"} en Colombia. Atiendes clientes por WhatsApp de forma calida y profesional.
+
+INFORMACION DEL NEGOCIO:
+- Servicios: ${services}
+- Horario: ${hours}
+- Precios de referencia: ${prices}
+- Ubicacion: ${location}
+
+COMO AGENDAR: Cuando el cliente quiera agendar, primero pregunta su nombre y motivo de consulta. Luego envia el link personalizado: https://cal.com/talen-crew-vnposv/15min?name=NOMBRE_DEL_CLIENTE
+
+REGLAS:
+- Maximo 3-4 lineas por respuesta.
+- Tono calido y colombiano (usa "con gusto", "claro que si").
+- NUNCA des diagnosticos medicos.
+- Si no sabes algo, ofrece comunicar con el equipo.
+- Siempre termina con una pregunta o invitacion a agendar.`;
+    document.getElementById("ob_prompt").value = prompt;
+  };
   window.createClient = async () => {
     const bizName = document.getElementById('ob_bizName').value.trim();
     const contact = document.getElementById('ob_contact').value.trim();
