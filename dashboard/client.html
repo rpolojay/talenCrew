@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TalenCrew — Mi Dashboard</title>
+  <title>VeloiApp — Mi Dashboard</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -96,7 +96,7 @@
 <!-- LOGIN -->
 <div id="loginView" class="login-wrap">
   <div class="login-card">
-    <div class="login-logo">Talen<span style="color:var(--green)">Crew</span></div>
+    <div class="login-logo">Veloi<span style="color:var(--green)">App</span></div>
     <div class="login-sub">Portal de Cliente · Accede con tu cuenta</div>
     <button class="btn-google" onclick="signIn()">
       <svg width="16" height="16" viewBox="0 0 48 48">
@@ -107,14 +107,14 @@
       </svg>
       Continuar con Google
     </button>
-    <div class="login-error" id="loginError">No tienes acceso. Contacta a TalenCrew.</div>
+    <div class="login-error" id="loginError">No tienes acceso. Contacta a VeloiApp.</div>
   </div>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashView" class="hidden">
   <div class="topbar">
-    <div class="topbar-logo">Talen<span>Crew</span></div>
+    <div class="topbar-logo">Veloi<span>App</span></div>
     <div class="topbar-right">
       <span class="topbar-email" id="topEmail"></span>
       <button class="btn-logout" onclick="signOut()">Salir</button>
@@ -131,10 +131,18 @@
 
     <!-- OVERVIEW -->
     <div id="tab-overview">
+      <!-- TRIAL BANNER -->
+      <div id="trialBanner" style="background: linear-gradient(135deg, #1a2e1a, #1a2d27); border: 1px solid #25D366; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <div style="font-size: 13px; font-weight: 700; color: #25D366; margin-bottom: 4px;">🎉 Trial Activo — 7 días gratis</div>
+          <div style="font-size: 12px; color: #9ca3af;" id="trialDaysLeft">Calculando días restantes...</div>
+        </div>
+        <a href="https://wa.me/573224802976?text=Hola%2C%20quiero%20contratar%20VeloiApp" target="_blank" style="background: #25D366; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none;">Contratar Plan</a>
+      </div>
       <div id="botStatusCard" class="bot-card">
         <div class="bot-info">
           <h3 id="botName">Cargando...</h3>
-          <p id="botPhone">WhatsApp Phone ID: —</p>
+          <p id="botPhone">Número de WhatsApp conectado: —</p>
         </div>
         <span class="badge badge-inactive" id="botBadge">○ Inactivo</span>
       </div>
@@ -223,7 +231,7 @@
 
     if (clientSnap.empty) {
       document.getElementById('loginError').style.display = 'block';
-      document.getElementById('loginError').textContent = 'No tienes acceso. Contacta a TalenCrew en hola@talencrew.com';
+      document.getElementById('loginError').textContent = 'No tienes acceso. Contacta a VeloiApp en hola@talencrew.com';
       await fbSignOut(auth);
       return;
     }
@@ -252,6 +260,20 @@
     }
 
     loadData(botData?.whatsappPhoneId);
+    // Trial days calculation
+    if (clientData.createdAt) {
+      const created = clientData.createdAt.toDate();
+      const daysUsed = Math.floor((new Date() - created) / (1000 * 60 * 60 * 24));
+      const daysLeft = Math.max(0, 7 - daysUsed);
+      const el = document.getElementById("trialDaysLeft");
+      if (daysLeft > 0) {
+        el.textContent = "Te quedan " + daysLeft + " dia(s) de prueba gratuita.";
+      } else {
+        el.textContent = "Tu trial ha finalizado. Contrata un plan para continuar.";
+        document.getElementById("trialBanner").style.borderColor = "#ef4444";
+        document.getElementById("trialBanner").style.background = "linear-gradient(135deg, #2e1a1a, #2d1a1a)";
+      }
+    }
   });
 
   async function loadData(phoneId) {
