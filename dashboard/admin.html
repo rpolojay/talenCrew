@@ -428,11 +428,15 @@ REGLAS:
       await addDoc(collection(db, 'clients'), {
         businessName: bizName, contactName: contact,
         whatsapp, email, plan, niche, isActive: false,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        isTrial: plan === "trial",
+        trialEndsAt: plan === "trial" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null,
       });
 
       if (phoneId) {
         await addDoc(collection(db, 'bots'), {
+          isTrial: plan === "trial",
+          trialEndsAt: plan === "trial" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null,
           botName: bizName, whatsappPhoneId: phoneId,
           systemPrompt: prompt, isActive: false,
           createdAt: serverTimestamp()
