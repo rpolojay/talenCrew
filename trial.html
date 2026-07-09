@@ -124,11 +124,7 @@
         <option value="otro">Otro</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>Número de WhatsApp del Negocio *</label>
-      <input type="text" id="phoneId" placeholder="+57 300 000 0000 (número que usan sus clientes)" />
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Este es el número de WhatsApp donde sus clientes le escriben actualmente.</div>
-    </div>
+
     <div class="form-group">
       <label>Cuéntanos sobre tu negocio *</label>
       <textarea id="bizInfo" placeholder="¿Qué servicios ofreces? ¿Cuáles son tus horarios? ¿Cuánto cuestan tus servicios? Mientras más detalle, mejor será tu bot."></textarea>
@@ -199,7 +195,7 @@
     errEl.style.display = 'none';
     sucEl.style.display = 'none';
 
-    if (!bizName || !contact || !email || !whatsapp || !niche || !phoneId || !bizInfo) {
+    if (!bizName || !contact || !email || !whatsapp || !niche || !bizInfo) {
       errEl.textContent = 'Por favor completa todos los campos obligatorios.';
       errEl.style.display = 'block';
       return;
@@ -232,7 +228,7 @@ REGLAS:
       });
 
       await addDoc(collection(db, 'bots'), {
-        botName: bizName, whatsappPhoneId: phoneId,
+        botName: bizName,
         systemPrompt, isActive: true, isTrial: true,
         trialEndsAt: Timestamp.fromDate(trialEndsAt),
         createdAt: serverTimestamp()
@@ -245,7 +241,6 @@ REGLAS:
         client_email: email,
         whatsapp: whatsapp,
         niche: niche,
-        phone_id: phoneId,
         biz_info: bizInfo
       });
 
