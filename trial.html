@@ -243,6 +243,14 @@ REGLAS:
         niche: niche,
         biz_info: bizInfo
       });
+      emailjs.send('service_qbykbbc', 'template_fsf8vfo', {
+        business_name: bizName,
+        contact_name: contact,
+        client_email: email,
+        whatsapp: whatsapp,
+        niche: niche,
+        biz_info: bizInfo
+      });
 
       btn.textContent = '✓ Bot Activado';
       setTimeout(() => { window.location.href = '/success.html'; }, 2000);
