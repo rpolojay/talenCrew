@@ -464,7 +464,7 @@
                 <div class="funnel-card-name">${l.userName || 'Sin nombre'}</div>
                 <div class="funnel-card-phone">${l.userPhone || '—'}</div>
               </div>
-              <button onclick="event.stopPropagation(); deleteLead('${l.id}', '${safeName}')" title="Borrar lead" style="background:none; border:none; color:var(--muted); font-size:13px; cursor:pointer; line-height:1; padding:2px;">✕</button>
+              <button onclick="event.stopPropagation(); deleteLead('${l.id}', '${safeName}')" title="Borrar lead" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:var(--danger); font-size:12px; font-weight:700; cursor:pointer; line-height:1; padding:4px 7px; border-radius:6px; flex-shrink:0;">🗑</button>
             </div>
           </div>
         `;
