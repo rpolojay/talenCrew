@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Test Diagnóstico</title>
+</head>
+<body style="font-family: sans-serif; padding: 40px; background:#0f1117; color:#fff;">
+  <h1>Prueba de diagnóstico</h1>
+  <p>Si el botón funciona, el problema NO es de infraestructura — es algo específico de client.html.</p>
+  <p>Si el botón NO funciona (nada pasa al hacer clic), el problema SÍ es de infraestructura (dominio/Workers), no del archivo.</p>
+  <button onclick="testFn()" style="padding: 14px 24px; font-size: 16px; cursor:pointer;">Clic para probar</button>
+
+  <script type="module">
+    window.testFn = () => {
+      alert('✅ FUNCIONA — el script sí se ejecutó correctamente.');
+    };
+    console.log('Script de prueba cargado correctamente.');
+  </script>
+</body>
+</html>
