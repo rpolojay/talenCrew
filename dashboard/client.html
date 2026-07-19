@@ -218,8 +218,8 @@
       <div class="section-title">Leads Capturados</div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Nombre</th><th>Teléfono</th><th>Primer Mensaje</th><th>Mensajes</th><th>Último Contacto</th></tr></thead>
-          <tbody id="leadsTable"><tr><td colspan="5" class="empty-state">Cargando...</td></tr></tbody>
+          <thead><tr><th>Nombre</th><th>Teléfono</th><th>Primer Mensaje</th><th>Mensajes</th><th>Último Contacto</th><th>Acción</th></tr></thead>
+          <tbody id="leadsTable"><tr><td colspan="6" class="empty-state">Cargando...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -258,7 +258,7 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, collection, query, where, getDocs, orderBy, limit, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, collection, query, where, getDocs, orderBy, limit, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const app = initializeApp({
     apiKey: "AIzaSyCLvjCxWXivE-THeoPw56rPDo9PXavsIHQ",
@@ -413,20 +413,25 @@
 
     document.getElementById('statLeads').textContent = leads.length;
     currentLeads = leads;
+    renderLeadsTable(leads);
     renderFunnel(leads);
+  }
 
+  function renderLeadsTable(leads) {
     const leadsTable = document.getElementById('leadsTable');
     if (leads.length === 0) {
-      leadsTable.innerHTML = '<tr><td colspan="5" class="empty-state">No hay leads aún.</td></tr>';
+      leadsTable.innerHTML = '<tr><td colspan="6" class="empty-state">No hay leads aún.</td></tr>';
     } else {
       leadsTable.innerHTML = leads.map(l => {
         const last = l.lastSeen?.seconds ? new Date(l.lastSeen.seconds * 1000).toLocaleString('es-CO') : '—';
+        const safeName = (l.userName || l.userPhone || '').replace(/'/g, "\\'");
         return `<tr>
           <td>${l.userName || '—'}</td>
           <td>${l.userPhone || '—'}</td>
           <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.firstMessage || '—'}</td>
           <td>${l.messageCount || 0}</td>
           <td style="white-space:nowrap">${last}</td>
+          <td><button onclick="deleteLead('${l.id}', '${safeName}')" style="background:none;border:1px solid var(--border);color:var(--danger);padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;">🗑 Borrar</button></td>
         </tr>`;
       }).join('');
     }
@@ -450,12 +455,20 @@
       if (items.length === 0) {
         col.innerHTML = '<div class="funnel-empty">Sin leads aquí</div>';
       } else {
-        col.innerHTML = items.map(l => `
+        col.innerHTML = items.map(l => {
+          const safeName = (l.userName || l.userPhone || '').replace(/'/g, "\\'");
+          return `
           <div class="funnel-card" draggable="true" data-lead-id="${l.id}">
-            <div class="funnel-card-name">${l.userName || 'Sin nombre'}</div>
-            <div class="funnel-card-phone">${l.userPhone || '—'}</div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
+              <div>
+                <div class="funnel-card-name">${l.userName || 'Sin nombre'}</div>
+                <div class="funnel-card-phone">${l.userPhone || '—'}</div>
+              </div>
+              <button onclick="event.stopPropagation(); deleteLead('${l.id}', '${safeName}')" title="Borrar lead" style="background:none; border:none; color:var(--muted); font-size:13px; cursor:pointer; line-height:1; padding:2px;">✕</button>
+            </div>
           </div>
-        `).join('');
+        `;
+        }).join('');
       }
     });
 
@@ -520,6 +533,22 @@
     el.classList.add('active');
   };
 
+  window.deleteLead = async (leadId, leadName) => {
+    const confirmed = confirm(`¿Borrar a "${leadName || 'este lead'}"? Esta acción no se puede deshacer.`);
+    if (!confirmed) return;
+
+    try {
+      await deleteDoc(doc(db, 'leads', leadId));
+      currentLeads = currentLeads.filter(l => l.id !== leadId);
+      document.getElementById('statLeads').textContent = currentLeads.length;
+      renderLeadsTable(currentLeads);
+      renderFunnel(currentLeads);
+    } catch (err) {
+      console.error('No se pudo borrar el lead:', err);
+      alert('No se pudo borrar el lead. Intenta de nuevo.');
+    }
+  };
+
   window.showConversation = (userPhone, userName, allConvs) => {
     const userConvs = allConvs.filter(c => c.userPhone === userPhone);
     userConvs.sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
@@ -528,28 +557,4 @@
       const ts = c.timestamp?.seconds ? new Date(c.timestamp.seconds * 1000).toLocaleTimeString("es-CO", {hour:"2-digit",minute:"2-digit"}) : "";
       return `
         <div style="align-self:flex-start; max-width:85%;">
-          <div style="font-size:10px; color:#6b7280; margin-bottom:3px;">Usuario · ${ts}</div>
-          <div style="background:#2a2d3a; color:#d1d5db; padding:10px 14px; border-radius:12px; border-bottom-left-radius:4px; font-size:13px; line-height:1.5;">${c.userMessage || "—"}</div>
-        </div>
-        <div style="align-self:flex-end; max-width:85%; text-align:right;">
-          <div style="font-size:10px; color:#6b7280; margin-bottom:3px;">Bot · ${ts}</div>
-          <div style="background:rgba(37,211,102,0.12); color:#d1fae5; padding:10px 14px; border-radius:12px; border-bottom-right-radius:4px; font-size:13px; line-height:1.5;">${c.botReply || "—"}</div>
-        </div>`;
-    }).join("");
-    document.getElementById("convModal").style.display = "block";
-  };
-</script>
-
-
-<!-- MODAL CONVERSACION COMPLETA -->
-<div id="convModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; padding:20px; overflow-y:auto;">
-  <div style="background:#1a1d27; border:1px solid #2a2d3a; border-radius:16px; max-width:600px; margin:0 auto; padding:24px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-      <div style="font-size:15px; font-weight:700;" id="modalTitle">Conversacion</div>
-      <button onclick="document.getElementById('convModal').style.display='none'" style="background:none; border:none; color:#6b7280; font-size:20px; cursor:pointer;">✕</button>
-    </div>
-    <div id="modalMessages" style="display:flex; flex-direction:column; gap:10px;"></div>
-  </div>
-</div>
-</body>
-</html>
+          <div style="font-size:10px; color:#6b728
