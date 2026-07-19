@@ -557,4 +557,28 @@
       const ts = c.timestamp?.seconds ? new Date(c.timestamp.seconds * 1000).toLocaleTimeString("es-CO", {hour:"2-digit",minute:"2-digit"}) : "";
       return `
         <div style="align-self:flex-start; max-width:85%;">
-          <div style="font-size:10px; color:#6b728
+          <div style="font-size:10px; color:#6b7280; margin-bottom:3px;">Usuario · ${ts}</div>
+          <div style="background:#2a2d3a; color:#d1d5db; padding:10px 14px; border-radius:12px; border-bottom-left-radius:4px; font-size:13px; line-height:1.5;">${c.userMessage || "—"}</div>
+        </div>
+        <div style="align-self:flex-end; max-width:85%; text-align:right;">
+          <div style="font-size:10px; color:#6b7280; margin-bottom:3px;">Bot · ${ts}</div>
+          <div style="background:rgba(37,211,102,0.12); color:#d1fae5; padding:10px 14px; border-radius:12px; border-bottom-right-radius:4px; font-size:13px; line-height:1.5;">${c.botReply || "—"}</div>
+        </div>`;
+    }).join("");
+    document.getElementById("convModal").style.display = "block";
+  };
+</script>
+
+
+<!-- MODAL CONVERSACION COMPLETA -->
+<div id="convModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; padding:20px; overflow-y:auto;">
+  <div style="background:#1a1d27; border:1px solid #2a2d3a; border-radius:16px; max-width:600px; margin:0 auto; padding:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <div style="font-size:15px; font-weight:700;" id="modalTitle">Conversacion</div>
+      <button onclick="document.getElementById('convModal').style.display='none'" style="background:none; border:none; color:#6b7280; font-size:20px; cursor:pointer;">✕</button>
+    </div>
+    <div id="modalMessages" style="display:flex; flex-direction:column; gap:10px;"></div>
+  </div>
+</div>
+</body>
+</html>
