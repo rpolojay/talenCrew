@@ -89,6 +89,33 @@
 
     /* HIDDEN */
     .hidden { display: none !important; }
+
+    /* FUNNEL / KANBAN */
+    .funnel-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; }
+    .funnel-col {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      min-width: 220px; max-width: 220px; flex-shrink: 0; display: flex; flex-direction: column;
+    }
+    .funnel-col-header {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .funnel-col-count {
+      background: var(--border); color: var(--muted); font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 100px;
+    }
+    .funnel-col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 80px; flex: 1; }
+    .funnel-col-body.drag-over { background: rgba(37,211,102,0.06); }
+    .funnel-card {
+      background: #22252f; border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 12px; cursor: grab; font-size: 12.5px;
+    }
+    .funnel-card:active { cursor: grabbing; }
+    .funnel-card-name { font-weight: 700; margin-bottom: 3px; }
+    .funnel-card-phone { color: var(--muted); font-size: 11px; }
+    .funnel-empty { color: var(--muted); font-size: 11.5px; text-align: center; padding: 16px 8px; }
+
   </style>
 </head>
 <body>
@@ -125,6 +152,7 @@
     <button class="tab active" onclick="showTab('overview', this)">📊 Resumen</button>
     <button class="tab" onclick="showTab('conversations', this)">💬 Conversaciones</button>
     <button class="tab" onclick="showTab('leads', this)">👥 Leads</button>
+    <button class="tab" onclick="showTab('funnel', this)">🎯 Embudo</button>
   </div>
 
   <div class="main">
@@ -196,13 +224,41 @@
       </div>
     </div>
 
+    <!-- FUNNEL -->
+    <div id="tab-funnel" class="hidden">
+      <div class="section-title">Embudo de Ventas</div>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:16px;">Arrastra cada lead entre columnas a medida que avanza la conversación.</p>
+      <div class="funnel-board">
+        <div class="funnel-col" data-stage="nuevo">
+          <div class="funnel-col-header"><span>🆕 Nuevo</span><span class="funnel-col-count" id="count-nuevo">0</span></div>
+          <div class="funnel-col-body" id="col-nuevo"></div>
+        </div>
+        <div class="funnel-col" data-stage="calificado">
+          <div class="funnel-col-header"><span>✅ Calificado</span><span class="funnel-col-count" id="count-calificado">0</span></div>
+          <div class="funnel-col-body" id="col-calificado"></div>
+        </div>
+        <div class="funnel-col" data-stage="cita_agendada">
+          <div class="funnel-col-header"><span>📅 Cita Agendada</span><span class="funnel-col-count" id="count-cita_agendada">0</span></div>
+          <div class="funnel-col-body" id="col-cita_agendada"></div>
+        </div>
+        <div class="funnel-col" data-stage="cliente_convertido">
+          <div class="funnel-col-header"><span>💰 Convertido</span><span class="funnel-col-count" id="count-cliente_convertido">0</span></div>
+          <div class="funnel-col-body" id="col-cliente_convertido"></div>
+        </div>
+        <div class="funnel-col" data-stage="perdido">
+          <div class="funnel-col-header"><span>❌ Perdido</span><span class="funnel-col-count" id="count-perdido">0</span></div>
+          <div class="funnel-col-body" id="col-perdido"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, collection, query, where, getDocs, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, collection, query, where, getDocs, orderBy, limit, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const app = initializeApp({
     apiKey: "AIzaSyCLvjCxWXivE-THeoPw56rPDo9PXavsIHQ",
@@ -218,6 +274,8 @@
   const provider = new GoogleAuthProvider();
 
   let currentBot = null;
+  let currentLeads = [];
+  const STAGES = ['nuevo', 'calificado', 'cita_agendada', 'cliente_convertido', 'perdido'];
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
@@ -354,6 +412,8 @@
     leads.sort((a, b) => (b.lastSeen?.seconds || 0) - (a.lastSeen?.seconds || 0));
 
     document.getElementById('statLeads').textContent = leads.length;
+    currentLeads = leads;
+    renderFunnel(leads);
 
     const leadsTable = document.getElementById('leadsTable');
     if (leads.length === 0) {
@@ -372,6 +432,74 @@
     }
   }
 
+  function renderFunnel(leads) {
+    // group leads by stage; anything without a stage yet defaults to "nuevo"
+    const groups = {};
+    STAGES.forEach(s => groups[s] = []);
+    leads.forEach(l => {
+      const stage = STAGES.includes(l.stage) ? l.stage : 'nuevo';
+      groups[stage].push(l);
+    });
+
+    STAGES.forEach(stage => {
+      const col = document.getElementById('col-' + stage);
+      const count = document.getElementById('count-' + stage);
+      const items = groups[stage];
+      count.textContent = items.length;
+
+      if (items.length === 0) {
+        col.innerHTML = '<div class="funnel-empty">Sin leads aquí</div>';
+      } else {
+        col.innerHTML = items.map(l => `
+          <div class="funnel-card" draggable="true" data-lead-id="${l.id}">
+            <div class="funnel-card-name">${l.userName || 'Sin nombre'}</div>
+            <div class="funnel-card-phone">${l.userPhone || '—'}</div>
+          </div>
+        `).join('');
+      }
+    });
+
+    attachFunnelDragEvents();
+  }
+
+  function attachFunnelDragEvents() {
+    document.querySelectorAll('.funnel-card').forEach(card => {
+      card.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', card.dataset.leadId);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+    });
+
+    document.querySelectorAll('.funnel-col-body').forEach(colBody => {
+      colBody.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        colBody.classList.add('drag-over');
+      });
+      colBody.addEventListener('dragleave', () => {
+        colBody.classList.remove('drag-over');
+      });
+      colBody.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        colBody.classList.remove('drag-over');
+        const leadId = e.dataTransfer.getData('text/plain');
+        const newStage = colBody.closest('.funnel-col').dataset.stage;
+        if (!leadId || !newStage) return;
+
+        // optimistic UI update
+        const lead = currentLeads.find(l => l.id === leadId);
+        if (lead) lead.stage = newStage;
+        renderFunnel(currentLeads);
+
+        try {
+          await updateDoc(doc(db, 'leads', leadId), { stage: newStage });
+        } catch (err) {
+          console.error('No se pudo actualizar la etapa del lead:', err);
+        }
+      });
+    });
+  }
+
+
   window.signIn = async () => {
     try {
       await signInWithPopup(auth, provider);
@@ -385,7 +513,7 @@
   };
 
   window.showTab = (name, el) => {
-    ['overview', 'conversations', 'leads'].forEach(t => {
+    ['overview', 'conversations', 'leads', 'funnel'].forEach(t => {
       document.getElementById('tab-' + t).classList.toggle('hidden', t !== name);
     });
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
