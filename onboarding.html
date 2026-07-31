@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VeloiApp — Configura tu asistente</title>
+<style>
+  :root{
+    --emerald-deep:#083F2E; --emerald:#0E7A57; --mint:#4CEBB0; --mint-soft:#2FCB93;
+    --spark:#FFB648; --paper:#F6FAF7; --ink:#06231C; --danger:#ef4444;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--paper); color:var(--ink); line-height:1.5; padding:32px 16px 80px;
+  }
+  .wrap{max-width:640px; margin:0 auto;}
+  .header{text-align:center; margin-bottom:32px;}
+  .logo-mark{width:48px; height:48px; border-radius:13px; background:linear-gradient(135deg,var(--emerald),var(--emerald-deep)); display:flex; align-items:center; justify-content:center; margin:0 auto 12px;}
+  h1{font-size:24px; font-weight:800; color:var(--emerald-deep);}
+  .sub{color:#3A5A4E; font-size:14.5px; margin-top:8px;}
+
+  .card{background:#fff; border:1px solid #E3EFE9; border-radius:16px; padding:24px; margin-bottom:16px;}
+  label{display:block; font-weight:700; font-size:13.5px; color:var(--emerald-deep); margin-bottom:6px;}
+  .hint{font-size:12px; color:#7A9186; margin-bottom:8px; margin-top:-4px;}
+  input[type=text], input[type=email], input[type=tel], textarea{
+    width:100%; padding:11px 13px; border:1.5px solid #DCE8E2; border-radius:10px;
+    font-size:14px; font-family:inherit; margin-bottom:16px; color:var(--ink);
+  }
+  input:focus, textarea:focus{ outline:none; border-color:var(--mint); }
+  textarea{resize:vertical; min-height:80px;}
+  .radio-group{display:flex; flex-direction:column; gap:8px; margin-bottom:16px;}
+  .radio-option{display:flex; align-items:center; gap:8px; font-size:14px;}
+
+  .required{color:var(--danger);}
+
+  .submit-btn{
+    width:100%; padding:15px; background:linear-gradient(135deg,var(--mint),var(--mint-soft));
+    color:var(--ink); font-weight:800; font-size:15px; border:none; border-radius:12px;
+    cursor:pointer; font-family:inherit;
+  }
+  .submit-btn:disabled{opacity:0.6; cursor:not-allowed;}
+
+  #successMsg, #errorMsg{
+    display:none; text-align:center; padding:40px 24px; background:#fff;
+    border-radius:16px; border:1px solid #E3EFE9;
+  }
+  #successMsg .icon{font-size:40px; margin-bottom:12px;}
+  #errorMsg{border-color:var(--danger);}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <div class="logo-mark">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" width="26" height="26">
+        <rect x="108" y="158" width="222" height="160" rx="54" fill="#4CEBB0"/>
+        <path d="M 148 300 Q 140 330 118 344 Q 152 340 172 316 Z" fill="#2FCB93"/>
+        <path d="M 350 200 L 396 238 L 350 276" fill="none" stroke="#4CEBB0" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+        <g transform="translate(300,178)"><path d="M0,-22 C2,-8 8,-2 22,0 C8,2 2,8 0,22 C-2,8 -8,2 -22,0 C-8,-2 -2,-8 0,-22 Z" fill="#FFB648"/></g>
+      </svg>
+    </div>
+    <h1>Configura tu asistente de WhatsApp</h1>
+    <p class="sub">Completa esto y tu asistente queda activo en menos de 24 horas. Toma unos 5 minutos.</p>
+  </div>
+
+  <form id="onboardingForm">
+
+    <div class="card">
+      <label>Nombre del negocio <span class="required">*</span></label>
+      <input type="text" id="businessName" required>
+
+      <label>Tu nombre <span class="required">*</span></label>
+      <input type="text" id="contactName" required>
+
+      <label>WhatsApp del negocio (el que va a usar el asistente) <span class="required">*</span></label>
+      <div class="hint">Con código de país, ej: 573001234567</div>
+      <input type="tel" id="whatsapp" required>
+
+      <label>Correo electrónico <span class="required">*</span></label>
+      <input type="email" id="email" required>
+
+      <label>Instagram (opcional)</label>
+      <input type="text" id="instagram" placeholder="@tunegocio">
+    </div>
+
+    <div class="card">
+      <label>Horario de atención <span class="required">*</span></label>
+      <div class="hint">Días y horas, ej: Lunes a viernes 8am-6pm, sábados 9am-1pm</div>
+      <textarea id="schedule" required></textarea>
+
+      <label>Servicios o productos que ofreces <span class="required">*</span></label>
+      <div class="hint">Mientras más detalle, mejor responde el asistente</div>
+      <textarea id="services" required></textarea>
+
+      <label>Precios que se puedan compartir</label>
+      <div class="hint">Puedes dejarlo como "Consultar" si prefieres no dar precio exacto por WhatsApp</div>
+      <textarea id="prices"></textarea>
+
+      <label>Preguntas frecuentes de tus clientes</label>
+      <div class="hint">Ej: ¿aceptan seguro?, ¿dónde quedan ubicados?</div>
+      <textarea id="faqs"></textarea>
+
+      <label>Dirección o zona de cobertura</label>
+      <input type="text" id="address">
+    </div>
+
+    <div class="card">
+      <label>Tono de comunicación preferido</label>
+      <div class="radio-group">
+        <label class="radio-option"><input type="radio" name="tone" value="Formal y profesional" checked> Formal y profesional</label>
+        <label class="radio-option"><input type="radio" name="tone" value="Cercano y casual"> Cercano y casual</label>
+        <label class="radio-option"><input type="radio" name="tone" value="Mixto"> Mixto</label>
+      </div>
+
+      <label>¿Algo que el asistente NUNCA deba decir o prometer?</label>
+      <div class="hint">Ej: no dar garantías médicas, no prometer descuentos</div>
+      <textarea id="restrictions"></textarea>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">Enviar información →</button>
+  </form>
+
+  <div id="successMsg">
+    <div class="icon">✅</div>
+    <h2 style="color:var(--emerald-deep); margin-bottom:8px;">¡Listo, recibimos tu información!</h2>
+    <p style="color:#3A5A4E; font-size:14px;">Te escribimos por WhatsApp en menos de 24 horas para confirmar que tu asistente ya está activo.</p>
+  </div>
+
+  <div id="errorMsg">
+    <p style="color:var(--danger); font-weight:700;">Hubo un problema al enviar el formulario.</p>
+    <p style="color:#3A5A4E; font-size:14px; margin-top:8px;">Por favor intenta de nuevo, o escríbenos directo: <a href="https://wa.me/573224802976" style="color:var(--emerald);">wa.me/573224802976</a></p>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const app = initializeApp({
+    apiKey: "AIzaSyCLvjCxWXivE-THeoPw56rPDo9PXavsIHQ",
+    authDomain: "gen-lang-client-0598503352.firebaseapp.com",
+    projectId: "gen-lang-client-0598503352",
+    storageBucket: "gen-lang-client-0598503352.firebasestorage.app",
+    messagingSenderId: "869550093470",
+    appId: "1:869550093470:web:7bb6989d149af7038db78f"
+  });
+  const db = getFirestore(app);
+
+  document.getElementById('onboardingForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    const tone = document.querySelector('input[name="tone"]:checked')?.value || '';
+
+    const data = {
+      businessName: document.getElementById('businessName').value.trim(),
+      contactName: document.getElementById('contactName').value.trim(),
+      whatsapp: document.getElementById('whatsapp').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      instagram: document.getElementById('instagram').value.trim(),
+      schedule: document.getElementById('schedule').value.trim(),
+      services: document.getElementById('services').value.trim(),
+      prices: document.getElementById('prices').value.trim(),
+      faqs: document.getElementById('faqs').value.trim(),
+      address: document.getElementById('address').value.trim(),
+      tone: tone,
+      restrictions: document.getElementById('restrictions').value.trim(),
+      status: 'pendiente_revision',
+      submittedAt: serverTimestamp()
+    };
+
+    try {
+      await addDoc(collection(db, 'onboarding_submissions'), data);
+      document.getElementById('onboardingForm').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    } catch (err) {
+      console.error('Error al guardar:', err);
+      document.getElementById('errorMsg').style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Enviar información →';
+    }
+  });
+</script>
+</body>
+</html>
