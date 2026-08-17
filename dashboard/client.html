@@ -295,12 +295,16 @@
 
     const clientData = clientSnap.docs[0].data();
 
-    // Find bot by phoneId
-    const botSnap = await getDocs(collection(db, 'bots'));
+    // Find the bot that belongs to THIS client, matched by business name —
+    // antes tomaba "el primer bot que encontrara" en toda la colección,
+    // mostrando datos de un negocio equivocado.
     let botData = null;
-    botSnap.forEach(d => {
-      if (!botData) botData = { id: d.id, ...d.data() };
-    });
+    if (clientData.businessName) {
+      const botSnap = await getDocs(query(collection(db, 'bots'), where('botName', '==', clientData.businessName)));
+      botSnap.forEach(d => {
+        if (!botData) botData = { id: d.id, ...d.data() };
+      });
+    }
 
     currentBot = botData;
 
@@ -314,11 +318,18 @@
       const badge = document.getElementById('botBadge');
       badge.textContent = botData.isActive ? '● Activo' : '○ Inactivo';
       badge.className = 'badge ' + (botData.isActive ? 'badge-active' : 'badge-inactive');
+    } else {
+      document.getElementById('botName').textContent = clientData.businessName || 'Sin bot asociado todavía';
+      document.getElementById('botPhone').textContent = 'No se encontró ningún bot con este nombre de negocio.';
     }
 
     loadData(botData?.whatsappPhoneId);
+
     // Trial days calculation — usa trialEndsAt (fuente real, la misma que usa
     // deactivateExpiredTrials), en vez de recalcularlo desde createdAt.
+    console.log('DEBUG clientData:', JSON.stringify(clientData));
+    console.log('DEBUG isTrial:', clientData.isTrial, typeof clientData.isTrial);
+    console.log('DEBUG trialEndsAt:', clientData.trialEndsAt);
     const el = document.getElementById("trialDaysLeft");
     if (clientData.trialEndsAt) {
       const endsAt = clientData.trialEndsAt.toDate();
@@ -331,9 +342,10 @@
         document.getElementById("trialBanner").style.background = "linear-gradient(135deg, #2e1a1a, #2d1a1a)";
       }
     } else if (clientData.isTrial) {
-      // El bot aún no fue conectado a un número real — el conteo de 7 días
-      // todavía no ha comenzado.
       el.textContent = "Tu asistente está en proceso de activación. El conteo de 7 días comienza cuando esté conectado a WhatsApp.";
+    } else {
+      // Cliente que no es trial (ej. plan "socio" o pagado) — oculta el banner de trial
+      document.getElementById("trialBanner").style.display = "none";
     }
   });
 
