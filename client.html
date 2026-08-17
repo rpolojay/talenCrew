@@ -327,6 +327,9 @@
 
     // Trial days calculation — usa trialEndsAt (fuente real, la misma que usa
     // deactivateExpiredTrials), en vez de recalcularlo desde createdAt.
+    console.log('DEBUG clientData:', JSON.stringify(clientData));
+    console.log('DEBUG isTrial:', clientData.isTrial, typeof clientData.isTrial);
+    console.log('DEBUG trialEndsAt:', clientData.trialEndsAt);
     const el = document.getElementById("trialDaysLeft");
     if (clientData.trialEndsAt) {
       const endsAt = clientData.trialEndsAt.toDate();
