@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VeloiApp — Mi Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #25D366;
+      --green-dark: #1da85c;
+      --bg: #0f1117;
+      --card: #1a1d27;
+      --border: #2a2d3a;
+      --text: #fff;
+      --muted: #6b7280;
+      --danger: #ef4444;
+      --warning: #fbbf24;
+    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+    /* TOPBAR */
+    .topbar {
+      background: var(--card); border-bottom: 1px solid var(--border);
+      padding: 14px 20px; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-logo { font-size: 18px; font-weight: 800; }
+    .topbar-logo span { color: var(--green); }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .topbar-email { font-size: 12px; color: var(--muted); }
+    .btn-logout { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; }
+
+    /* NAV TABS */
+    .tabs { display: flex; gap: 4px; padding: 16px 20px 0; border-bottom: 1px solid var(--border); overflow-x: auto; }
+    .tab { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
+    .tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+    /* MAIN */
+    .main { padding: 20px; max-width: 1000px; margin: 0 auto; }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+    @media (min-width: 600px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .stat-value { font-size: 28px; font-weight: 700; }
+    .stat-sub { font-size: 11px; color: var(--green); margin-top: 4px; }
+
+    /* BOT STATUS */
+    .bot-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .bot-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .bot-info p { font-size: 13px; color: var(--muted); }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+    .badge-active { background: rgba(37,211,102,0.15); color: var(--green); }
+    .badge-inactive { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+    /* TABLE */
+    .section-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 500px; }
+    th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    td { padding: 12px 14px; font-size: 13px; color: #d1d5db; border-bottom: 1px solid #1f2230; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #1f2230; }
+    .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+
+    /* CONVERSATION BUBBLE */
+    .conv-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .conv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .conv-name { font-size: 13px; font-weight: 700; }
+    .conv-time { font-size: 11px; color: var(--muted); }
+    .bubble-row { display: flex; flex-direction: column; gap: 6px; }
+    .bubble { padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.5; max-width: 85%; }
+    .bubble-user { background: #2a2d3a; color: #d1d5db; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .bubble-bot { background: rgba(37,211,102,0.12); color: #d1fae5; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .bubble-label { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+    .bubble-user-wrap { align-self: flex-start; }
+    .bubble-bot-wrap { align-self: flex-end; text-align: right; }
+
+    /* LOGIN */
+    .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 400px; text-align: center; }
+    .login-logo { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+    .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+    .btn-google { width: 100%; padding: 13px; background: #fff; color: #1a1d27; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: inherit; }
+    .btn-google:hover { background: #f3f4f6; }
+    .login-error { margin-top: 14px; font-size: 13px; color: var(--danger); display: none; }
+
+    /* HIDDEN */
+    .hidden { display: none !important; }
+
+    /* FUNNEL / KANBAN */
+    .funnel-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; }
+    .funnel-col {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      min-width: 220px; max-width: 220px; flex-shrink: 0; display: flex; flex-direction: column;
+    }
+    .funnel-col-header {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .funnel-col-count {
+      background: var(--border); color: var(--muted); font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 100px;
+    }
+    .funnel-col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 80px; flex: 1; }
+    .funnel-col-body.drag-over { background: rgba(37,211,102,0.06); }
+    .funnel-card {
+      background: #22252f; border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 12px; cursor: grab; font-size: 12.5px;
+    }
+    .funnel-card:active { cursor: grabbing; }
+    .funnel-card-name { font-weight: 700; margin-bottom: 3px; }
+    .funnel-card-phone { color: var(--muted); font-size: 11px; }
+    .funnel-empty { color: var(--muted); font-size: 11.5px; text-align: center; padding: 16px 8px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">Veloi<span style="color:var(--green)">App</span></div>
+    <div class="login-sub">Portal de Cliente · Accede con tu cuenta</div>
+    <button class="btn-google" onclick="signIn()">
+      <svg width="16" height="16" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Continuar con Google
+    </button>
+    <div class="login-error" id="loginError">No tienes acceso. Contacta a VeloiApp.</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashView" class="hidden">
+  <div class="topbar">
+    <div class="topbar-logo">Veloi<span>App</span></div>
+    <div class="topbar-right">
+      <span class="topbar-email" id="topEmail"></span>
+      <button class="btn-logout" onclick="signOut()">Salir</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('overview', this)">📊 Resumen</button>
+    <button class="tab" onclick="showTab('conversations', this)">💬 Conversaciones</button>
+    <button class="tab" onclick="showTab('leads', this)">👥 Leads</button>
+    <button class="tab" onclick="showTab('funnel', this)">🎯 Embudo</button>
+  </div>
+
+  <div class="main">
+
+    <!-- OVERVIEW -->
+    <div id="tab-overview">
+      <!-- TRIAL BANNER -->
+      <div id="trialBanner" style="background: linear-gradient(135deg, #1a2e1a, #1a2d27); border: 1px solid #25D366; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <div style="font-size: 13px; font-weight: 700; color: #25D366; margin-bottom: 4px;">🎉 Trial Activo — 7 días gratis</div>
+          <div style="font-size: 12px; color: #9ca3af;" id="trialDaysLeft">Calculando días restantes...</div>
+        </div>
+        <a href="https://wa.me/573224802976?text=Hola%2C%20quiero%20contratar%20VeloiApp" target="_blank" style="background: #25D366; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none;">Contratar Plan</a>
+      </div>
+      <div id="botStatusCard" class="bot-card">
+        <div class="bot-info">
+          <h3 id="botName">Cargando...</h3>
+          <p id="botPhone">Número de WhatsApp conectado: —</p>
+        </div>
+        <span class="badge badge-inactive" id="botBadge">○ Inactivo</span>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Mensajes</div>
+          <div class="stat-value" id="statMsgs">0</div>
+          <div class="stat-sub">Respondidos por el bot</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Leads Capturados</div>
+          <div class="stat-value" id="statLeads">0</div>
+          <div class="stat-sub">Contactos únicos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Hoy</div>
+          <div class="stat-value" id="statToday">0</div>
+          <div class="stat-sub">Mensajes hoy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Esta Semana</div>
+          <div class="stat-value" id="statWeek">0</div>
+          <div class="stat-sub">Mensajes 7 días</div>
+        </div>
+      </div>
+
+      <div class="section-title">Últimas conversaciones</div>
+      <div id="recentConvs"></div>
+    </div>
+
+    <!-- CONVERSATIONS -->
+    <div id="tab-conversations" class="hidden">
+      <div class="section-title">Todas las Conversaciones</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Usuario</th><th>Mensaje</th><th>Respuesta del Bot</th><th>Fecha</th></tr></thead>
+          <tbody id="convsTable"><tr><td colspan="4" class="empty-state">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LEADS -->
+    <div id="tab-leads" class="hidden">
+      <div class="section-title">Leads Capturados</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nombre</th><th>Teléfono</th><th>Primer Mensaje</th><th>Mensajes</th><th>Último Contacto</th><th>Acción</th></tr></thead>
+          <tbody id="leadsTable"><tr><td colspan="6" class="empty-state">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FUNNEL -->
+    <div id="tab-funnel" class="hidden">
+      <div class="section-title">Embudo de Ventas</div>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:16px;">Arrastra cada lead entre columnas a medida que avanza la conversación.</p>
+      <div class="funnel-board">
+        <div class="funnel-col" data-stage="nuevo">
+          <div class="funnel-col-header"><span>🆕 Nuevo</span><span class="funnel-col-count" id="count-nuevo">0</span></div>
+          <div class="funnel-col-body" id="col-nuevo"></div>
+        </div>
+        <div class="funnel-col" data-stage="calificado">
+          <div class="funnel-col-header"><span>✅ Calificado</span><span class="funnel-col-count" id="count-calificado">0</span></div>
+          <div class="funnel-col-body" id="col-calificado"></div>
+        </div>
+        <div class="funnel-col" data-stage="cita_agendada">
+          <div class="funnel-col-header"><span>📅 Cita Agendada</span><span class="funnel-col-count" id="count-cita_agendada">0</span></div>
+          <div class="funnel-col-body" id="col-cita_agendada"></div>
+        </div>
+        <div class="funnel-col" data-stage="cliente_convertido">
+          <div class="funnel-col-header"><span>💰 Convertido</span><span class="funnel-col-count" id="count-cliente_convertido">0</span></div>
+          <div class="funnel-col-body" id="col-cliente_convertido"></div>
+        </div>
+        <div class="funnel-col" data-stage="perdido">
+          <div class="funnel-col-header"><span>❌ Perdido</span><span class="funnel-col-count" id="count-perdido">0</span></div>
+          <div class="funnel-col-body" id="col-perdido"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, collection, query, where, getDocs, orderBy, limit, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const app = initializeApp({
+    apiKey: "AIzaSyCLvjCxWXivE-THeoPw56rPDo9PXavsIHQ",
+    authDomain: "gen-lang-client-0598503352.firebaseapp.com",
+    projectId: "gen-lang-client-0598503352",
+    storageBucket: "gen-lang-client-0598503352.firebasestorage.app",
+    messagingSenderId: "869550093470",
+    appId: "1:869550093470:web:7bb6989d149af7038db78f"
+  });
+
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  let currentBot = null;
+  let currentLeads = [];
+  const STAGES = ['nuevo', 'calificado', 'cita_agendada', 'cliente_convertido', 'perdido'];
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('dashView').classList.add('hidden');
+      return;
+    }
+
+    // Find client by email
+    const clientSnap = await getDocs(query(collection(db, 'clients'), where('email', '==', user.email)));
+
+    if (clientSnap.empty) {
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('loginError').textContent = 'No tienes acceso. Contacta a VeloiApp en hola@veloiapp.com';
+      await fbSignOut(auth);
+      return;
+    }
+
+    const clientData = clientSnap.docs[0].data();
+
+    // Find the bot that belongs to THIS client, matched by business name —
+    // antes tomaba "el primer bot que encontrara" en toda la colección,
+    // mostrando datos de un negocio equivocado.
+    let botData = null;
+    if (clientData.businessName) {
+      const botSnap = await getDocs(query(collection(db, 'bots'), where('botName', '==', clientData.businessName)));
+      botSnap.forEach(d => {
+        if (!botData) botData = { id: d.id, ...d.data() };
+      });
+    }
+
+    currentBot = botData;
+
+    document.getElementById('loginView').classList.add('hidden');
+    document.getElementById('dashView').classList.remove('hidden');
+    document.getElementById('topEmail').textContent = user.email;
+
+    if (botData) {
+      document.getElementById('botName').textContent = botData.botName || clientData.businessName;
+      document.getElementById('botPhone').textContent = 'WhatsApp ID: ' + (botData.whatsappPhoneId || '—');
+      const badge = document.getElementById('botBadge');
+      badge.textContent = botData.isActive ? '● Activo' : '○ Inactivo';
+      badge.className = 'badge ' + (botData.isActive ? 'badge-active' : 'badge-inactive');
+    } else {
+      document.getElementById('botName').textContent = clientData.businessName || 'Sin bot asociado todavía';
+      document.getElementById('botPhone').textContent = 'No se encontró ningún bot con este nombre de negocio.';
+    }
+
+    loadData(botData?.whatsappPhoneId);
+
+    // Trial days calculation — usa trialEndsAt (fuente real, la misma que usa
+    // deactivateExpiredTrials), en vez de recalcularlo desde createdAt.
+    const el = document.getElementById("trialDaysLeft");
+    if (clientData.trialEndsAt) {
+      const endsAt = clientData.trialEndsAt.toDate();
+      const daysLeft = Math.max(0, Math.ceil((endsAt - new Date()) / (1000 * 60 * 60 * 24)));
+      if (daysLeft > 0) {
+        el.textContent = "Te quedan " + daysLeft + " dia(s) de prueba gratuita.";
+      } else {
+        el.textContent = "Tu trial ha finalizado. Contrata un plan para continuar.";
+        document.getElementById("trialBanner").style.borderColor = "#ef4444";
+        document.getElementById("trialBanner").style.background = "linear-gradient(135deg, #2e1a1a, #2d1a1a)";
+      }
+    } else if (clientData.isTrial) {
+      el.textContent = "Tu asistente está en proceso de activación. El conteo de 7 días comienza cuando esté conectado a WhatsApp.";
+    } else {
+      // Cliente que no es trial (ej. plan "socio" o pagado) — oculta el banner de trial
+      document.getElementById("trialBanner").style.display = "none";
+    }
+  });
+
+  async function loadData(phoneId) {
+    if (!phoneId) return;
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Load conversations
+    const convSnap = await getDocs(query(
+      collection(db, 'conversations'),
+      where('phoneId', '==', phoneId)
+    ));
+
+    const convs = [];
+    convSnap.forEach(d => convs.push({ id: d.id, ...d.data() }));
+    convs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+    // Stats
+    document.getElementById('statMsgs').textContent = convs.length;
+    document.getElementById('statToday').textContent = convs.filter(c => {
+      const ts = c.timestamp?.seconds ? new Date(c.timestamp.seconds * 1000) : null;
+      return ts && ts >= todayStart;
+    }).length;
+    document.getElementById('statWeek').textContent = convs.filter(c => {
+      const ts = c.timestamp?.seconds ? new Date(c.timestamp.seconds * 1000) : null;
+      return ts && ts >= weekStart;
+    }).length;
+
+    // Recent convs (overview)
+    const recent = convs;
+    const recentEl = document.getElementById('recentConvs');
+    if (recent.length === 0) {
+      recentEl.innerHTML = '<div class="empty-state" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:32px;">Aún no hay conversaciones. El bot comenzará a registrarlas cuando reciba mensajes.</div>';
+    } else {
+      recentEl.innerHTML = recent.map(c => {
+        const ts = c.timestamp?.seconds ? new Date(c.timestamp.seconds * 1000).toLocaleString('es-CO') : '—';
+        return `
+          <div class="conv-card" onclick="showConversation('${c.userPhone}', '${c.userName || c.userPhone}', convs)" style="cursor:pointer;" title="Ver conversacion completa">
+            <div class="conv-header">
+              <span class="conv-name">📱 ${c.userName || c.userPhone || '—'}</span>
+              <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:11px; color:#25D366;">Ver todo →</span><span class="conv-time">${ts}</span></span>
+            </div>
+            <div class="bubble-row">
+              <div class="bubble-user-wrap"><div class="bubble-label">Usuario</div><div class="bubble bubble-user">${c.userMessage || '—'}</div></div>
+              <div class="bubble-bot-wrap"><div class="bubble-label">Bot</div><div class="bubble bubble-bot">${c.botReply || '—'}</div></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // All convs table
+    const convsTable = document.getElementById('convsTable');
+    if (convs.length === 0) {
+      convsTable.innerHTML = '<tr><td colspan="4" class="empty-state">No hay conversaciones aún.</td></tr>';
+    } else {
+      convsTable.innerHTML = convs.map(c => {
+        const ts = c.timestamp?.seconds ? new Date(c.timestamp.seconds * 1000).toLocaleString('es-CO') : '—';
+        return `<tr>
+          <td>${c.userName || c.userPhone || '—'}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.userMessage || '—'}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.botReply || '—'}</td>
+          <td style="white-space:nowrap">${ts}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Leads
+    const leadsSnap = await getDocs(query(
+      collection(db, 'leads'),
+      where('phoneId', '==', phoneId)
+    ));
+
+    const leads = [];
+    leadsSnap.forEach(d => leads.push({ id: d.id, ...d.data() }));
+    leads.sort((a, b) => (b.lastSeen?.seconds || 0) - (a.lastSeen?.seconds || 0));
+
+    document.getElementById('statLeads').textContent = leads.length;
+    currentLeads = leads;
+    renderLeadsTable(leads);
+    renderFunnel(leads);
+  }
+
+  function renderLeadsTable(leads) {
+    const leadsTable = document.getElementById('leadsTable');
+    if (leads.length === 0) {
+      leadsTable.innerHTML = '<tr><td colspan="6" class="empty-state">No hay leads aún.</td></tr>';
+    } else {
+      leadsTable.innerHTML = leads.map(l => {
+        const last = l.lastSeen?.seconds ? new Date(l.lastSeen.seconds * 1000).toLocaleString('es-CO') : '—';
+        const safeName = (l.userName || l.userPhone || '').replace(/'/g, "\\'");
+        return `<tr>
+          <td>${l.userName || '—'}</td>
+          <td>${l.userPhone || '—'}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.firstMessage || '—'}</td>
+          <td>${l.messageCount || 0}</td>
+          <td style="white-space:nowrap">${last}</td>
+          <td><button onclick="deleteLead('${l.id}', '${safeName}')" style="background:none;border:1px solid var(--border);color:var(--danger);padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;">🗑 Borrar</button></td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  function renderFunnel(leads) {
+    // group leads by stage; anything without a stage yet defaults to "nuevo"
+    const groups = {};
+    STAGES.forEach(s => groups[s] = []);
+    leads.forEach(l => {
+      const stage = STAGES.includes(l.stage) ? l.stage : 'nuevo';
+      groups[stage].push(l);
+    });
+
+    STAGES.forEach(stage => {
+      const col = document.getElementById('col-' + stage);
+      const count = document.getElementById('count-' + stage);
+      const items = groups[stage];
+      count.textContent = items.length;
+
+      if (items.length === 0) {
+        col.innerHTML = '<div class="funnel-empty">Sin leads aquí</div>';
+      } else {
+        col.innerHTML = items.map(l => {
+          const safeName = (l.userName || l.userPhone || '').replace(/'/g, "\\'");
+          return `
+          <div class="funnel-card" draggable="true" data-lead-id="${l.id}">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
+              <div>
+                <div class="funnel-card-name">${l.userName || 'Sin nombre'}</div>
+                <div class="funnel-card-phone">${l.userPhone || '—'}</div>
+              </div>
+              <button onclick="event.stopPropagation(); deleteLead('${l.id}', '${safeName}')" title="Borrar lead" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:var(--danger); font-size:12px; font-weight:700; cursor:pointer; line-height:1; padding:4px 7px; border-radius:6px; flex-shrink:0;">🗑</button>
+            </div>
+          </div>
+        `;
+        }).join('');
+      }
+    });
+
+    attachFunnelDragEvents();
+  }
+
+  function attachFunnelDragEvents() {
+    document.querySelectorAll('.funnel-card').forEach(card => {
+      card.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', card.dataset.leadId);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+    });
+
+    document.querySelectorAll('.funnel-col-body').forEach(colBody => {
+      colBody.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        colBody.classList.add('drag-over');
+      });
+      colBody.addEventListener('dragleave', () => {
+        colBody.classList.remove('drag-over');
+      });
+      colBody.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        colBody.classList.remove('drag-over');
+        const leadId = e.dataTransfer.getData('text/plain');
+        const newStage = colBody.closest('.funnel-col').dataset.stage;
+        if (!leadId || !newStage) return;
+
+        // optimistic UI update
+        const lead = currentLeads.find(l => l.id === leadId);
+        if (lead) lead.stage = newStage;
+        renderFunnel(currentLeads);
+
+        try {
+          await updateDoc(doc(db, 'leads', leadId), { stage: newStage });
+        } catch (err) {
+          console.error('No se pudo actualizar la etapa del lead:', err);
+        }
+      });
+    });
+  }
+
+  window.signIn = async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  window.signOut = async () => {
+    await fbSignOut(auth);
+  };
+
+  window.showTab = (name, el) => {
+    ['overview', 'conversations', 'leads', 'funnel'].forEach(t => {
+      document.getElementById('tab-' + t).classList.toggle('hidden', t !== name);
+    });
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  };
+
+  window.deleteLead = async (leadId, leadName) => {
+    const confirmed = confirm(`¿Borrar a "${leadName || 'este lead'}"? Esta acción no se puede deshacer.`);
+    if (!confirmed) return;
+
+    try {
+      await deleteDoc(doc(db, 'leads', leadId));
+      currentLeads = currentLeads.filter(l => l.id !== leadId);
+      document.getElementById('statLeads').textContent = currentLeads.length;
+      renderLeadsTable(currentLeads);
+      renderFunnel(currentLeads);
+    } catch (err) {
+      console.error('No se pudo borrar el lead:', err);
+      alert('No se pudo borrar el lead. Intenta de nuevo.');
+    }
+  };
+
+  window.showConversation = (userPhone, userName, allConvs) => {
+    const userConvs = allConvs.filter(c => c.userPhone === userPhone);
+    userConvs.sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+    document.getElementById("modalTitle").textContent = "💬 " + (userName || userPhone);
+    document.getElementById("modalMessages").innerHTML = userConvs.map(c => {
+      const ts = c.timestamp?.seconds ? new Date(c.timestamp.seconds * 1000).toLocaleTimeString("es-CO", {hour:"2-digit",minute:"2-digit"}) : "";
+      return `
+        <div style="align-self:flex-start; max-width:85%;">
+          <div style="font-size:10px; color:#6b7280; margin-bottom:3px;">Usuario · ${ts}</div>
+          <div style="background:#2a2d3a; color:#d1d5db; padding:10px 14px; border-radius:12px; border-bottom-left-radius:4px; font-size:13px; line-height:1.5;">${c.userMessage || "—"}</div>
+        </div>
+        <div style="align-self:flex-end; max-width:85%; text-align:right;">
+          <div style="font-size:10px; color:#6b7280; margin-bottom:3px;">Bot · ${ts}</div>
+          <div style="background:rgba(37,211,102,0.12); color:#d1fae5; padding:10px 14px; border-radius:12px; border-bottom-right-radius:4px; font-size:13px; line-height:1.5;">${c.botReply || "—"}</div>
+        </div>`;
+    }).join("");
+    document.getElementById("convModal").style.display = "block";
+  };
+</script>
+
+
+<!-- MODAL CONVERSACION COMPLETA -->
+<div id="convModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; padding:20px; overflow-y:auto;">
+  <div style="background:#1a1d27; border:1px solid #2a2d3a; border-radius:16px; max-width:600px; margin:0 auto; padding:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <div style="font-size:15px; font-weight:700;" id="modalTitle">Conversacion</div>
+      <button onclick="document.getElementById('convModal').style.display='none'" style="background:none; border:none; color:#6b7280; font-size:20px; cursor:pointer;">✕</button>
+    </div>
+    <div id="modalMessages" style="display:flex; flex-direction:column; gap:10px;"></div>
+  </div>
+</div>
+</body>
+</html>
