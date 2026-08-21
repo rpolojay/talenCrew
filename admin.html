@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VeloiApp — Admin Panel</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', system-ui, sans-serif; background: #0f1117; color: #fff; }
+.sidebar {
+position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
+background: #1a1d27; border-right: 1px solid #2a2d3a;
+display: flex; flex-direction: column; padding: 24px 0;
+}
+.sidebar-logo { font-size: 20px; font-weight: 800; color: #fff; padding: 0 24px 24px; border-bottom: 1px solid #2a2d3a; }
+.sidebar-logo span { color: #25D366; }
+.nav { padding: 16px 12px; flex: 1; }
+.nav-item {
+display: flex; align-items: center; gap: 10px;
+padding: 10px 12px; border-radius: 8px;
+font-size: 14px; font-weight: 500; color: #9ca3af;
+cursor: pointer; transition: all 0.15s; margin-bottom: 4px;
+text-decoration: none;
+}
+.nav-item:hover { background: #2a2d3a; color: #fff; }
+.nav-item.active { background: #25D366; color: #fff; }
+.sidebar-footer { padding: 16px 24px; border-top: 1px solid #2a2d3a; font-size: 12px; color: #6b7280; }
+.btn-logout {
+display: flex; align-items: center; gap: 8px;
+font-size: 13px; color: #ef4444; cursor: pointer;
+background: none; border: none; font-family: inherit;
+padding: 8px 0; margin-top: 8px;
+}
+.main { margin-left: 240px; padding: 32px; min-height: 100vh; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+.page-title { font-size: 24px; font-weight: 700; }
+.page-sub { font-size: 14px; color: #6b7280; margin-top: 4px; }
+.btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
+.btn-primary { background: #25D366; color: #fff; }
+.btn-primary:hover { background: #1da85c; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+.stat-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 12px; padding: 20px; }
+.stat-label { font-size: 12px; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-size: 32px; font-weight: 700; color: #fff; }
+.stat-change { font-size: 12px; color: #25D366; margin-top: 4px; }
+.section { margin-bottom: 32px; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.section-title { font-size: 16px; font-weight: 700; }
+.table-wrap { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 12px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 16px; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #2a2d3a; }
+td { padding: 14px 16px; font-size: 14px; color: #d1d5db; border-bottom: 1px solid #1f2230; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #1f2230; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; }
+.badge-active { background: rgba(37,211,102,0.15); color: #25D366; }
+.badge-inactive { background: rgba(239,68,68,0.15); color: #ef4444; }
+.badge-pending { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
+.modal-overlay.open { display: flex; }
+.modal { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 16px; padding: 32px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 24px; }
+.form-group { margin-bottom: 16px; }
+label { display: block; font-size: 12px; font-weight: 600; color: #9ca3af; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+input, textarea, select { width: 100%; padding: 10px 14px; background: #0f1117; border: 1px solid #2a2d3a; border-radius: 8px; font-size: 14px; color: #fff; font-family: inherit; outline: none; }
+input:focus, textarea:focus, select:focus { border-color: #25D366; }
+textarea { resize: vertical; min-height: 120px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.check-item { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
+.check-circle { width: 28px; height: 28px; border-radius: 50%; background: #2a2d3a; border: 2px solid #3a3d4a; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
+.check-circle.done { background: #25D366; border-color: #25D366; color: #fff; }
+.check-title { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+.check-sub { font-size: 11px; color: #6b7280; line-height: 1.4; }
+.modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+.btn-cancel { background: #2a2d3a; color: #9ca3af; }
+.btn-cancel:hover { background: #343748; }
+.empty-state { text-align: center; padding: 48px; color: #6b7280; font-size: 14px; }
+.action-btn { background: none; border: none; cursor: pointer; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-family: inherit; }
+.action-edit { color: #60a5fa; background: rgba(96,165,250,0.1); }
+.action-delete { color: #ef4444; background: rgba(239,68,68,0.1); margin-left: 4px; }
+.action-toggle-on { color: #25D366; background: rgba(37,211,102,0.1); }
+.action-toggle-off { color: #fbbf24; background: rgba(251,191,36,0.1); }
+@media (max-width: 768px) {
+.sidebar {
+position: fixed; bottom: 0; top: auto;
+left: 0; right: 0; width: 100%;
+height: 60px; flex-direction: row;
+padding: 0; border-right: none;
+border-top: 1px solid #2a2d3a;
+z-index: 100;
+}
+.sidebar-logo { display: none; }
+.nav {
+display: flex; flex-direction: row;
+padding: 0; gap: 0; flex: 1;
+}
+.nav-item {
+flex: 1; flex-direction: column;
+justify-content: center; align-items: center;
+padding: 8px 4px; margin-bottom: 0;
+font-size: 10px; gap: 3px; border-radius: 0;
+}
+.sidebar-footer { display: none; }
+.main { margin-left: 0; padding: 16px; padding-bottom: 80px; }
+.stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.form-row { grid-template-columns: 1fr; }
+table { font-size: 12px; }
+th, td { padding: 8px 10px; }
+.page-title { font-size: 18px; }
+.stat-value { font-size: 24px; }
+.modal { padding: 20px 16px; }
+}
+</style>
+</head>
+<body>
+<div class="sidebar">
+<div class="sidebar-logo">Veloi<span>App</span></div>
+<nav class="nav">
+<a class="nav-item active" onclick="showSection('clients', this)">👥 Clientes</a>
+<a class="nav-item" onclick="showSection('bots', this)">🤖 Bots</a>
+<a class="nav-item" onclick="showSection('onboarding', this)">➕ Nuevo Cliente</a>
+</nav>
+<div class="sidebar-footer">
+<div id="userEmail" style="margin-bottom: 4px;"></div>
+<button class="btn-logout" onclick="logout()">⬅ Cerrar sesión</button>
+</div>
+</div>
+<div class="main">
+<div id="section-clients">
+<div class="page-header">
+<div>
+<div class="page-title">Clientes</div>
+<div class="page-sub">Gestiona todos los clientes activos de VeloiApp</div>
+</div>
+<button class="btn btn-primary" onclick="showSection('onboarding', null)">+ Nuevo Cliente</button>
+</div>
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Total Clientes</div><div class="stat-value" id="statTotal">0</div></div>
+<div class="stat-card"><div class="stat-label">Bots Activos</div><div class="stat-value" id="statActive">0</div><div class="stat-change">✓ Funcionando</div></div>
+<div class="stat-card"><div class="stat-label">Ingresos/mes</div><div class="stat-value" id="statRevenue">$0</div><div class="stat-change">COP</div></div>
+<div class="stat-card"><div class="stat-label">Pendientes</div><div class="stat-value" id="statPending">0</div></div>
+</div>
+<div class="section">
+<div class="section-header"><div class="section-title">Lista de Clientes</div></div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Negocio</th><th>Contacto</th><th>Plan</th><th>Bot Status</th><th>Mensual</th><th>Acciones</th></tr></thead>
+<tbody id="clientsTable"><tr><td colspan="6" class="empty-state">Cargando clientes...</td></tr></tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="section-bots" style="display:none;">
+<div class="page-header">
+<div><div class="page-title">Bots de IA</div><div class="page-sub">Gestiona los system prompts y configuración de cada bot</div></div>
+</div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Cliente</th><th>WhatsApp Phone ID</th><th>Status</th><th>Acciones</th></tr></thead>
+<tbody id="botsTable"><tr><td colspan="4" class="empty-state">Cargando bots...</td></tr></tbody>
+</table>
+</div>
+</div>
+<div id="section-onboarding" style="display:none;">
+<div class="page-header">
+<div><div class="page-title">Nuevo Cliente</div><div class="page-sub">Completa el formulario — el system prompt se genera automaticamente</div></div>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start;">
+<!-- FORMULARIO -->
+<div style="background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 16px; padding: 32px;">
+<div style="font-size: 13px; font-weight: 700; color: #25D366; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">Informacion del Negocio</div>
+<div class="form-group"><label>Nombre del Negocio *</label><input type="text" id="ob_bizName" placeholder="Ej: Clinica Dental Sonrisa" oninput="generatePrompt()" /></div>
+<div class="form-row">
+<div class="form-group"><label>Contacto *</label><input type="text" id="ob_contact" placeholder="Nombre del dueno" /></div>
+<div class="form-group"><label>WhatsApp *</label><input type="text" id="ob_whatsapp" placeholder="+57 300 000 0000" /></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>Email</label><input type="email" id="ob_email" placeholder="cliente@email.com" /></div>
+<div class="form-group"><label>Nicho</label>
+<select id="ob_niche" onchange="generatePrompt()">
+<option value="clinica">Clinica / Salud</option>
+<option value="dental">Clinica Dental</option>
+<option value="estetica">Clinica Estetica</option>
+<option value="inmobiliaria">Inmobiliaria</option>
+<option value="salon">Salon de Belleza</option>
+<option value="otro">Otro</option>
+</select>
+</div>
+</div>
+<div class="form-group"><label>Servicios principales</label><input type="text" id="ob_services" placeholder="Ej: Limpieza dental, blanqueamiento, ortodoncia" oninput="generatePrompt()" /></div>
+<div class="form-row">
+<div class="form-group"><label>Horario de atencion</label><input type="text" id="ob_hours" placeholder="Lun-Vie 8am-6pm, Sab 8am-1pm" oninput="generatePrompt()" /></div>
+<div class="form-group"><label>Ubicacion</label><input type="text" id="ob_location" placeholder="Calle 100 #15-20, Bogota" oninput="generatePrompt()" /></div>
+</div>
+<div class="form-group"><label>Precios de referencia</label><input type="text" id="ob_prices" placeholder="Consulta $50.000, Limpieza $120.000" oninput="generatePrompt()" /></div>
+<div style="border-top: 1px solid #2a2d3a; margin: 20px 0;"></div>
+<div style="font-size: 13px; font-weight: 700; color: #25D366; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">Configuracion Tecnica</div>
+<div class="form-row">
+<div class="form-group"><label>Plan</label>
+<select id="ob_plan">
+<option value="trial">Trial 7 dias gratis</option>
+<option value="socio">Socio / Gratuito (sin vencimiento)</option>
+<option value="basico">Basico — $500K + $450K/mes</option>
+<option value="avanzado">Avanzado — $900K + $750K/mes</option>
+</select>
+</div>
+<div class="form-group"><label>WhatsApp Phone ID</label><input type="text" id="ob_phoneId" placeholder="Ej: 123450543044836" /></div>
+</div>
+<div class="form-group"><label>System Prompt (auto-generado, editable)</label><textarea id="ob_prompt" style="min-height: 180px; font-size: 12px;" placeholder="Se genera automaticamente al llenar el formulario..."></textarea></div>
+<button class="btn btn-primary" style="width:100%; margin-top: 8px;" onclick="createClient()">Crear Cliente y Activar Bot</button>
+<div id="ob_msg" style="margin-top: 12px; font-size: 13px; display: none;"></div>
+</div>
+<!-- CHECKLIST -->
+<div style="background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 16px; padding: 24px; position: sticky; top: 24px;">
+<div style="font-size: 13px; font-weight: 700; color: #25D366; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">Checklist Onboarding</div>
+<div id="checklist">
+<div class="check-item" id="chk1">
+<div class="check-circle" onclick="toggleCheck('chk1')">1</div>
+<div><div class="check-title">Reunion inicial (15-30 min)</div><div class="check-sub">Recopilar info del negocio, servicios y precios</div></div>
+</div>
+<div class="check-item" id="chk2">
+<div class="check-circle" onclick="toggleCheck('chk2')">2</div>
+<div><div class="check-title">Obtener Phone Number ID</div><div class="check-sub">Desde Meta Business Manager del cliente</div></div>
+</div>
+<div class="check-item" id="chk3">
+<div class="check-circle" onclick="toggleCheck('chk3')">3</div>
+<div><div class="check-title">Configurar bot en Firestore</div><div class="check-sub">Crear documento con system prompt personalizado</div></div>
+</div>
+<div class="check-item" id="chk4">
+<div class="check-circle" onclick="toggleCheck('chk4')">4</div>
+<div><div class="check-title">Prueba de funcionamiento</div><div class="check-sub">Enviar mensaje de prueba al numero del cliente</div></div>
+</div>
+<div class="check-item" id="chk5">
+<div class="check-circle" onclick="toggleCheck('chk5')">5</div>
+<div><div class="check-title">Seguimiento dia 3 y dia 7</div><div class="check-sub">Reporte de conversaciones y propuesta de contrato</div></div>
+</div>
+</div>
+<div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #2a2d3a;">
+<div style="font-size: 11px; color: #6b7280; margin-bottom: 8px;">INSTRUCCIONES META</div>
+<div style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
+1. business.facebook.com<br/>
+2. Configuracion → Cuentas WhatsApp<br/>
+3. Agregar numero → Verificar con SMS<br/>
+4. Copiar Phone Number ID
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="modal-overlay" id="editBotModal">
+<div class="modal">
+<div class="modal-title">✏️ Editar System Prompt</div>
+<input type="hidden" id="edit_botId" />
+<div class="form-group"><label>Nombre del Bot</label><input type="text" id="edit_botName" readonly style="opacity:0.5;" /></div>
+<div class="form-group"><label>System Prompt</label><textarea id="edit_prompt" style="min-height: 200px;"></textarea></div>
+<div class="modal-footer">
+<button class="btn btn-cancel" onclick="closeModal('editBotModal')">Cancelar</button>
+<button class="btn btn-primary" onclick="savePrompt()">Guardar</button>
+</div>
+</div>
+</div>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+const ALLOWED_EMAILS = ['seacrewagency@gmail.com', 'hola@veloiapp.com', 'veloiapp@gmail.com'];
+const app = initializeApp({
+apiKey: "AIzaSyCLvjCxWXivE-THeoPw56rPDo9PXavsIHQ",
+authDomain: "gen-lang-client-0598503352.firebaseapp.com",
+projectId: "gen-lang-client-0598503352",
+storageBucket: "gen-lang-client-0598503352.firebasestorage.app",
+messagingSenderId: "869550093470",
+appId: "1:869550093470:web:7bb6989d149af7038db78f"
+});
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Precios vigentes por plan — un solo lugar para actualizar si vuelven a cambiar.
+// "socio" es la categoría gratuita sin vencimiento (ej. SelectiveCrew) y no debe
+// contarse como ingreso real.
+const PLAN_PRICES = { avanzado: 750000, basico: 450000, socio: 0, trial: 0 };
+const PLAN_LABELS = { avanzado: 'Avanzado', basico: 'Básico', socio: 'Socio', trial: 'Trial' };
+
+function planPriceDisplay(plan) {
+  const price = PLAN_PRICES[plan];
+  if (price === undefined) return '—';
+  return price === 0 ? 'Gratis' : '$' + price.toLocaleString('es-CO');
+}
+
+onAuthStateChanged(auth, (user) => {
+if (!user || !ALLOWED_EMAILS.includes(user.email)) {
+window.location.href = 'login.html';
+} else {
+document.getElementById('userEmail').textContent = user.email;
+loadClients();
+loadBots();
+}
+});
+window.showSection = (name, el) => {
+['clients','bots','onboarding'].forEach(s => {
+document.getElementById('section-' + s).style.display = s === name ? 'block' : 'none';
+});
+document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+if (el) el.classList.add('active');
+};
+window.logout = async () => {
+await signOut(auth);
+window.location.href = 'login.html';
+};
+async function loadClients() {
+const snap = await getDocs(collection(db, 'clients'));
+const tbody = document.getElementById('clientsTable');
+const clients = [];
+snap.forEach(d => clients.push({ id: d.id, ...d.data() }));
+document.getElementById('statTotal').textContent = clients.length;
+const active = clients.filter(c => c.isActive).length;
+document.getElementById('statActive').textContent = active;
+document.getElementById('statPending').textContent = clients.filter(c => !c.isActive).length;
+// Ingresos reales: precios vigentes, y "socio" (gratuito) nunca cuenta como ingreso.
+const revenue = clients
+  .filter(c => c.isActive && !c.isTrial)
+  .reduce((sum, c) => sum + (PLAN_PRICES[c.plan] ?? 0), 0);
+document.getElementById('statRevenue').textContent = '$' + revenue.toLocaleString('es-CO');
+if (clients.length === 0) {
+tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No hay clientes aún. ¡Agrega el primero!</td></tr>';
+return;
+}
+tbody.innerHTML = clients.map(c => `
+<tr>
+<td><strong>${c.businessName || '—'}</strong><br><small style="color:#6b7280">${c.niche || ''}</small></td>
+<td>${c.contactName || '—'}<br><small style="color:#6b7280">${c.whatsapp || ''}</small></td>
+<td>${PLAN_LABELS[c.plan] || '—'}</td>
+<td><span class="badge ${c.isActive ? 'badge-active' : 'badge-pending'}">${c.isActive ? '● Activo' : '○ Pendiente'}</span></td>
+<td>${planPriceDisplay(c.plan)}</td>
+<td>
+<button class="action-btn ${c.isActive ? 'action-toggle-off' : 'action-toggle-on'}" onclick="toggleClient('${c.id}', ${c.isActive})">${c.isActive ? 'Desactivar' : 'Activar'}</button>
+<button class="action-btn action-delete" onclick="deleteClient('${c.id}')">Eliminar</button>
+</td>
+</tr>
+`).join('');
+}
+async function loadBots() {
+const snap = await getDocs(collection(db, 'bots'));
+const tbody = document.getElementById('botsTable');
+const bots = [];
+snap.forEach(d => bots.push({ id: d.id, ...d.data() }));
+if (bots.length === 0) {
+tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No hay bots configurados.</td></tr>';
+return;
+}
+tbody.innerHTML = bots.map(b => `
+<tr>
+<td><strong>${b.botName || '—'}</strong></td>
+<td><code style="font-size:12px;color:#9ca3af">${b.whatsappPhoneId || '—'}</code></td>
+<td><span class="badge ${b.isActive ? 'badge-active' : 'badge-inactive'}">${b.isActive ? '● Activo' : '○ Inactivo'}</span></td>
+<td>
+<button class="action-btn action-edit" onclick="editBot('${b.id}', '${b.botName}', \`${(b.systemPrompt||'').replace(/`/g,"'")}\`)">✏️ Editar Prompt</button>
+<button class="action-btn ${b.isActive ? 'action-toggle-off' : 'action-toggle-on'}" onclick="toggleBot('${b.id}', ${b.isActive})">${b.isActive ? 'Desactivar' : 'Activar'}</button>
+</td>
+</tr>
+`).join('');
+}
+window.toggleCheck = (id) => {
+const circle = document.querySelector("#" + id + " .check-circle");
+circle.classList.toggle("done");
+circle.textContent = circle.classList.contains("done") ? "✓" : id.replace("chk","");
+};
+window.generatePrompt = () => {
+const biz = document.getElementById("ob_bizName").value || "[Nombre del Negocio]";
+const niche = document.getElementById("ob_niche").value;
+const services = document.getElementById("ob_services").value || "[servicios]";
+const hours = document.getElementById("ob_hours").value || "[horario]";
+const location = document.getElementById("ob_location").value || "[ubicacion]";
+const prices = document.getElementById("ob_prices").value || "[precios]";
+const nicheMap = { clinica:"clinica medica", dental:"clinica dental", estetica:"clinica estetica", inmobiliaria:"inmobiliaria", salon:"salon de belleza", otro:"negocio" };
+const prompt = `Eres el asistente virtual de ${biz}, una ${nicheMap[niche] || "empresa"} en Colombia. Atiendes clientes por WhatsApp de forma calida y profesional.
+INFORMACION DEL NEGOCIO:
+- Servicios: ${services}
+- Horario: ${hours}
+- Precios de referencia: ${prices}
+- Ubicacion: ${location}
+COMO AGENDAR: Cuando el cliente quiera agendar, primero pregunta su nombre y motivo de consulta. Luego envia el link personalizado: https://cal.com/talen-crew-vnposv/15min?name=NOMBRE_DEL_CLIENTE
+REGLAS:
+- Maximo 3-4 lineas por respuesta.
+- Tono calido y colombiano (usa "con gusto", "claro que si").
+- NUNCA des diagnosticos medicos.
+- Si no sabes algo, ofrece comunicar con el equipo.
+- Siempre termina con una pregunta o invitacion a agendar.`;
+document.getElementById("ob_prompt").value = prompt;
+};
+window.createClient = async () => {
+const bizName = document.getElementById('ob_bizName').value.trim();
+const contact = document.getElementById('ob_contact').value.trim();
+const whatsapp = document.getElementById('ob_whatsapp').value.trim();
+const email = document.getElementById('ob_email').value.trim();
+const plan = document.getElementById('ob_plan').value;
+const phoneId = document.getElementById('ob_phoneId').value.trim();
+const prompt = document.getElementById('ob_prompt').value.trim();
+const niche = document.getElementById('ob_niche').value;
+const msg = document.getElementById('ob_msg');
+if (!bizName || !contact || !whatsapp || !prompt) {
+msg.style.display = 'block';
+msg.style.color = '#ef4444';
+msg.textContent = 'Por favor completa los campos obligatorios (*)';
+return;
+}
+try {
+msg.style.display = 'block';
+msg.style.color = '#fbbf24';
+msg.textContent = 'Creando cliente...';
+await addDoc(collection(db, 'clients'), {
+businessName: bizName, contactName: contact,
+whatsapp, email, plan, niche, isActive: false,
+createdAt: serverTimestamp(),
+isTrial: plan === "trial",
+trialEndsAt: plan === "trial" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null,
+});
+if (phoneId) {
+await addDoc(collection(db, 'bots'), {
+isTrial: plan === "trial",
+trialEndsAt: plan === "trial" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null,
+botName: bizName, whatsappPhoneId: phoneId,
+systemPrompt: prompt, isActive: false,
+createdAt: serverTimestamp()
+});
+}
+msg.style.color = '#25D366';
+msg.textContent = '✓ Cliente creado exitosamente. Bot configurado en Firestore.';
+['ob_bizName','ob_contact','ob_whatsapp','ob_email','ob_phoneId','ob_prompt'].forEach(id => document.getElementById(id).value = '');
+loadClients();
+loadBots();
+} catch (err) {
+msg.style.color = '#ef4444';
+msg.textContent = 'Error: ' + err.message;
+}
+};
+window.toggleClient = async (id, current) => {
+await updateDoc(doc(db, 'clients', id), { isActive: !current });
+loadClients();
+};
+window.deleteClient = async (id) => {
+if (!confirm('¿Eliminar este cliente?')) return;
+await deleteDoc(doc(db, 'clients', id));
+loadClients();
+};
+window.editBot = (id, name, prompt) => {
+document.getElementById('edit_botId').value = id;
+document.getElementById('edit_botName').value = name;
+document.getElementById('edit_prompt').value = prompt;
+document.getElementById('editBotModal').classList.add('open');
+};
+window.savePrompt = async () => {
+const id = document.getElementById('edit_botId').value;
+const prompt = document.getElementById('edit_prompt').value;
+await updateDoc(doc(db, 'bots', id), { systemPrompt: prompt });
+closeModal('editBotModal');
+loadBots();
+};
+window.toggleBot = async (id, current) => {
+await updateDoc(doc(db, 'bots', id), { isActive: !current });
+loadBots();
+};
+window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+</script>
+</body>
+</html>
