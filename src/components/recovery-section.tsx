@@ -1,81 +1,73 @@
 ﻿'use client';
 
-import { RotateCcw, CheckCircle2, ArrowRight } from 'lucide-react';
-
-const recoveryScenarios = [
-  'Prospectos que preguntaron precios de tratamientos y no continuaron.',
-  'Personas que mostraron interés pero no concluyeron la reserva.',
-  'Citas agendadas pendientes de confirmación previa.',
-  'Citas canceladas que pueden reagendarse.',
-  'Clientes antiguos que no han vuelto a agendar una valoración.',
-];
+import { Repeat, CheckCircle2 } from 'lucide-react';
 
 export function RecoverySection() {
   return (
-    <section className="py-20 bg-gradient-to-b from-slate-900/90 to-slate-950 border-y border-slate-800/80">
+    <section className="py-20 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-7">
-            <span className="text-emerald-400 font-semibold text-sm uppercase tracking-wider bg-emerald-950/60 border border-emerald-800/50 px-3 py-1 rounded-full inline-block mb-4">
-              Diferenciador Clave
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-              No solo respondas. Recupera las oportunidades que ya tienes.
-            </h2>
-            <p className="mt-4 text-slate-300 text-lg leading-relaxed">
-              Muchos prospectos preguntan, comparan opciones o dicen <em className="text-white italic">&quot;lo voy a pensar&quot;</em>. Sin seguimiento, esas conversaciones terminan olvidadas en el historial.
-            </p>
-            <p className="mt-2 text-slate-400 text-base">
-              Veloi identifica oportunidades que no terminaron de agendar y automatiza el seguimiento adecuado en el momento justo.
-            </p>
+        <div className="bg-slate-900/90 border border-emerald-500/30 rounded-3xl p-8 sm:p-12 relative overflow-hidden shadow-2xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            <div className="lg:col-span-7 space-y-6">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+                <Repeat className="w-4 h-4" />
+                Diferencial Clave
+              </span>
 
-            <blockquote className="my-6 p-4 bg-emerald-950/30 border-l-4 border-emerald-500 text-slate-200 text-sm font-medium rounded-r-lg">
-              &quot;Tu equipo responde las conversaciones nuevas. Veloi ayuda a recuperar las antiguas.&quot;
-            </blockquote>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                No solo respondas. <br className="hidden sm:inline" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200">
+                  Recupera las oportunidades que ya tienes.
+                </span>
+              </h2>
 
-            <div className="space-y-3 mt-6">
-              {recoveryScenarios.map((scen, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                  <span className="text-slate-300 text-sm">{scen}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+              <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
+                Muchos prospectos preguntan, comparan opciones o dicen &quot;lo voy a pensar&quot;. Sin seguimiento, esas conversaciones terminan olvidadas. Veloi identifica oportunidades que no terminaron de agendar y automatiza el seguimiento adecuado.
+              </p>
 
-          <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
-            <div className="absolute top-3 right-4 text-[10px] uppercase font-mono tracking-wider text-slate-500 bg-slate-800/80 px-2.5 py-1 rounded">
-              Ejemplo / Concepto
-            </div>
+              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-emerald-400 font-medium italic">
+                &ldquo;Tu equipo responde las conversaciones nuevas. Veloi ayuda a recuperar las antiguas.&rdquo;
+              </div>
 
-            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-              <RotateCcw className="w-5 h-5 text-emerald-400" />
-              Ciclo de Conversión Veloi
-            </h3>
-
-            <div className="space-y-3">
-              {[
-                { label: '1. Nuevo Prospecto Inicia Chat', desc: 'Pregunta por tratamiento/precio' },
-                { label: '2. Veloi Responde & Califica', desc: 'Suministra información e identifica interés' },
-                { label: '3. El Prospecto No Reserva', desc: 'Dice "gracias, lo voy a pensar"' },
-                { label: '4. Seguimiento Programado Veloi', desc: 'Envía un recordatorio de valor o promo' },
-                { label: '5. Oportunidad Recuperada', desc: 'El prospecto agenda su cita de valoración' },
-              ].map((step, idx) => (
-                <div key={idx} className="relative">
-                  <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-lg flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-semibold text-emerald-400">{step.label}</div>
-                      <div className="text-xs text-slate-400">{step.desc}</div>
-                    </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-sm text-slate-300">
+                {[
+                  'Prospectos que preguntaron precios',
+                  'Personas que no terminaron de agendar',
+                  'Citas pendientes de confirmación',
+                  'Citas canceladas por reprogramar',
+                  'Clientes de re-atención periódica',
+                  'Leads que dejaron de responder',
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{item}</span>
                   </div>
-                  {idx < 4 && (
-                    <div className="flex justify-center my-1">
-                      <ArrowRight className="w-4 h-4 text-slate-600 rotate-90" />
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+
+            <div className="lg:col-span-5 bg-slate-950 border border-slate-800 rounded-2xl p-6">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-400 mb-6 text-center border-b border-slate-800 pb-3">
+                Flujo de Recuperación de Oportunidades
+              </h3>
+              
+              <div className="space-y-3 font-mono text-xs">
+                {[
+                  { step: '1. Nuevo Prospecto', desc: 'Consulta inicial por WhatsApp', color: 'border-slate-800 text-slate-300' },
+                  { step: '2. Atención e Información', desc: 'Veloi aclara dudas y califica', color: 'border-slate-800 text-slate-300' },
+                  { step: '3. Pausa en Conversación', desc: 'El prospecto no confirma fecha', color: 'border-amber-500/30 text-amber-300 bg-amber-950/20' },
+                  { step: '4. Seguimiento Automático', desc: 'Veloi reactiva el interés', color: 'border-emerald-500/40 text-emerald-300 bg-emerald-950/30' },
+                  { step: '5. Cita Confirmada', desc: 'Oportunidad recuperada exitosamente', color: 'border-emerald-500 text-white bg-emerald-600/20' },
+                ].map((f, i) => (
+                  <div key={i} className={`p-3 rounded-xl border ${f.color}`}>
+                    <div className="font-bold">{f.step}</div>
+                    <div className="text-[11px] opacity-80 mt-0.5">{f.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
