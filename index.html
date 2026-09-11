@@ -1,12 +1,11 @@
-﻿<!DOCTYPE html>
+﻿Set-Content -Path "C:\TalenCrew\talencrew\index.html" -Value @'
+<!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VeloiApp | Agentes IA de WhatsApp para Negocios</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         tailwind.config = {
@@ -27,7 +26,7 @@
         }
     </script>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white min-h-screen overflow-x-hidden">
+<body class="bg-slate-900 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-white min-h-screen overflow-x-hidden">
 
     <!-- Navbar -->
     <header class="fixed top-0 left-0 right-0 w-full z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
@@ -37,7 +36,8 @@
                 <span class="text-xl font-bold tracking-tight text-white">Veloi<span class="text-emerald-400">App</span></span>
             </div>
             <nav class="hidden md:flex space-x-8 text-sm font-medium text-slate-400">
-                <a href="#features" class="hover:text-white transition-colors">Características</a>
+                <a href="#features" class="hover:text-white transition-colors">Beneficios</a>
+                <a href="#how-it-works" class="hover:text-white transition-colors">Cómo Funciona</a>
                 <a href="#demo" class="hover:text-white transition-colors">Demo en Vivo</a>
                 <a href="#use-cases" class="hover:text-white transition-colors">Casos de Uso</a>
             </nav>
@@ -53,7 +53,6 @@
         <!-- Hero Section -->
         <section class="pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
             <div class="flex flex-col lg:flex-row items-center justify-between gap-12">
-                <!-- Presentación -->
                 <div class="w-full lg:w-1/2 space-y-6 text-left">
                     <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
                         <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
@@ -63,25 +62,39 @@
                         Convierte chats de WhatsApp en <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200">Clientes Reales</span>
                     </h1>
                     <p class="text-base sm:text-lg text-slate-400 max-w-xl">
-                        Agentes conversacionales inteligentes que responden preguntas, agendan citas y cierran ventas 24/7 de forma humana y automatizada.
+                        Agentes conversacionales inteligentes entrenados con tu catálogo de servicios para calificar prospectos, resolver dudas y agendar citas 24/7 sin intervención humana.
                     </p>
-                    <div>
+                    <div class="flex flex-col sm:flex-row gap-4 pt-2">
                         <a href="#demo" class="inline-flex items-center justify-center px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-500/25 transition-all text-base">
                             <i data-lucide="message-square" class="w-5 h-5 mr-2"></i>
-                            Probar Agente Comercial
+                            Probar Demo Interactiva
                         </a>
+                        <a href="#how-it-works" class="inline-flex items-center justify-center px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl border border-slate-700 transition-all text-base">
+                            Ver Funcionamiento
+                        </a>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 pt-6 border-t border-slate-800">
+                        <div>
+                            <p class="text-2xl font-extrabold text-emerald-400">+300%</p>
+                            <p class="text-xs text-slate-400">Conversión de Leads</p>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-extrabold text-emerald-400">&lt; 5s</p>
+                            <p class="text-xs text-slate-400">Tiempo de Respuesta</p>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-extrabold text-emerald-400">24/7</p>
+                            <p class="text-xs text-slate-400">Operación Continua</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Widget Chat Demo -->
                 <div id="demo" class="w-full lg:w-1/2 flex justify-center items-center scroll-mt-24">
                     <div class="bg-slate-800/90 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden w-full max-w-md">
                         <div class="bg-slate-900 px-4 py-3 border-b border-slate-700 flex items-center justify-between">
                             <div class="flex items-center space-x-3">
                                 <div class="relative">
-                                    <div class="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold">
-                                        V
-                                    </div>
+                                    <div class="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold">V</div>
                                     <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-slate-900 rounded-full"></span>
                                 </div>
                                 <div>
@@ -92,7 +105,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div id="chat-box" class="p-4 h-80 sm:h-96 overflow-y-auto space-y-3 bg-slate-950/50 text-sm">
                             <div class="flex items-start space-x-2">
                                 <div class="bg-slate-800 text-slate-200 rounded-2xl rounded-tl-none p-3 max-w-[85%] border border-slate-700/50 shadow-sm">
@@ -100,20 +112,9 @@
                                 </div>
                             </div>
                         </div>
-
                         <form id="chat-form" class="p-3 bg-slate-900 border-t border-slate-800 flex items-center space-x-2">
-                            <input 
-                                type="text" 
-                                id="user-input"
-                                placeholder="Escribe tu consulta aquí..." 
-                                required
-                                class="flex-1 min-w-0 bg-slate-800 text-white placeholder-slate-500 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 border border-slate-700"
-                            />
-                            <button 
-                                type="submit" 
-                                id="send-btn"
-                                class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 p-3 rounded-xl transition-colors font-bold flex items-center justify-center shrink-0"
-                            >
+                            <input type="text" id="user-input" placeholder="Escribe tu consulta aquí..." required class="flex-1 min-w-0 bg-slate-800 text-white placeholder-slate-500 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 border border-slate-700" />
+                            <button type="submit" id="send-btn" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 p-3 rounded-xl transition-colors font-bold flex items-center justify-center shrink-0">
                                 <i data-lucide="send" class="w-4 h-4"></i>
                             </button>
                         </form>
@@ -122,81 +123,98 @@
             </div>
         </section>
 
-        <!-- Features Section -->
+        <!-- Features -->
         <section id="features" class="py-20 bg-slate-950/50 border-t border-b border-slate-800/80 scroll-mt-16">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center max-w-3xl mx-auto mb-16">
-                    <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Potencia las ventas de tu empresa</h2>
-                    <p class="text-slate-400">Diseñado específicamente para automatizar la atención al cliente sin perder el toque humano.</p>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Todo lo necesario para escalar tus ventas por WhatsApp</h2>
+                    <p class="text-slate-400">Automatiza la calificación de prospectos y el agendamiento sin perder el lenguaje natural y cálido de tu marca.</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/60">
-                        <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center mb-4">
-                            <i data-lucide="clock" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-white mb-2">Respuesta Inmediata 24/7</h3>
-                        <p class="text-slate-400 text-sm">Elimina tiempos de espera y atiende consultas al instante, incluso fuera de horario comercial.</p>
+                        <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center mb-4"><i data-lucide="clock" class="w-6 h-6"></i></div>
+                        <h3 class="text-xl font-bold text-white mb-2">Atención 24/7</h3>
+                        <p class="text-slate-400 text-sm">Captura y califica prospectos a cualquier hora del día, incluso fuera de jornada comercial.</p>
                     </div>
                     <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/60">
-                        <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center mb-4">
-                            <i data-lucide="calendar" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-white mb-2">Agendamiento Automático</h3>
-                        <p class="text-slate-400 text-sm">Conecta con tu calendario para programar citas y valoraciones directamente en el chat.</p>
+                        <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center mb-4"><i data-lucide="calendar" class="w-6 h-6"></i></div>
+                        <h3 class="text-xl font-bold text-white mb-2">Agendamiento de Citas</h3>
+                        <p class="text-slate-400 text-sm">Integra agendas directas para coordinar evaluaciones y consultas clínicas en el mismo chat.</p>
                     </div>
                     <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/60">
-                        <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center mb-4">
-                            <i data-lucide="zap" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-white mb-2">Integración con Gemini IA</h3>
-                        <p class="text-slate-400 text-sm">Entrenado con la información específica de tus productos para responder objeciones con precisión.</p>
+                        <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center mb-4"><i data-lucide="cpu" class="w-6 h-6"></i></div>
+                        <h3 class="text-xl font-bold text-white mb-2">Motor Gemini IA</h3>
+                        <p class="text-slate-400 text-sm">Procesamiento de lenguaje avanzado para responder preguntas complejas y objeciones de precio.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Use Cases Section -->
-        <section id="use-cases" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-16">
+        <!-- How It Works -->
+        <section id="how-it-works" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-16">
             <div class="text-center max-w-3xl mx-auto mb-16">
-                <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Adaptado a múltiples industrias</h2>
-                <p class="text-slate-400">Crea el flujo perfecto para el tipo de clientes que atiendes a diario.</p>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Implementación en 3 sencillos pasos</h2>
+                <p class="text-slate-400">Pon tu agente comercial a trabajar en WhatsApp en cuestión de minutos.</p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="p-6 bg-slate-800/40 rounded-2xl border border-slate-700 flex items-start space-x-4">
-                    <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-lg shrink-0">
-                        <i data-lucide="heart-pulse" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-white mb-1">Clínicas y Estética</h3>
-                        <p class="text-slate-400 text-sm">Resuelve dudas sobre procedimientos, paquetes de Botox, cuidados previos y agendamiento de citas.</p>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center p-6">
+                    <div class="w-14 h-14 bg-emerald-500 text-slate-950 font-black rounded-2xl flex items-center justify-center text-xl mx-auto mb-4">1</div>
+                    <h3 class="text-lg font-bold text-white mb-2">Conecta tu Número</h3>
+                    <p class="text-slate-400 text-sm">Enlaza tu línea comercial de WhatsApp Business mediante nuestra integración oficial.</p>
                 </div>
-                <div class="p-6 bg-slate-800/40 rounded-2xl border border-slate-700 flex items-start space-x-4">
-                    <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-lg shrink-0">
-                        <i data-lucide="briefcase" class="w-6 h-6"></i>
+                <div class="text-center p-6">
+                    <div class="w-14 h-14 bg-emerald-500 text-slate-950 font-black rounded-2xl flex items-center justify-center text-xl mx-auto mb-4">2</div>
+                    <h3 class="text-lg font-bold text-white mb-2">Carga tu Información</h3>
+                    <p class="text-slate-400 text-sm">Sube la información de tus productos, precios y políticas de agendamiento.</p>
+                </div>
+                <div class="text-center p-6">
+                    <div class="w-14 h-14 bg-emerald-500 text-slate-950 font-black rounded-2xl flex items-center justify-center text-xl mx-auto mb-4">3</div>
+                    <h3 class="text-lg font-bold text-white mb-2">Recibe Citas y Ventas</h3>
+                    <p class="text-slate-400 text-sm">El agente atiende a tus prospectos 24/7 y te notifica cuando se concreta una cita.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Use Cases -->
+        <section id="use-cases" class="py-20 bg-slate-950/50 border-t border-slate-800 scroll-mt-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-3xl mx-auto mb-16">
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Diseñado para sectores con alta demanda</h2>
+                    <p class="text-slate-400">Optimiza la atención en negocios donde las consultas repetitivas consumen tiempo valioso.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="p-6 bg-slate-800/40 rounded-2xl border border-slate-700 flex items-start space-x-4">
+                        <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-lg shrink-0"><i data-lucide="heart-pulse" class="w-6 h-6"></i></div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-1">Clínicas Estéticas y Salud</h3>
+                            <p class="text-slate-400 text-sm">Resuelve dudas sobre procedimientos de Botox y ácido hialurónico agendando valoraciones médicas.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-white mb-1">Servicios Profesionales</h3>
-                        <p class="text-slate-400 text-sm">Califica prospectos automáticamente y recopila información relevante antes de derivar al equipo humano.</p>
+                    <div class="p-6 bg-slate-800/40 rounded-2xl border border-slate-700 flex items-start space-x-4">
+                        <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-lg shrink-0"><i data-lucide="briefcase" class="w-6 h-6"></i></div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-1">Agencias y Servicios B2B</h3>
+                            <p class="text-slate-400 text-sm">Filtra requerimientos comerciales y transfiere contactos calificados a asesores humanos.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-slate-950 border-t border-slate-800 py-8 text-center text-slate-500 text-sm">
-        <div class="max-w-7xl mx-auto px-4">
+    <footer class="bg-slate-950 border-t border-slate-800 py-10 text-slate-500 text-sm">
+        <div class="max-w-7xl mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-7 h-7 bg-emerald-500 rounded-lg flex items-center justify-center font-bold text-slate-900">V</div>
+                <span class="text-lg font-bold text-white">Veloi<span class="text-emerald-400">App</span></span>
+            </div>
             <p>&copy; 2026 VeloiApp. Todos los derechos reservados.</p>
         </div>
     </footer>
 
-    <!-- Script de integración -->
     <script>
         lucide.createIcons();
-
         const ENDPOINT_URL = "https://us-central1-gen-lang-client-0598503352.cloudfunctions.net/liveDemoAgent";
-
         const chatBox = document.getElementById("chat-box");
         const chatForm = document.getElementById("chat-form");
         const userInput = document.getElementById("user-input");
@@ -205,15 +223,9 @@
         function appendMessage(text, isUser = false) {
             const msgContainer = document.createElement("div");
             msgContainer.className = `flex items-start space-x-2 ${isUser ? "justify-end" : ""}`;
-
             const bubble = document.createElement("div");
-            if (isUser) {
-                bubble.className = "bg-emerald-600 text-white rounded-2xl rounded-tr-none p-3 max-w-[85%] shadow-sm break-words";
-            } else {
-                bubble.className = "bg-slate-800 text-slate-200 rounded-2xl rounded-tl-none p-3 max-w-[85%] border border-slate-700/50 shadow-sm break-words";
-            }
+            bubble.className = isUser ? "bg-emerald-600 text-white rounded-2xl rounded-tr-none p-3 max-w-[85%] shadow-sm break-words" : "bg-slate-800 text-slate-200 rounded-2xl rounded-tl-none p-3 max-w-[85%] border border-slate-700/50 shadow-sm break-words";
             bubble.textContent = text;
-
             msgContainer.appendChild(bubble);
             chatBox.appendChild(msgContainer);
             chatBox.scrollTop = chatBox.scrollHeight;
@@ -223,12 +235,7 @@
             const indicator = document.createElement("div");
             indicator.id = "typing-indicator";
             indicator.className = "flex items-start space-x-2";
-            indicator.innerHTML = `
-                <div class="bg-slate-800 text-slate-400 rounded-2xl rounded-tl-none px-4 py-3 border border-slate-700/50 text-xs flex items-center space-x-1">
-                    <span>Veloi está escribiendo</span>
-                    <span class="animate-pulse">...</span>
-                </div>
-            `;
+            indicator.innerHTML = `<div class="bg-slate-800 text-slate-400 rounded-2xl rounded-tl-none px-4 py-3 border border-slate-700/50 text-xs flex items-center space-x-1"><span>Veloi está escribiendo</span><span class="animate-pulse">...</span></div>`;
             chatBox.appendChild(indicator);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
@@ -242,32 +249,22 @@
             e.preventDefault();
             const message = userInput.value.trim();
             if (!message) return;
-
             appendMessage(message, true);
             userInput.value = "";
             userInput.disabled = true;
             sendBtn.disabled = true;
-
             appendTypingIndicator();
 
             try {
                 const response = await fetch(ENDPOINT_URL, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message: message })
                 });
-
                 removeTypingIndicator();
-
-                if (!response.ok) {
-                    throw new Error(`HTTP Error: ${response.status}`);
-                }
-
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 const data = await response.json();
                 appendMessage(data.reply || "Lo siento, no pude procesar la respuesta.");
-
             } catch (error) {
                 console.error("Fetch error:", error);
                 removeTypingIndicator();
@@ -281,3 +278,4 @@
     </script>
 </body>
 </html>
+'@ -Encoding UTF8
