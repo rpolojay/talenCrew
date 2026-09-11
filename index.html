@@ -36,6 +36,7 @@
       </div>
       <div class="hidden md:flex items-center gap-8 text-sm text-slate-300 font-medium">
         <a href="#solucion" class="hover:text-emerald-400 transition-colors">¿Qué hace?</a>
+        <a href="#demo-live" class="hover:text-emerald-400 transition-colors">Demo en Vivo</a>
         <a href="#recuperacion" class="hover:text-emerald-400 transition-colors">Recuperación</a>
         <a href="#planes" class="hover:text-emerald-400 transition-colors">Planes</a>
         <a href="#faq" class="hover:text-emerald-400 transition-colors">FAQ</a>
@@ -47,7 +48,7 @@
   </nav>
 
   <!-- SECTION 1: HERO -->
-  <section class="relative py-20 lg:py-28 overflow-hidden">
+  <section class="relative py-16 lg:py-24 overflow-hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         
@@ -72,44 +73,151 @@
             <a href="https://wa.me/?text=Hola%20Veloi,%20quiero%20una%20demo%20personalizada" target="_blank" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-8 py-4 rounded-xl text-center text-base transition-all shadow-xl shadow-emerald-500/20">
               Quiero una demo personalizada
             </a>
-            <a href="#solucion" class="bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold px-8 py-4 rounded-xl text-center text-base transition-all">
-              Ver cómo funciona
+            <a href="#demo-live" class="bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold px-8 py-4 rounded-xl text-center text-base transition-all">
+              Probar Demo interactiva
             </a>
           </div>
         </div>
 
-        <!-- WHATSAPP MOCKUP -->
-        <div class="lg:col-span-5 flex justify-center">
-          <div class="w-full max-w-[360px] bg-slate-900 border-4 border-slate-800 rounded-[40px] shadow-2xl overflow-hidden">
-            <div class="bg-slate-950 px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <!-- LIVE INTERACTIVE CHAT MOCKUP -->
+        <div id="demo-live" class="lg:col-span-5 flex justify-center">
+          <div class="w-full max-w-[360px] bg-[#0b141a] border-4 border-slate-800 rounded-[38px] shadow-2xl overflow-hidden relative font-sans flex flex-col h-[520px]">
+            
+            <!-- HEADER ESTILO WHATSAPP -->
+            <div class="bg-[#202c33] px-4 py-3 flex items-center justify-between border-b border-slate-800">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center font-bold text-emerald-400 text-sm">CE</div>
+                <div class="relative">
+                  <div class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-white text-sm shadow">
+                    CE
+                  </div>
+                  <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-[#202c33] rounded-full"></span>
+                </div>
                 <div>
-                  <div class="text-sm font-bold text-white">Clínica Estética Veloi</div>
-                  <div class="text-[11px] text-emerald-400">Agente Veloi • En línea</div>
+                  <div class="text-sm font-semibold text-slate-100 flex items-center gap-1">
+                    Clínica Estética Veloi
+                    <i class="fa-solid fa-circle-check text-emerald-400 text-xs"></i>
+                  </div>
+                  <div id="bot-status" class="text-[11px] text-emerald-400 transition-all">Agente Veloi • En línea</div>
+                </div>
+              </div>
+              <div class="text-slate-400 text-xs space-x-2">
+                <i class="fa-solid fa-phone"></i>
+              </div>
+            </div>
+
+            <!-- MESSAGES CONTAINER -->
+            <div id="chat-container" class="p-4 space-y-3 bg-[#0b141a] text-xs leading-relaxed flex-1 overflow-y-auto flex flex-col bg-[radial-gradient(#111b21_1px,transparent_1px)] [background-size:16px_16px]">
+              <div class="text-center my-1">
+                <span class="bg-[#182229] text-slate-400 text-[10px] font-medium px-2.5 py-1 rounded-md uppercase tracking-wider">Hoy</span>
+              </div>
+              
+              <!-- MENSAJE INICIAL VELOI -->
+              <div class="bg-[#005c4b] text-slate-100 p-3 rounded-xl rounded-tr-none max-w-[88%] self-end shadow-sm">
+                <p>¡Hola! 👋 Bienvenido a la Clínica Estética Veloi. Soy tu asistente comercial. ¿En qué tratamiento estás interesado hoy?</p>
+                <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-emerald-200">
+                  <span>Ahora</span>
+                  <i class="fa-solid fa-check-double text-sky-400"></i>
                 </div>
               </div>
             </div>
-            <div class="p-4 space-y-3 bg-slate-950/90 text-xs min-h-[380px]">
-              <div class="bg-slate-900 text-slate-200 p-3 rounded-2xl rounded-tl-none max-w-[85%] border border-slate-800">
-                Hola 👋 Quisiera saber cuánto cuesta un tratamiento de Botox o valoración facial.
-              </div>
-              <div class="bg-emerald-950/80 text-emerald-100 p-3 rounded-2xl rounded-tr-none max-w-[88%] ml-auto border border-emerald-800/60">
-                ¡Hola! Claro que sí ✨ Con gusto te orientamos. Manejamos valoración personalizada. ¿Buscas prevenir líneas o tratar alguna zona en específico?
-              </div>
-              <div class="bg-slate-900 text-slate-200 p-3 rounded-2xl rounded-tl-none max-w-[85%] border border-slate-800">
-                Principalmente frente y entrecejo. ¿Tienen disponibilidad esta semana?
-              </div>
-              <div class="bg-emerald-950/80 text-emerald-100 p-3 rounded-2xl rounded-tr-none max-w-[88%] ml-auto border border-emerald-800/60">
-                Perfecto. Tenemos disponibilidad este Jueves a las 3:30 PM o Viernes a las 11:00 AM. ¿Cuál te conviene mejor para agendar tu cita?
-              </div>
+
+            <!-- QUICK SUGGESTIONS -->
+            <div class="px-3 py-2 bg-[#111b21] border-t border-slate-800/60 flex gap-2 overflow-x-auto text-[10px] whitespace-nowrap">
+              <button onclick="sendQuickPrompt('¿Cuánto cuesta el tratamiento de Botox?')" class="bg-[#202c33] hover:bg-[#2a3942] text-slate-300 px-2.5 py-1 rounded-full border border-slate-700/60 transition-colors">
+                ¿Precios Botox?
+              </button>
+              <button onclick="sendQuickPrompt('Quiero agendar una cita para esta semana')" class="bg-[#202c33] hover:bg-[#2a3942] text-slate-300 px-2.5 py-1 rounded-full border border-slate-700/60 transition-colors">
+                Agendar cita
+              </button>
             </div>
+
+            <!-- CHAT INPUT FORM -->
+            <form onsubmit="submitLiveMessage(event)" class="bg-[#202c33] p-2.5 flex items-center gap-2 border-t border-slate-800">
+              <input 
+                type="text" 
+                id="chat-input" 
+                placeholder="Escribe tu consulta aquí..." 
+                class="flex-1 bg-[#2a3942] rounded-full px-4 py-2 text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder-slate-400"
+                required
+              />
+              <button type="submit" class="w-8 h-8 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center font-bold transition-all shrink-0">
+                <i class="fa-solid fa-paper-plane text-xs"></i>
+              </button>
+            </form>
+
           </div>
         </div>
 
       </div>
     </div>
   </section>
+
+  <!-- SCRIPT LÓGICA CHAT EN VIVO -->
+  <script>
+    function sendQuickPrompt(promptText) {
+      document.getElementById('chat-input').value = promptText;
+      submitLiveMessage(new Event('submit'));
+    }
+
+    function submitLiveMessage(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const container = document.getElementById('chat-container');
+      const status = document.getElementById('bot-status');
+      const userText = input.value.trim();
+
+      if (!userText) return;
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      container.innerHTML += `
+        <div class="bg-[#202c33] text-slate-200 p-3 rounded-xl rounded-tl-none max-w-[85%] self-start border border-slate-800 shadow-sm">
+          <p>${escapeHtml(userText)}</p>
+          <span class="text-[9px] text-slate-400 block text-right mt-1">${timeStr}</span>
+        </div>
+      `;
+
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
+
+      status.innerText = "Escribiendo...";
+      status.classList.remove('text-emerald-400');
+      status.classList.add('text-amber-400');
+
+      setTimeout(() => {
+        let responseText = "Con gusto te ayudamos. Manejamos valoraciones personalizadas para la zona facial. ¿Te gustaría conocer la disponibilidad de horarios de la Dra. Martínez?";
+        const lower = userText.toLowerCase();
+
+        if (lower.includes('precio') || lower.includes('costo') || lower.includes('cuanto') || lower.includes('botox')) {
+          responseText = "El tratamiento de valoración e hidratación/Botox inicia desde COP $180.000 dependiendo de la zona. ¿Buscas prevenir líneas de expresión en frente o entrecejo?";
+        } else if (lower.includes('agendar') || lower.includes('cita') || lower.includes('disponibilidad') || lower.includes('semana') || lower.includes('horario')) {
+          responseText = "¡Excelente! Tenemos espacios libres este **Jueves a las 3:30 PM** o **Viernes a las 11:00 AM**. ¿Cuál te conviene mejor para agendar tu reserva?";
+        } else if (lower.includes('humano') || lower.includes('persona') || lower.includes('asesor') || lower.includes('hablar')) {
+          responseText = "Entendido. En este momento transfiero tu conversación a uno de nuestros especialistas humanos en recepción.";
+        }
+
+        container.innerHTML += `
+          <div class="bg-[#005c4b] text-slate-100 p-3 rounded-xl rounded-tr-none max-w-[88%] self-end shadow-sm">
+            <p>${responseText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>
+            <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-emerald-200">
+              <span>${timeStr}</span>
+              <i class="fa-solid fa-check-double text-sky-400"></i>
+            </div>
+          </div>
+        `;
+
+        status.innerText = "Agente Veloi • En línea";
+        status.classList.remove('text-amber-400');
+        status.classList.add('text-emerald-400');
+        container.scrollTop = container.scrollHeight;
+      }, 900);
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+  </script>
 
   <!-- SECTION 2: THE PROBLEM -->
   <section class="py-20 bg-slate-900/60 border-t border-slate-800/80">
