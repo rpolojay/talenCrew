@@ -1,12 +1,11 @@
 const { onRequest } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
 const cors = require("cors")({ origin: true });
 const { GoogleGenAI } = require("@google/genai");
 
-// Replace with your actual Gemini API Key or pass via environment variable
-const GEMINI_KEY = process.env.GEMINI_API_KEY || "AQ.Ab8RN6IulOLkjT2sJ7IBJ3-A5Ved5w3nYvLQXJreTd5Q9r9qSQ";
-const ai = new GoogleGenAI({ apiKey: GEMINI_KEY });
+const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
 
-exports.liveDemoAgent = onRequest((req, res) => {
+exports.liveDemoAgent = onRequest({ secrets: [GEMINI_API_KEY] }, (req, res) => {
   cors(req, res, async () => {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method not allowed" });
@@ -14,6 +13,7 @@ exports.liveDemoAgent = onRequest((req, res) => {
 
     try {
       const { message } = req.body;
+      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY.value() });
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
@@ -40,8 +40,8 @@ Reglas de respuesta:
       return res.status(200).json({ reply: response.text });
     } catch (error) {
       console.error("Error procesando IA:", error);
-      return res.status(200).json({ 
-        reply: "¡Hola! Claro que sí ✨ ¿Te gustaría conocer los horarios disponibles para agendar tu valoración esta semana?" 
+      return res.status(200).json({
+        reply: "¡Hola! Claro que sí ✨ ¿Te gustaría conocer los horarios disponibles para agendar tu valoración esta semana?"
       });
     }
   });

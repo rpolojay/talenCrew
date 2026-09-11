@@ -1,0 +1,14 @@
+{
+  "name": "functions",
+  "description": "Cloud Functions for VeloiApp",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "firebase-functions": "^7.3.2",
+    "@google/genai": "^2.22.0",
+    "cors": "^2.8.6"
+  },
+  "private": true
+}
