@@ -374,7 +374,7 @@
                                 <li class="flex items-start"><i data-lucide="check" class="w-4 h-4 text-pine-dark mr-2 mt-0.5 shrink-0"></i>Optimización continua</li>
                             </ul>
                         </div>
-                        <a href="#demo" class="mt-auto w-full text-center border border-pine/20 hover:bg-pine/5 text-ink font-medium py-3 rounded-xl transition-all">Solicitar demo</a>
+                        <button type="button" onclick="openDemoModal('Veloi Growth')" class="mt-auto w-full text-center border border-pine/20 hover:bg-pine/5 text-ink font-medium py-3 rounded-xl transition-all">Solicitar demo</button>
                     </div>
 
                     <!-- Veloi Revenue (featured) -->
@@ -397,7 +397,7 @@
                                 <li class="flex items-start"><i data-lucide="check" class="w-4 h-4 text-gold mr-2 mt-0.5 shrink-0"></i>Soporte prioritario</li>
                             </ul>
                         </div>
-                        <a href="#demo" class="mt-auto w-full text-center bg-pine-dark hover:bg-pine text-paper font-semibold py-3 rounded-xl transition-all">Solicitar demo</a>
+                        <button type="button" onclick="openDemoModal('Veloi Revenue')" class="mt-auto w-full text-center bg-pine-dark hover:bg-pine text-paper font-semibold py-3 rounded-xl transition-all">Solicitar demo</button>
                     </div>
                 </div>
 
@@ -472,8 +472,53 @@
         </div>
     </footer>
 
+    <!-- Modal: Solicitar Demo -->
+    <div id="demoModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background: rgba(15,61,46,0.45);" onclick="if (event.target === this) closeDemoModal()">
+        <div class="bg-white rounded-2xl border border-pine/15 w-full max-w-md p-8 relative">
+            <button type="button" onclick="closeDemoModal()" aria-label="Cerrar" class="absolute top-4 right-4 text-ink-soft hover:text-ink transition-colors">✕</button>
+            <h3 class="font-serif text-xl font-medium text-pine-dark mb-1">Solicitar demo personalizada</h3>
+            <p class="text-sm text-ink-soft mb-6">Cuéntanos un poco de tu negocio y te contactamos por WhatsApp.</p>
+            <form id="demoForm" class="space-y-4">
+                <div>
+                    <label for="demo_nombre" class="block text-xs font-medium text-ink-soft uppercase tracking-wide mb-1">Nombre *</label>
+                    <input type="text" id="demo_nombre" required class="w-full px-4 py-2.5 rounded-lg border border-pine/20 bg-paper text-ink text-sm focus:outline-none focus:border-pine" />
+                </div>
+                <div>
+                    <label for="demo_negocio" class="block text-xs font-medium text-ink-soft uppercase tracking-wide mb-1">Negocio *</label>
+                    <input type="text" id="demo_negocio" required class="w-full px-4 py-2.5 rounded-lg border border-pine/20 bg-paper text-ink text-sm focus:outline-none focus:border-pine" />
+                </div>
+                <div>
+                    <label for="demo_whatsapp" class="block text-xs font-medium text-ink-soft uppercase tracking-wide mb-1">WhatsApp *</label>
+                    <input type="tel" id="demo_whatsapp" required placeholder="+57 300 000 0000" class="w-full px-4 py-2.5 rounded-lg border border-pine/20 bg-paper text-ink text-sm focus:outline-none focus:border-pine" />
+                </div>
+                <div>
+                    <label for="demo_plan" class="block text-xs font-medium text-ink-soft uppercase tracking-wide mb-1">Plan de interés</label>
+                    <select id="demo_plan" class="w-full px-4 py-2.5 rounded-lg border border-pine/20 bg-paper text-ink text-sm focus:outline-none focus:border-pine">
+                        <option value="">Sin definir</option>
+                        <option value="Veloi Growth">Veloi Growth</option>
+                        <option value="Veloi Revenue">Veloi Revenue</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-pine-dark hover:bg-pine text-paper font-semibold py-3 rounded-xl transition-all">Continuar a WhatsApp</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Script para integración de Chat e Íconos (idéntico al de producción) -->
-    <script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+        const firebaseApp = initializeApp({
+            apiKey: "AIzaSyCLvjCxWXivE-THeoPw56rPDo9PXavsIHQ",
+            authDomain: "gen-lang-client-0598503352.firebaseapp.com",
+            projectId: "gen-lang-client-0598503352",
+            storageBucket: "gen-lang-client-0598503352.firebasestorage.app",
+            messagingSenderId: "869550093470",
+            appId: "1:869550093470:web:7bb6989d149af7038db78f"
+        });
+        const db = getFirestore(firebaseApp);
+
         lucide.createIcons();
 
         const ENDPOINT_URL = "https://us-central1-gen-lang-client-0598503352.cloudfunctions.net/liveDemoAgent";
@@ -558,6 +603,51 @@
                 sendBtn.disabled = false;
                 userInput.focus();
             }
+        });
+
+        // Modal: Solicitar Demo (precios) -> captura datos -> redirige a WhatsApp
+        const demoModal = document.getElementById("demoModal");
+        const demoForm = document.getElementById("demoForm");
+
+        window.openDemoModal = (plan) => {
+            document.getElementById("demo_plan").value = plan || "";
+            demoModal.classList.remove("hidden");
+            demoModal.classList.add("flex");
+        };
+
+        window.closeDemoModal = () => {
+            demoModal.classList.add("hidden");
+            demoModal.classList.remove("flex");
+        };
+
+        demoForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById("demo_nombre").value.trim();
+            const negocio = document.getElementById("demo_negocio").value.trim();
+            const whatsapp = document.getElementById("demo_whatsapp").value.trim();
+            const plan = document.getElementById("demo_plan").value;
+
+            try {
+                await addDoc(collection(db, "leads_landing"), {
+                    nombre,
+                    businessName: negocio,
+                    whatsapp,
+                    plan: plan || null,
+                    createdAt: serverTimestamp()
+                });
+            } catch (err) {
+                // No bloquea el contacto por WhatsApp si falla el registro del lead.
+                console.error("No se pudo guardar el lead en leads_landing:", err);
+            }
+
+            let mensaje = `Hola, soy ${nombre} de ${negocio}, quiero una demo de Veloi.`;
+            if (plan) {
+                mensaje += ` Plan de interés: ${plan}.`;
+            }
+
+            window.open(`https://wa.me/573224802976?text=${encodeURIComponent(mensaje)}`, "_blank");
+            closeDemoModal();
+            demoForm.reset();
         });
     </script>
 </body>

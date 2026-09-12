@@ -69,6 +69,14 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // leads_landing — modal "Solicitar demo" en index.html (sección de
+    // precios), sin login, mismo patrón que trial.html/onboarding_submissions:
+    // crear es público, leer/editar solo admin.
+    match /leads_landing/{leadId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
     // Cualquier otra colección no listada arriba: denegado explícitamente.
     match /{document=**} {
       allow read, write: if false;

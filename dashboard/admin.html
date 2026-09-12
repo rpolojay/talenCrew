@@ -135,6 +135,7 @@
   <nav class="nav">
     <a class="nav-item active" onclick="showSection('clients', this)">👥 Clientes</a>
     <a class="nav-item" onclick="showSection('bots', this)">🤖 Bots</a>
+    <a class="nav-item" onclick="showSection('leads-landing', this)">📥 Leads Landing</a>
     <a class="nav-item" onclick="showSection('onboarding', this)">➕ Nuevo Cliente</a>
   </nav>
   <div class="sidebar-footer">
@@ -178,6 +179,18 @@
       <table>
         <thead><tr><th>Cliente</th><th>WhatsApp Phone ID</th><th>Status</th><th>Acciones</th></tr></thead>
         <tbody id="botsTable"><tr><td colspan="4" class="empty-state">Cargando bots...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="section-leads-landing" style="display:none;">
+    <div class="page-header">
+      <div><div class="page-title">Leads Landing</div><div class="page-sub">Envíos del formulario "Solicitar demo" en la sección de precios de index.html</div></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nombre</th><th>Negocio</th><th>WhatsApp</th><th>Plan</th><th>Fecha</th><th>Acción</th></tr></thead>
+        <tbody id="leadsLandingTable"><tr><td colspan="6" class="empty-state">Cargando...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -364,11 +377,12 @@
       document.getElementById('userEmail').textContent = user.email;
       loadClients();
       loadBots();
+      loadLeadsLandingTable();
     }
   });
 
   window.showSection = (name, el) => {
-    ['clients','bots','onboarding'].forEach(s => {
+    ['clients','bots','leads-landing','onboarding'].forEach(s => {
       document.getElementById('section-' + s).style.display = s === name ? 'block' : 'none';
     });
     document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
@@ -509,6 +523,34 @@
         </td>
       </tr>
     `).join('');
+  }
+
+  async function loadLeadsLandingTable() {
+    const snap = await getDocs(collection(db, 'leads_landing'));
+    const tbody = document.getElementById('leadsLandingTable');
+    const leads = [];
+    snap.forEach(d => leads.push({ id: d.id, ...d.data() }));
+    leads.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+    if (leads.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No hay leads todavía.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = leads.map(l => {
+      const fecha = l.createdAt?.seconds ? new Date(l.createdAt.seconds * 1000).toLocaleString('es-CO') : '—';
+      const waDigits = (l.whatsapp || '').replace(/[^0-9]/g, '');
+      return `
+      <tr>
+        <td><strong>${l.nombre || '—'}</strong></td>
+        <td>${l.businessName || '—'}</td>
+        <td>${l.whatsapp || '—'}</td>
+        <td>${l.plan || '—'}</td>
+        <td style="white-space:nowrap">${fecha}</td>
+        <td>${waDigits ? `<a href="https://wa.me/${waDigits}" target="_blank" rel="noopener" class="step-link">Contactar →</a>` : '—'}</td>
+      </tr>
+    `;
+    }).join('');
   }
 
 
