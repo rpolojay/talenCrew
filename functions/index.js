@@ -12,12 +12,19 @@ exports.liveDemoAgent = onRequest({ secrets: [GEMINI_API_KEY] }, (req, res) => {
     }
 
     try {
-      const { message } = req.body;
+      const { message, history } = req.body;
       const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY.value() });
+
+      const contents = Array.isArray(history) && history.length > 0
+        ? history.map((turn) => ({
+            role: turn.role === "model" ? "model" : "user",
+            parts: [{ text: turn.text }],
+          }))
+        : [{ role: "user", parts: [{ text: message }] }];
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
-        contents: message,
+        contents,
         config: {
           systemInstruction: `
 Eres Veloi, el Agente Comercial de IA en WhatsApp para la 'Clínica Estética Veloi'.
