@@ -4,20 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VeloiApp — Mi Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --green: #25D366;
-      --green-dark: #1da85c;
-      --bg: #0f1117;
-      --card: #1a1d27;
-      --border: #2a2d3a;
-      --text: #fff;
-      --muted: #6b7280;
-      --danger: #ef4444;
-      --warning: #fbbf24;
+      --pine: #0F3D2E;
+      --pine-dark: #0A2B20;
+      --gold: #C89B3C;
+      --sage: #DCE9DE;
+      --paper: #FAF6EF;
+      --card: #FFFFFF;
+      --border: rgba(15,61,46,0.14);
+      --text: #1B1F1C;
+      --muted: #4A524C;
+      --danger: #B3423A;
+      --warning: #C89B3C;
     }
-    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--paper); color: var(--text); }
 
     /* TOPBAR */
     .topbar {
@@ -25,8 +29,8 @@
       padding: 14px 20px; display: flex; align-items: center;
       justify-content: space-between; position: sticky; top: 0; z-index: 50;
     }
-    .topbar-logo { font-size: 18px; font-weight: 800; }
-    .topbar-logo span { color: var(--green); }
+    .topbar-logo { font-size: 18px; font-weight: 600; font-family: 'Fraunces', serif; color: var(--pine-dark); }
+    .topbar-logo span { color: var(--gold); }
     .topbar-right { display: flex; align-items: center; gap: 12px; }
     .topbar-email { font-size: 12px; color: var(--muted); }
     .btn-logout { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; }
@@ -34,7 +38,7 @@
     /* NAV TABS */
     .tabs { display: flex; gap: 4px; padding: 16px 20px 0; border-bottom: 1px solid var(--border); overflow-x: auto; }
     .tab { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
-    .tab.active { color: var(--green); border-bottom-color: var(--green); }
+    .tab.active { color: var(--pine); border-bottom-color: var(--pine); }
 
     /* MAIN */
     .main { padding: 20px; max-width: 1000px; margin: 0 auto; }
@@ -44,25 +48,25 @@
     @media (min-width: 600px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
     .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
     .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-    .stat-value { font-size: 28px; font-weight: 700; }
-    .stat-sub { font-size: 11px; color: var(--green); margin-top: 4px; }
+    .stat-value { font-size: 28px; font-weight: 500; font-family: 'Fraunces', serif; color: var(--pine-dark); }
+    .stat-sub { font-size: 11px; color: var(--pine); margin-top: 4px; }
 
     /* BOT STATUS */
     .bot-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-    .bot-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .bot-info h3 { font-size: 16px; font-weight: 600; font-family: 'Fraunces', serif; color: var(--pine-dark); margin-bottom: 4px; }
     .bot-info p { font-size: 13px; color: var(--muted); }
     .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; }
-    .badge-active { background: rgba(37,211,102,0.15); color: var(--green); }
-    .badge-inactive { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .badge-active { background: rgba(15,61,46,0.1); color: var(--pine-dark); }
+    .badge-inactive { background: rgba(179,66,58,0.12); color: var(--danger); }
 
     /* TABLE */
-    .section-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+    .section-title { font-size: 17px; font-weight: 500; font-family: 'Fraunces', serif; color: var(--pine-dark); margin-bottom: 12px; }
     .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; min-width: 500px; }
     th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
-    td { padding: 12px 14px; font-size: 13px; color: #d1d5db; border-bottom: 1px solid #1f2230; }
+    td { padding: 12px 14px; font-size: 13px; color: var(--text); border-bottom: 1px solid var(--border); }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #1f2230; }
+    tr:hover td { background: #F3F0E8; }
     .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
 
     /* CONVERSATION BUBBLE */
@@ -72,8 +76,8 @@
     .conv-time { font-size: 11px; color: var(--muted); }
     .bubble-row { display: flex; flex-direction: column; gap: 6px; }
     .bubble { padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.5; max-width: 85%; }
-    .bubble-user { background: #2a2d3a; color: #d1d5db; align-self: flex-start; border-bottom-left-radius: 4px; }
-    .bubble-bot { background: rgba(37,211,102,0.12); color: #d1fae5; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .bubble-user { background: var(--sage); color: var(--pine-dark); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .bubble-bot { background: #fff; border: 1px solid var(--border); color: var(--text); align-self: flex-end; border-bottom-right-radius: 4px; }
     .bubble-label { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
     .bubble-user-wrap { align-self: flex-start; }
     .bubble-bot-wrap { align-self: flex-end; text-align: right; }
@@ -81,10 +85,10 @@
     /* LOGIN */
     .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
     .login-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 400px; text-align: center; }
-    .login-logo { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+    .login-logo { font-size: 26px; font-weight: 600; font-family: 'Fraunces', serif; color: var(--pine-dark); margin-bottom: 6px; }
     .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
-    .btn-google { width: 100%; padding: 13px; background: #fff; color: #1a1d27; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: inherit; }
-    .btn-google:hover { background: #f3f4f6; }
+    .btn-google { width: 100%; padding: 13px; background: #fff; color: var(--text); border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: inherit; }
+    .btn-google:hover { background: #F3F0E8; }
     .login-error { margin-top: 14px; font-size: 13px; color: var(--danger); display: none; }
 
     /* HIDDEN */
@@ -100,19 +104,20 @@
       padding: 12px 14px; border-bottom: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
       font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+      color: var(--pine-dark);
     }
     .funnel-col-count {
-      background: var(--border); color: var(--muted); font-size: 11px; font-weight: 700;
+      background: var(--sage); color: var(--pine-dark); font-size: 11px; font-weight: 700;
       padding: 2px 8px; border-radius: 100px;
     }
     .funnel-col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 80px; flex: 1; }
-    .funnel-col-body.drag-over { background: rgba(37,211,102,0.06); }
+    .funnel-col-body.drag-over { background: rgba(15,61,46,0.06); }
     .funnel-card {
-      background: #22252f; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--paper); border: 1px solid var(--border); border-radius: 10px;
       padding: 10px 12px; cursor: grab; font-size: 12.5px;
     }
     .funnel-card:active { cursor: grabbing; }
-    .funnel-card-name { font-weight: 700; margin-bottom: 3px; }
+    .funnel-card-name { font-weight: 700; margin-bottom: 3px; color: var(--text); }
     .funnel-card-phone { color: var(--muted); font-size: 11px; }
     .funnel-empty { color: var(--muted); font-size: 11.5px; text-align: center; padding: 16px 8px; }
 </style>
@@ -122,7 +127,7 @@
 <!-- LOGIN -->
 <div id="loginView" class="login-wrap">
   <div class="login-card">
-    <div class="login-logo">Veloi<span style="color:var(--green)">App</span></div>
+    <div class="login-logo">Veloi<span style="color:var(--gold)">App</span></div>
     <div class="login-sub">Portal de Cliente · Accede con tu cuenta</div>
     <button class="btn-google" onclick="signIn()">
       <svg width="16" height="16" viewBox="0 0 48 48">
@@ -159,12 +164,12 @@
     <!-- OVERVIEW -->
     <div id="tab-overview">
       <!-- TRIAL BANNER -->
-      <div id="trialBanner" style="background: linear-gradient(135deg, #1a2e1a, #1a2d27); border: 1px solid #25D366; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div id="trialBanner" style="background: linear-gradient(135deg, #FFFDF7, #FBF3E1); border: 1px solid #C89B3C; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
         <div>
-          <div style="font-size: 13px; font-weight: 700; color: #25D366; margin-bottom: 4px;">🎉 Trial Activo — 7 días gratis</div>
-          <div style="font-size: 12px; color: #9ca3af;" id="trialDaysLeft">Calculando días restantes...</div>
+          <div style="font-size: 13px; font-weight: 700; color: #A87F2E; margin-bottom: 4px;">🎉 Trial Activo — 7 días gratis</div>
+          <div style="font-size: 12px; color: #4A524C;" id="trialDaysLeft">Calculando días restantes...</div>
         </div>
-        <a href="https://wa.me/573224802976?text=Hola%2C%20quiero%20contratar%20VeloiApp" target="_blank" style="background: #25D366; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none;">Contratar Plan</a>
+        <a href="https://wa.me/573224802976?text=Hola%2C%20quiero%20contratar%20VeloiApp" target="_blank" style="background: #0F3D2E; color: #FAF6EF; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none;">Contratar Plan</a>
       </div>
       <div id="botStatusCard" class="bot-card">
         <div class="bot-info">
@@ -338,8 +343,8 @@
         el.textContent = "Te quedan " + daysLeft + " dia(s) de prueba gratuita.";
       } else {
         el.textContent = "Tu trial ha finalizado. Contrata un plan para continuar.";
-        document.getElementById("trialBanner").style.borderColor = "#ef4444";
-        document.getElementById("trialBanner").style.background = "linear-gradient(135deg, #2e1a1a, #2d1a1a)";
+        document.getElementById("trialBanner").style.borderColor = "#B3423A";
+        document.getElementById("trialBanner").style.background = "linear-gradient(135deg, #FBEDEA, #F7E2DE)";
       }
     } else if (clientData.isTrial) {
       el.textContent = "Tu asistente está en proceso de activación. El conteo de 7 días comienza cuando esté conectado a WhatsApp.";
@@ -389,7 +394,7 @@
           <div class="conv-card" onclick="showConversation('${c.userPhone}', '${c.userName || c.userPhone}', convs)" style="cursor:pointer;" title="Ver conversacion completa">
             <div class="conv-header">
               <span class="conv-name">📱 ${c.userName || c.userPhone || '—'}</span>
-              <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:11px; color:#25D366;">Ver todo →</span><span class="conv-time">${ts}</span></span>
+              <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:11px; color:#0F3D2E;">Ver todo →</span><span class="conv-time">${ts}</span></span>
             </div>
             <div class="bubble-row">
               <div class="bubble-user-wrap"><div class="bubble-label">Usuario</div><div class="bubble bubble-user">${c.userMessage || '—'}</div></div>
@@ -479,7 +484,7 @@
                 <div class="funnel-card-name">${l.userName || 'Sin nombre'}</div>
                 <div class="funnel-card-phone">${l.userPhone || '—'}</div>
               </div>
-              <button onclick="event.stopPropagation(); deleteLead('${l.id}', '${safeName}')" title="Borrar lead" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:var(--danger); font-size:12px; font-weight:700; cursor:pointer; line-height:1; padding:4px 7px; border-radius:6px; flex-shrink:0;">🗑</button>
+              <button onclick="event.stopPropagation(); deleteLead('${l.id}', '${safeName}')" title="Borrar lead" style="background:rgba(179,66,58,0.12); border:1px solid rgba(179,66,58,0.3); color:var(--danger); font-size:12px; font-weight:700; cursor:pointer; line-height:1; padding:4px 7px; border-radius:6px; flex-shrink:0;">🗑</button>
             </div>
           </div>
         `;
@@ -571,12 +576,12 @@
       const ts = c.timestamp?.seconds ? new Date(c.timestamp.seconds * 1000).toLocaleTimeString("es-CO", {hour:"2-digit",minute:"2-digit"}) : "";
       return `
         <div style="align-self:flex-start; max-width:85%;">
-          <div style="font-size:10px; color:#6b7280; margin-bottom:3px;">Usuario · ${ts}</div>
-          <div style="background:#2a2d3a; color:#d1d5db; padding:10px 14px; border-radius:12px; border-bottom-left-radius:4px; font-size:13px; line-height:1.5;">${c.userMessage || "—"}</div>
+          <div style="font-size:10px; color:#4A524C; margin-bottom:3px;">Usuario · ${ts}</div>
+          <div style="background:#DCE9DE; color:#0A2B20; padding:10px 14px; border-radius:12px; border-bottom-left-radius:4px; font-size:13px; line-height:1.5;">${c.userMessage || "—"}</div>
         </div>
         <div style="align-self:flex-end; max-width:85%; text-align:right;">
-          <div style="font-size:10px; color:#6b7280; margin-bottom:3px;">Bot · ${ts}</div>
-          <div style="background:rgba(37,211,102,0.12); color:#d1fae5; padding:10px 14px; border-radius:12px; border-bottom-right-radius:4px; font-size:13px; line-height:1.5;">${c.botReply || "—"}</div>
+          <div style="font-size:10px; color:#4A524C; margin-bottom:3px;">Bot · ${ts}</div>
+          <div style="background:#FFFFFF; border:1px solid rgba(15,61,46,0.14); color:#1B1F1C; padding:10px 14px; border-radius:12px; border-bottom-right-radius:4px; font-size:13px; line-height:1.5;">${c.botReply || "—"}</div>
         </div>`;
     }).join("");
     document.getElementById("convModal").style.display = "block";
@@ -585,11 +590,11 @@
 
 
 <!-- MODAL CONVERSACION COMPLETA -->
-<div id="convModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; padding:20px; overflow-y:auto;">
-  <div style="background:#1a1d27; border:1px solid #2a2d3a; border-radius:16px; max-width:600px; margin:0 auto; padding:24px;">
+<div id="convModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,61,46,0.45); z-index:1000; padding:20px; overflow-y:auto;">
+  <div style="background:#FFFFFF; border:1px solid rgba(15,61,46,0.14); border-radius:16px; max-width:600px; margin:0 auto; padding:24px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-      <div style="font-size:15px; font-weight:700;" id="modalTitle">Conversacion</div>
-      <button onclick="document.getElementById('convModal').style.display='none'" style="background:none; border:none; color:#6b7280; font-size:20px; cursor:pointer;">✕</button>
+      <div style="font-size:16px; font-weight:600; font-family:'Fraunces',serif; color:#0A2B20;" id="modalTitle">Conversacion</div>
+      <button onclick="document.getElementById('convModal').style.display='none'" style="background:none; border:none; color:#4A524C; font-size:20px; cursor:pointer;">✕</button>
     </div>
     <div id="modalMessages" style="display:flex; flex-direction:column; gap:10px;"></div>
   </div>
