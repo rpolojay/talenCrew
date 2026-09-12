@@ -323,8 +323,10 @@
     { key: 'confirmarPlan', label: 'Confirmar plan e intención del cliente' },
     { key: 'recopilarInfo', label: 'Recopilar información completa del negocio' },
     { key: 'phoneNumberId', label: 'Obtener Phone Number ID desde Meta', url: 'https://business.facebook.com' },
-    { key: 'crearClients', label: 'Crear documento en clients', url: 'https://console.firebase.google.com/project/gen-lang-client-0598503352/firestore/data' },
-    { key: 'crearBots', label: 'Crear documento en bots con system prompt', url: 'https://console.firebase.google.com/project/gen-lang-client-0598503352/firestore/data' },
+    { key: 'crearClients', label: 'Crear documento en clients', url: 'https://console.firebase.google.com/project/gen-lang-client-0598503352/firestore/data',
+      notes: ['Colección: clients', 'businessName', 'contactName', 'whatsapp', 'email', 'plan', 'niche', 'isActive: false'] },
+    { key: 'crearBots', label: 'Crear documento en bots con system prompt', url: 'https://console.firebase.google.com/project/gen-lang-client-0598503352/firestore/data',
+      notes: ['Colección: bots', 'botName (debe coincidir con businessName del cliente)', 'whatsappPhoneId', 'systemPrompt', 'isActive', 'isTrial'] },
     { key: 'revisarTono', label: 'Revisar y ajustar tono del prompt' },
     { key: 'mensajePrueba', label: 'Enviar mensaje de prueba' },
     { key: 'confirmarAgendamiento', label: 'Confirmar enlace de agendamiento' },
@@ -422,7 +424,14 @@
     checklistEl.innerHTML = ONBOARDING_STEPS.map((step, i) => `
       <div class="check-item">
         <div class="check-circle ${steps[step.key] ? 'done' : ''}" onclick="toggleOnboardingStep('${clientId}', '${step.key}', ${!steps[step.key]})">${steps[step.key] ? '✓' : i + 1}</div>
-        <div><div class="check-title">${step.label}${step.url ? ` <a href="${step.url}" target="_blank" rel="noopener" class="step-link">Abrir →</a>` : ''}</div></div>
+        <div>
+          <div class="check-title">${step.label}${step.url ? ` <a href="${step.url}" target="_blank" rel="noopener" class="step-link">Abrir →</a>` : ''}</div>
+          ${step.notes ? `
+          <div style="font-size: 11px; color: #4A524C; margin-top: 8px; margin-bottom: 4px;">CAMPOS A LLENAR</div>
+          <div style="font-size: 12px; color: #4A524C; line-height: 1.6;">
+            ${step.notes.map((n, idx) => (idx + 1) + '. ' + n).join('<br/>')}
+          </div>` : ''}
+        </div>
       </div>
     `).join('');
     const done = ONBOARDING_STEPS.filter(s => steps[s.key]).length;
