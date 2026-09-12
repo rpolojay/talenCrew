@@ -4,89 +4,103 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VeloiApp — Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #0f1117; color: #fff; }
+    :root {
+      --pine: #0F3D2E;
+      --pine-dark: #0A2B20;
+      --gold: #C89B3C;
+      --sage: #DCE9DE;
+      --paper: #FAF6EF;
+      --card: #FFFFFF;
+      --border: rgba(15,61,46,0.14);
+      --text: #1B1F1C;
+      --muted: #4A524C;
+      --danger: #B3423A;
+    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--paper); color: var(--text); }
     .sidebar {
       position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
-      background: #1a1d27; border-right: 1px solid #2a2d3a;
+      background: var(--card); border-right: 1px solid var(--border);
       display: flex; flex-direction: column; padding: 24px 0;
     }
-    .sidebar-logo { font-size: 20px; font-weight: 800; color: #fff; padding: 0 24px 24px; border-bottom: 1px solid #2a2d3a; }
-    .sidebar-logo span { color: #25D366; }
+    .sidebar-logo { font-size: 20px; font-weight: 600; font-family: 'Fraunces', serif; color: var(--pine-dark); padding: 0 24px 24px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo span { color: var(--gold); }
     .nav { padding: 16px 12px; flex: 1; }
     .nav-item {
       display: flex; align-items: center; gap: 10px;
       padding: 10px 12px; border-radius: 8px;
-      font-size: 14px; font-weight: 500; color: #9ca3af;
+      font-size: 14px; font-weight: 500; color: var(--muted);
       cursor: pointer; transition: all 0.15s; margin-bottom: 4px;
       text-decoration: none;
     }
-    .nav-item:hover { background: #2a2d3a; color: #fff; }
-    .nav-item.active { background: #25D366; color: #fff; }
-    .sidebar-footer { padding: 16px 24px; border-top: 1px solid #2a2d3a; font-size: 12px; color: #6b7280; }
+    .nav-item:hover { background: rgba(15,61,46,0.06); color: var(--pine-dark); }
+    .nav-item.active { background: var(--pine-dark); color: var(--paper); }
+    .sidebar-footer { padding: 16px 24px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
     .btn-logout {
       display: flex; align-items: center; gap: 8px;
-      font-size: 13px; color: #ef4444; cursor: pointer;
+      font-size: 13px; color: var(--danger); cursor: pointer;
       background: none; border: none; font-family: inherit;
       padding: 8px 0; margin-top: 8px;
     }
     .main { margin-left: 240px; padding: 32px; min-height: 100vh; }
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
-    .page-title { font-size: 24px; font-weight: 700; }
-    .page-sub { font-size: 14px; color: #6b7280; margin-top: 4px; }
+    .page-title { font-size: 24px; font-weight: 500; font-family: 'Fraunces', serif; color: var(--pine-dark); }
+    .page-sub { font-size: 14px; color: var(--muted); margin-top: 4px; }
     .btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
-    .btn-primary { background: #25D366; color: #fff; }
-    .btn-primary:hover { background: #1da85c; }
+    .btn-primary { background: var(--pine-dark); color: var(--paper); }
+    .btn-primary:hover { background: var(--pine); }
     .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
-    .stat-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 12px; padding: 20px; }
-    .stat-label { font-size: 12px; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-value { font-size: 32px; font-weight: 700; color: #fff; }
-    .stat-change { font-size: 12px; color: #25D366; margin-top: 4px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .stat-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 32px; font-weight: 500; font-family: 'Fraunces', serif; color: var(--pine-dark); }
+    .stat-change { font-size: 12px; color: var(--pine); margin-top: 4px; }
     .section { margin-bottom: 32px; }
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .section-title { font-size: 16px; font-weight: 700; }
-    .table-wrap { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 12px; overflow: hidden; }
+    .section-title { font-size: 17px; font-weight: 500; font-family: 'Fraunces', serif; color: var(--pine-dark); }
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
     table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; padding: 12px 16px; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #2a2d3a; }
-    td { padding: 14px 16px; font-size: 14px; color: #d1d5db; border-bottom: 1px solid #1f2230; }
+    th { text-align: left; padding: 12px 16px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    td { padding: 14px 16px; font-size: 14px; color: var(--text); border-bottom: 1px solid var(--border); }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #1f2230; }
+    tr:hover td { background: #F3F0E8; }
     .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; }
-    .badge-active { background: rgba(37,211,102,0.15); color: #25D366; }
-    .badge-inactive { background: rgba(239,68,68,0.15); color: #ef4444; }
-    .badge-pending { background: rgba(251,191,36,0.15); color: #fbbf24; }
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
+    .badge-active { background: rgba(15,61,46,0.1); color: var(--pine-dark); }
+    .badge-inactive { background: rgba(179,66,58,0.12); color: var(--danger); }
+    .badge-pending { background: rgba(200,155,60,0.15); color: var(--gold); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,61,46,0.45); display: none; align-items: center; justify-content: center; z-index: 100; }
     .modal-overlay.open { display: flex; }
-    .modal { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 16px; padding: 32px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
-    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 24px; }
+    .modal { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+    .modal-title { font-size: 18px; font-weight: 600; font-family: 'Fraunces', serif; color: var(--pine-dark); margin-bottom: 24px; }
     .form-group { margin-bottom: 16px; }
-    label { display: block; font-size: 12px; font-weight: 600; color: #9ca3af; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-    input, textarea, select { width: 100%; padding: 10px 14px; background: #0f1117; border: 1px solid #2a2d3a; border-radius: 8px; font-size: 14px; color: #fff; font-family: inherit; outline: none; }
-    input:focus, textarea:focus, select:focus { border-color: #25D366; }
+    label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input, textarea, select { width: 100%; padding: 10px 14px; background: var(--paper); border: 1px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text); font-family: inherit; outline: none; }
+    input:focus, textarea:focus, select:focus { border-color: var(--pine); }
     textarea { resize: vertical; min-height: 120px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .check-item { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
-    .check-circle { width: 28px; height: 28px; border-radius: 50%; background: #2a2d3a; border: 2px solid #3a3d4a; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
-    .check-circle.done { background: #25D366; border-color: #25D366; color: #fff; }
-    .check-title { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 2px; }
-    .check-sub { font-size: 11px; color: #6b7280; line-height: 1.4; }
+    .check-circle { width: 28px; height: 28px; border-radius: 50%; background: var(--paper); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--muted); cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
+    .check-circle.done { background: var(--pine-dark); border-color: var(--pine-dark); color: var(--paper); }
+    .check-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .check-sub { font-size: 11px; color: var(--muted); line-height: 1.4; }
     .modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
-    .btn-cancel { background: #2a2d3a; color: #9ca3af; }
-    .btn-cancel:hover { background: #343748; }
-    .empty-state { text-align: center; padding: 48px; color: #6b7280; font-size: 14px; }
+    .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    .btn-cancel:hover { background: rgba(15,61,46,0.05); }
+    .empty-state { text-align: center; padding: 48px; color: var(--muted); font-size: 14px; }
     .action-btn { background: none; border: none; cursor: pointer; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-family: inherit; }
-    .action-edit { color: #60a5fa; background: rgba(96,165,250,0.1); }
-    .action-delete { color: #ef4444; background: rgba(239,68,68,0.1); margin-left: 4px; }
-    .action-toggle-on { color: #25D366; background: rgba(37,211,102,0.1); }
-    .action-toggle-off { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .action-edit { color: var(--muted); background: rgba(74,82,76,0.08); }
+    .action-delete { color: var(--danger); background: rgba(179,66,58,0.12); margin-left: 4px; }
+    .action-toggle-on { color: var(--pine-dark); background: rgba(15,61,46,0.1); }
+    .action-toggle-off { color: var(--gold); background: rgba(200,155,60,0.15); }
     @media (max-width: 768px) {
   .sidebar {
     position: fixed; bottom: 0; top: auto;
     left: 0; right: 0; width: 100%;
     height: 60px; flex-direction: row;
     padding: 0; border-right: none;
-    border-top: 1px solid #2a2d3a;
+    border-top: 1px solid var(--border);
     z-index: 100;
   }
   .sidebar-logo { display: none; }
@@ -173,8 +187,8 @@
     <div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start;">
 
       <!-- FORMULARIO -->
-      <div style="background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 16px; padding: 32px;">
-        <div style="font-size: 13px; font-weight: 700; color: #25D366; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">Informacion del Negocio</div>
+      <div style="background: #FFFFFF; border: 1px solid rgba(15,61,46,0.14); border-radius: 16px; padding: 32px;">
+        <div style="font-size: 13px; font-weight: 700; color: #C89B3C; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">Informacion del Negocio</div>
         <div class="form-group"><label>Nombre del Negocio *</label><input type="text" id="ob_bizName" placeholder="Ej: Clinica Dental Sonrisa" oninput="generatePrompt()" /></div>
         <div class="form-row">
           <div class="form-group"><label>Contacto *</label><input type="text" id="ob_contact" placeholder="Nombre del dueno" /></div>
@@ -200,8 +214,8 @@
         </div>
         <div class="form-group"><label>Precios de referencia</label><input type="text" id="ob_prices" placeholder="Consulta $50.000, Limpieza $120.000" oninput="generatePrompt()" /></div>
 
-        <div style="border-top: 1px solid #2a2d3a; margin: 20px 0;"></div>
-        <div style="font-size: 13px; font-weight: 700; color: #25D366; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">Configuracion Tecnica</div>
+        <div style="border-top: 1px solid rgba(15,61,46,0.14); margin: 20px 0;"></div>
+        <div style="font-size: 13px; font-weight: 700; color: #C89B3C; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">Configuracion Tecnica</div>
         <div class="form-row">
           <div class="form-group"><label>Plan</label>
             <select id="ob_plan">
@@ -219,8 +233,8 @@
       </div>
 
       <!-- CHECKLIST -->
-      <div style="background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 16px; padding: 24px; position: sticky; top: 24px;">
-        <div style="font-size: 13px; font-weight: 700; color: #25D366; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">Checklist Onboarding</div>
+      <div style="background: #FFFFFF; border: 1px solid rgba(15,61,46,0.14); border-radius: 16px; padding: 24px; position: sticky; top: 24px;">
+        <div style="font-size: 13px; font-weight: 700; color: #C89B3C; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">Checklist Onboarding</div>
         <div id="checklist">
           <div class="check-item" id="chk1">
             <div class="check-circle" onclick="toggleCheck('chk1')">1</div>
@@ -243,9 +257,9 @@
             <div><div class="check-title">Seguimiento dia 3 y dia 7</div><div class="check-sub">Reporte de conversaciones y propuesta de contrato</div></div>
           </div>
         </div>
-        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #2a2d3a;">
-          <div style="font-size: 11px; color: #6b7280; margin-bottom: 8px;">INSTRUCCIONES META</div>
-          <div style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(15,61,46,0.14);">
+          <div style="font-size: 11px; color: #4A524C; margin-bottom: 8px;">INSTRUCCIONES META</div>
+          <div style="font-size: 12px; color: #4A524C; line-height: 1.6;">
             1. business.facebook.com<br/>
             2. Configuracion → Cuentas WhatsApp<br/>
             3. Agregar numero → Verificar con SMS<br/>
@@ -333,8 +347,8 @@
 
     tbody.innerHTML = clients.map(c => `
       <tr>
-        <td><strong>${c.businessName || '—'}</strong><br><small style="color:#6b7280">${c.niche || ''}</small></td>
-        <td>${c.contactName || '—'}<br><small style="color:#6b7280">${c.whatsapp || ''}</small></td>
+        <td><strong>${c.businessName || '—'}</strong><br><small style="color:#4A524C">${c.niche || ''}</small></td>
+        <td>${c.contactName || '—'}<br><small style="color:#4A524C">${c.whatsapp || ''}</small></td>
         <td>${c.plan === 'avanzado' ? 'Avanzado' : 'Básico'}</td>
         <td><span class="badge ${c.isActive ? 'badge-active' : 'badge-pending'}">${c.isActive ? '● Activo' : '○ Pendiente'}</span></td>
         <td>${c.plan === 'avanzado' ? '$550.000' : '$350.000'}</td>
@@ -360,7 +374,7 @@
     tbody.innerHTML = bots.map(b => `
       <tr>
         <td><strong>${b.botName || '—'}</strong></td>
-        <td><code style="font-size:12px;color:#9ca3af">${b.whatsappPhoneId || '—'}</code></td>
+        <td><code style="font-size:12px;color:#4A524C">${b.whatsappPhoneId || '—'}</code></td>
         <td><span class="badge ${b.isActive ? 'badge-active' : 'badge-inactive'}">${b.isActive ? '● Activo' : '○ Inactivo'}</span></td>
         <td>
           <button class="action-btn action-edit" onclick="editBot('${b.id}', '${b.botName}', \`${(b.systemPrompt||'').replace(/`/g,"'")}\`)">✏️ Editar Prompt</button>
@@ -416,14 +430,14 @@ REGLAS:
 
     if (!bizName || !contact || !whatsapp || !prompt) {
       msg.style.display = 'block';
-      msg.style.color = '#ef4444';
+      msg.style.color = '#B3423A';
       msg.textContent = 'Por favor completa los campos obligatorios (*)';
       return;
     }
 
     try {
       msg.style.display = 'block';
-      msg.style.color = '#fbbf24';
+      msg.style.color = '#C89B3C';
       msg.textContent = 'Creando cliente...';
 
       await addDoc(collection(db, 'clients'), {
@@ -444,13 +458,13 @@ REGLAS:
         });
       }
 
-      msg.style.color = '#25D366';
+      msg.style.color = '#0F3D2E';
       msg.textContent = '✓ Cliente creado exitosamente. Bot configurado en Firestore.';
       ['ob_bizName','ob_contact','ob_whatsapp','ob_email','ob_phoneId','ob_prompt'].forEach(id => document.getElementById(id).value = '');
       loadClients();
       loadBots();
     } catch (err) {
-      msg.style.color = '#ef4444';
+      msg.style.color = '#B3423A';
       msg.textContent = 'Error: ' + err.message;
     }
   };
