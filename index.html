@@ -307,6 +307,57 @@
                         <p class="text-sm font-medium text-ink-soft">Oportunidades recuperadas</p>
                     </div>
                 </div>
+
+                <!-- Pipeline / Kanban interactivo (demo, sin conexión a Firestore) -->
+                <div id="pipeline-demo" class="scroll-mt-24 mt-16">
+                    <div class="text-center max-w-2xl mx-auto mb-2">
+                        <h3 class="text-xl sm:text-2xl font-serif font-medium text-pine-dark mb-2">Pipeline visual de prospectos</h3>
+                        <p class="text-sm text-ink-soft mb-3">Arrastra las tarjetas entre columnas para probar cómo funciona.</p>
+                        <span class="inline-block px-3 py-1 rounded-full border border-gold/50 text-xs font-medium text-gold">Ejemplo de dashboard · Datos de demostración</span>
+                    </div>
+
+                    <div class="flex justify-center mt-4">
+                        <button type="button" onclick="resetPipelineDemo()" class="text-xs font-medium text-pine-dark hover:text-pine transition-colors underline decoration-pine/30 underline-offset-2">Restablecer ejemplo</button>
+                    </div>
+
+                    <div class="flex gap-4 overflow-x-auto pb-2 mt-6">
+                        <div class="bg-white border border-pine/15 rounded-2xl min-w-[220px] flex-1 flex flex-col" data-stage="nuevo">
+                            <div class="px-4 py-3 border-b border-pine/15 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-pine-dark">
+                                <span>🆕 Nuevo</span>
+                                <span class="bg-sage text-pine-dark text-[11px] font-bold px-2 py-0.5 rounded-full" id="kanban-count-nuevo">0</span>
+                            </div>
+                            <div class="p-2.5 flex flex-col gap-2 min-h-[100px] flex-1 transition-colors" id="kanban-col-nuevo"></div>
+                        </div>
+                        <div class="bg-white border border-pine/15 rounded-2xl min-w-[220px] flex-1 flex flex-col" data-stage="calificado">
+                            <div class="px-4 py-3 border-b border-pine/15 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-pine-dark">
+                                <span>✅ Calificado</span>
+                                <span class="bg-sage text-pine-dark text-[11px] font-bold px-2 py-0.5 rounded-full" id="kanban-count-calificado">0</span>
+                            </div>
+                            <div class="p-2.5 flex flex-col gap-2 min-h-[100px] flex-1 transition-colors" id="kanban-col-calificado"></div>
+                        </div>
+                        <div class="bg-white border border-pine/15 rounded-2xl min-w-[220px] flex-1 flex flex-col" data-stage="cita_agendada">
+                            <div class="px-4 py-3 border-b border-pine/15 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-pine-dark">
+                                <span>📅 Cita Agendada</span>
+                                <span class="bg-sage text-pine-dark text-[11px] font-bold px-2 py-0.5 rounded-full" id="kanban-count-cita_agendada">0</span>
+                            </div>
+                            <div class="p-2.5 flex flex-col gap-2 min-h-[100px] flex-1 transition-colors" id="kanban-col-cita_agendada"></div>
+                        </div>
+                        <div class="bg-white border border-pine/15 rounded-2xl min-w-[220px] flex-1 flex flex-col" data-stage="convertido">
+                            <div class="px-4 py-3 border-b border-pine/15 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-pine-dark">
+                                <span>💰 Convertido</span>
+                                <span class="bg-sage text-pine-dark text-[11px] font-bold px-2 py-0.5 rounded-full" id="kanban-count-convertido">0</span>
+                            </div>
+                            <div class="p-2.5 flex flex-col gap-2 min-h-[100px] flex-1 transition-colors" id="kanban-col-convertido"></div>
+                        </div>
+                        <div class="bg-white border border-pine/15 rounded-2xl min-w-[220px] flex-1 flex flex-col" data-stage="perdido">
+                            <div class="px-4 py-3 border-b border-pine/15 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-pine-dark">
+                                <span>❌ Perdido</span>
+                                <span class="bg-sage text-pine-dark text-[11px] font-bold px-2 py-0.5 rounded-full" id="kanban-count-perdido">0</span>
+                            </div>
+                            <div class="p-2.5 flex flex-col gap-2 min-h-[100px] flex-1 transition-colors" id="kanban-col-perdido"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -380,7 +431,7 @@
                                 <li class="flex items-start"><i data-lucide="check" class="w-4 h-4 text-pine-dark mr-2 mt-0.5 shrink-0"></i>Agendamiento de citas</li>
                                 <li class="flex items-start"><i data-lucide="check" class="w-4 h-4 text-pine-dark mr-2 mt-0.5 shrink-0"></i>Seguimiento automático</li>
                                 <li class="flex items-start"><i data-lucide="check" class="w-4 h-4 text-pine-dark mr-2 mt-0.5 shrink-0"></i>Transferencia a un humano</li>
-                                <li class="flex items-start"><i data-lucide="check" class="w-4 h-4 text-pine-dark mr-2 mt-0.5 shrink-0"></i>Dashboard con pipeline visual de prospectos (Kanban: Nuevo → Calificado → Cita Agendada → Convertido → Perdido)</li>
+                                <li class="flex items-start"><i data-lucide="check" class="w-4 h-4 text-pine-dark mr-2 mt-0.5 shrink-0"></i><a href="#pipeline-demo" class="text-pine-dark hover:text-pine transition-colors underline decoration-pine/30 hover:decoration-pine underline-offset-2">Dashboard con pipeline visual de prospectos</a>&nbsp;(Kanban: Nuevo → Calificado → Cita Agendada → Convertido → Perdido)</li>
                                 <li class="flex items-start"><i data-lucide="check" class="w-4 h-4 text-pine-dark mr-2 mt-0.5 shrink-0"></i>Optimización continua</li>
                             </ul>
                         </div>
@@ -690,6 +741,70 @@
             closeDemoModal();
             demoForm.reset();
         });
+
+        // Pipeline / Kanban interactivo en la sección "Producto Preview" — puramente
+        // de demostración: datos fijos en memoria, drag-and-drop 100% en el navegador,
+        // nada se guarda ni se envía a Firestore ni a ningún backend.
+        const PIPELINE_STAGES = ["nuevo", "calificado", "cita_agendada", "convertido", "perdido"];
+        const PIPELINE_DEMO_SEED = [
+            { id: "1", name: "María Fernanda", phone: "+57 300 123 4567", stage: "nuevo" },
+            { id: "2", name: "Carlos Ruiz", phone: "+57 301 456 7890", stage: "nuevo" },
+            { id: "3", name: "Andrea López", phone: "+57 302 555 1122", stage: "calificado" },
+            { id: "4", name: "Juliana Torres", phone: "+57 315 888 3344", stage: "cita_agendada" },
+            { id: "5", name: "Pedro Gómez", phone: "+57 320 777 9988", stage: "convertido" },
+            { id: "6", name: "Sofía Martínez", phone: "+57 318 222 6655", stage: "perdido" },
+        ];
+        let pipelineDemoLeads = PIPELINE_DEMO_SEED.map((l) => ({ ...l }));
+
+        function renderPipelineDemo() {
+            PIPELINE_STAGES.forEach((stage) => {
+                const col = document.getElementById("kanban-col-" + stage);
+                const count = document.getElementById("kanban-count-" + stage);
+                const items = pipelineDemoLeads.filter((l) => l.stage === stage);
+                count.textContent = items.length;
+                col.innerHTML = items.length
+                    ? items.map((l) => `
+                        <div class="bg-paper border border-pine/15 rounded-xl px-3 py-2.5 text-xs cursor-grab active:cursor-grabbing" draggable="true" data-lead-id="${l.id}">
+                            <div class="font-semibold text-ink mb-0.5">${l.name}</div>
+                            <div class="text-ink-soft text-[11px]">${l.phone}</div>
+                        </div>
+                    `).join("")
+                    : `<div class="text-ink-soft/60 text-xs text-center py-6">Sin prospectos aquí</div>`;
+            });
+            attachPipelineDragEvents();
+        }
+
+        function attachPipelineDragEvents() {
+            document.querySelectorAll("#pipeline-demo [data-lead-id]").forEach((card) => {
+                card.addEventListener("dragstart", (e) => {
+                    e.dataTransfer.setData("text/plain", card.dataset.leadId);
+                    e.dataTransfer.effectAllowed = "move";
+                });
+            });
+            PIPELINE_STAGES.forEach((stage) => {
+                const colBody = document.getElementById("kanban-col-" + stage);
+                colBody.addEventListener("dragover", (e) => {
+                    e.preventDefault();
+                    colBody.classList.add("bg-sage/40");
+                });
+                colBody.addEventListener("dragleave", () => colBody.classList.remove("bg-sage/40"));
+                colBody.addEventListener("drop", (e) => {
+                    e.preventDefault();
+                    colBody.classList.remove("bg-sage/40");
+                    const leadId = e.dataTransfer.getData("text/plain");
+                    const lead = pipelineDemoLeads.find((l) => l.id === leadId);
+                    if (lead) lead.stage = stage;
+                    renderPipelineDemo();
+                });
+            });
+        }
+
+        window.resetPipelineDemo = () => {
+            pipelineDemoLeads = PIPELINE_DEMO_SEED.map((l) => ({ ...l }));
+            renderPipelineDemo();
+        };
+
+        renderPipelineDemo();
     </script>
 </body>
 </html>
