@@ -55,6 +55,7 @@
                 <a href="#how-it-works" class="hover:text-pine-dark transition-colors">Cómo Funciona</a>
                 <a href="#demo" class="hover:text-pine-dark transition-colors">Demo</a>
                 <a href="#use-cases" class="hover:text-pine-dark transition-colors">Casos de Uso</a>
+                <a href="#calculadora" class="hover:text-pine-dark transition-colors">Calculadora</a>
                 <a href="#industria" class="hover:text-pine-dark transition-colors">Clínicas</a>
                 <a href="#experiencia-real" class="hover:text-pine-dark transition-colors">Experiencia Real</a>
                 <a href="#planes" class="hover:text-pine-dark transition-colors">Precios</a>
@@ -80,7 +81,7 @@
                         Convierte chats de WhatsApp en Clientes Reales
                     </h1>
                     <p class="text-base sm:text-lg text-ink-soft max-w-xl">
-                        Agentes conversacionales inteligentes entrenados con tu catálogo de servicios para calificar prospectos, resolver dudas y agendar citas 24/7 sin intervención humana.
+                        Veloi responde, califica, hace seguimiento y ayuda a convertir tus prospectos de WhatsApp en citas y clientes, 24/7 — y transfiere a una persona de tu equipo cuando la conversación lo requiere.
                     </p>
 
                     <div class="flex flex-col sm:flex-row gap-4 pt-2">
@@ -411,6 +412,55 @@
             </div>
         </section>
 
+        <!-- Calculadora de Oportunidades Perdidas -->
+        <section id="calculadora" class="py-20 border-t border-pine/15 scroll-mt-16">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-2xl mx-auto mb-12">
+                    <h2 class="text-3xl sm:text-4xl font-serif font-medium text-pine-dark mb-4">¿Cuánto te cuesta perder oportunidades por WhatsApp?</h2>
+                    <p class="text-ink-soft">Usa tus propios números para estimar cuánto valor podría estar quedándose fuera de tus conversaciones.</p>
+                </div>
+
+                <div class="bg-white border border-pine/15 rounded-2xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <!-- Inputs -->
+                    <div class="space-y-6">
+                        <div>
+                            <label for="calc-inquiries" class="block text-sm font-medium text-pine-dark mb-2">Consultas de WhatsApp al mes</label>
+                            <input type="number" id="calc-inquiries" min="0" step="1" value="100"
+                                class="w-full px-4 py-2.5 rounded-lg border border-pine/20 bg-paper text-ink text-sm focus:outline-none focus:border-pine" />
+                        </div>
+                        <div>
+                            <label for="calc-lost-pct" class="block text-sm font-medium text-pine-dark mb-2">% estimado de consultas sin seguimiento</label>
+                            <div class="flex items-center gap-3">
+                                <input type="range" id="calc-lost-pct" min="0" max="100" step="1" value="10" class="flex-1 accent-pine-dark" />
+                                <span id="calc-lost-pct-value" class="text-sm font-medium text-pine-dark w-12 text-right">10%</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="calc-customer-value" class="block text-sm font-medium text-pine-dark mb-2">Valor promedio de un cliente (COP)</label>
+                            <input type="number" id="calc-customer-value" min="0" step="10000" value="800000"
+                                class="w-full px-4 py-2.5 rounded-lg border border-pine/20 bg-paper text-ink text-sm focus:outline-none focus:border-pine" />
+                        </div>
+                    </div>
+
+                    <!-- Output -->
+                    <div class="bg-sage/40 rounded-xl p-6 flex flex-col justify-center">
+                        <p class="text-xs font-medium text-ink-soft uppercase tracking-wide mb-1">Oportunidades sin seguimiento (estimado)</p>
+                        <p id="calc-opportunities" class="text-2xl font-serif font-medium text-pine-dark mb-5">10</p>
+
+                        <p class="text-xs font-medium text-ink-soft uppercase tracking-wide mb-1">Valor estimado de esas oportunidades</p>
+                        <p id="calc-value" class="text-3xl font-serif font-medium text-pine-dark mb-5">COP $8.000.000</p>
+
+                        <div class="pt-4 border-t border-pine-dark/15">
+                            <p class="text-xs font-medium text-ink-soft uppercase tracking-wide mb-1">Veloi Growth: COP $699.000 / mes</p>
+                            <p id="calc-breakeven" class="text-sm text-ink-soft">Necesitarías recuperar aproximadamente 1 cliente de COP $800.000 para cubrir el costo mensual del plan.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-center text-xs text-ink-soft/70 mt-6 max-w-2xl mx-auto">Estimación orientativa basada en los datos que ingresaste. No representa una garantía de resultados de VeloiApp. Los cálculos se hacen en tu navegador y no se guardan ni se envían a ningún lugar.</p>
+            </div>
+        </section>
+
         <!-- Pricing Section -->
         <section id="planes" class="py-20 border-t border-pine/15 scroll-mt-16">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -423,7 +473,7 @@
                     <div class="bg-white rounded-2xl border border-pine/15 p-8 flex flex-col">
                         <div>
                             <h3 class="text-lg font-semibold text-pine-dark mb-1">Veloi Growth</h3>
-                            <p class="text-sm text-ink-soft mb-6">Para negocios que quieren automatizar la atención y conversión de prospectos por WhatsApp.</p>
+                            <p class="text-sm text-ink-soft mb-6">Para negocios que quieren automatizar la atención, calificación, seguimiento y agendamiento de prospectos por WhatsApp.</p>
                             <div class="mb-6">
                                 <span class="text-3xl font-serif font-medium text-pine-dark">COP $699.000</span>
                                 <span class="text-sm text-ink-soft"> / mes</span>
@@ -448,7 +498,7 @@
                         <span class="absolute -top-3 left-6 bg-gold text-white text-xs font-medium px-3 py-1 rounded-full">Más popular</span>
                         <div>
                             <h3 class="text-lg font-semibold text-pine-dark mb-1">Veloi Revenue</h3>
-                            <p class="text-sm text-ink-soft mb-6">Para negocios con mayor volumen de prospectos y necesidades comerciales más avanzadas.</p>
+                            <p class="text-sm text-ink-soft mb-6">Para negocios con mayor volumen de prospectos que necesitan recuperación de oportunidades y seguimiento comercial más avanzado.</p>
                             <div class="mb-6">
                                 <span class="text-3xl font-serif font-medium text-pine-dark">COP $1.200.000</span>
                                 <span class="text-sm text-ink-soft"> / mes</span>
@@ -502,7 +552,7 @@
                     </div>
                     <div class="py-6">
                         <h3 class="font-serif text-lg text-pine-dark mb-2">¿Qué pasa si Veloi no sabe responder?</h3>
-                        <p class="text-ink-soft/70 text-sm italic">[Completar según comportamiento real — normalmente: deriva la conversación a una persona del equipo.]</p>
+                        <p class="text-ink-soft text-sm">Si la pregunta está fuera de lo que Veloi tiene configurado (por ejemplo, temas médicos específicos o algo fuera de tratamientos, precios o disponibilidad), no improvisa una respuesta — le indica al usuario que un miembro del equipo hará seguimiento personalmente.</p>
                     </div>
                     <div class="py-6">
                         <h3 class="font-serif text-lg text-pine-dark mb-2">¿Puede transferir una conversación a una persona?</h3>
@@ -810,6 +860,49 @@
         };
 
         renderPipelineDemo();
+
+        // Calculadora de oportunidades perdidas — puramente de estimación en el
+        // navegador: no envía ni guarda ningún dato ingresado por el usuario.
+        const GROWTH_PLAN_PRICE = 699000;
+        const copFormatter = new Intl.NumberFormat("es-CO", {
+            style: "currency",
+            currency: "COP",
+            maximumFractionDigits: 0,
+        });
+
+        const calcInquiries = document.getElementById("calc-inquiries");
+        const calcLostPct = document.getElementById("calc-lost-pct");
+        const calcLostPctValue = document.getElementById("calc-lost-pct-value");
+        const calcCustomerValue = document.getElementById("calc-customer-value");
+        const calcOpportunities = document.getElementById("calc-opportunities");
+        const calcValue = document.getElementById("calc-value");
+        const calcBreakeven = document.getElementById("calc-breakeven");
+
+        function updateCalculator() {
+            const inquiries = Math.max(0, Number(calcInquiries.value) || 0);
+            const lostPct = Math.min(100, Math.max(0, Number(calcLostPct.value) || 0));
+            const customerValue = Math.max(0, Number(calcCustomerValue.value) || 0);
+
+            calcLostPctValue.textContent = lostPct + "%";
+
+            const missedOpportunities = Math.round(inquiries * (lostPct / 100));
+            const missedValue = missedOpportunities * customerValue;
+
+            calcOpportunities.textContent = missedOpportunities.toLocaleString("es-CO");
+            calcValue.textContent = copFormatter.format(missedValue);
+
+            if (customerValue > 0) {
+                const clientsToBreakeven = Math.ceil(GROWTH_PLAN_PRICE / customerValue);
+                calcBreakeven.textContent = `Necesitarías recuperar aproximadamente ${clientsToBreakeven} cliente${clientsToBreakeven === 1 ? "" : "s"} de ${copFormatter.format(customerValue)} para cubrir el costo mensual del plan.`;
+            } else {
+                calcBreakeven.textContent = "Ingresa un valor de cliente para calcular cuántos necesitarías recuperar.";
+            }
+        }
+
+        [calcInquiries, calcLostPct, calcCustomerValue].forEach((input) => {
+            input.addEventListener("input", updateCalculator);
+        });
+        updateCalculator();
     </script>
 </body>
 </html>
