@@ -665,6 +665,27 @@
             phoneFrame.classList.remove("demo-highlight");
         });
 
+        // Escapa el texto como si fuera a insertarse con textContent (previene
+        // XSS), devolviendo el HTML equivalente para poder luego envolver URLs
+        // en <a> sin arriesgar el resto del mensaje.
+        function escapeHtml(str) {
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Convierte URLs http(s) dentro de un texto YA escapado en enlaces
+        // clickeables. Opera sobre el HTML escapado (nunca sobre texto crudo),
+        // así que no reintroduce riesgo de inyección.
+        function linkify(escapedText) {
+            return escapedText.replace(/https?:\/\/[^\s<>"']+/g, (rawUrl) => {
+                const trailing = rawUrl.match(/[.,;:!?)\]]+$/);
+                const suffix = trailing ? trailing[0] : "";
+                const url = suffix ? rawUrl.slice(0, -suffix.length) : rawUrl;
+                return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="underline decoration-current/40 hover:decoration-current break-all">${url}</a>${suffix}`;
+            });
+        }
+
         function appendMessage(text, isUser = false) {
             const msgContainer = document.createElement("div");
             msgContainer.className = `flex items-start space-x-2 ${isUser ? "justify-end" : ""}`;
@@ -675,7 +696,7 @@
             } else {
                 bubble.className = "bg-white text-ink rounded-2xl rounded-tl-none p-3 max-w-[85%] border border-pine/10 shadow-sm break-words";
             }
-            bubble.textContent = text;
+            bubble.innerHTML = linkify(escapeHtml(text));
 
             msgContainer.appendChild(bubble);
             chatBox.appendChild(msgContainer);
