@@ -9,7 +9,16 @@
       ".firebaserc",
       "README.md",
       "prompts.md",
-      "**/.*"
+      "**/.*",
+      ".git/**",
+      "**/node_modules/**",
+      "functions/**",
+      "src/**",
+      "package.json",
+      "package-lock.json",
+      "*.md",
+      "*.docx",
+      "*.txt"
     ],
     "rewrites": [
       {
