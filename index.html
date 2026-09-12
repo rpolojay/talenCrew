@@ -31,6 +31,16 @@
             }
         }
     </script>
+    <style>
+        @keyframes demo-highlight-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(200, 155, 60, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(200, 155, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(200, 155, 60, 0); }
+        }
+        .demo-highlight {
+            animation: demo-highlight-pulse 1.4s ease-out;
+        }
+    </style>
 </head>
 <body class="bg-paper text-ink font-sans antialiased min-h-screen flex flex-col justify-between overflow-x-hidden">
 
@@ -38,17 +48,17 @@
     <header class="sticky top-0 left-0 right-0 w-full z-50 bg-paper/95 backdrop-blur-md border-b border-pine/15">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-2 shrink-0">
-                <span class="text-xl font-serif font-semibold text-pine-dark">Veloi<span class="text-gold">App</span></span>
+                <a href="#" class="text-xl font-serif font-semibold text-pine-dark">Veloi<span class="text-gold">App</span></a>
             </div>
-            <nav class="hidden md:flex space-x-8 text-sm text-ink-soft">
+            <nav class="hidden md:flex space-x-10 text-sm text-ink-soft">
                 <a href="#features" class="hover:text-pine-dark transition-colors">Beneficios</a>
                 <a href="#how-it-works" class="hover:text-pine-dark transition-colors">Cómo Funciona</a>
-                <a href="#demo" class="hover:text-pine-dark transition-colors">Demo en Vivo</a>
+                <a href="#demo" class="hover:text-pine-dark transition-colors">Demo</a>
                 <a href="#use-cases" class="hover:text-pine-dark transition-colors">Casos de Uso</a>
-                <a href="#industria" class="hover:text-pine-dark transition-colors">Clínicas Estéticas</a>
+                <a href="#industria" class="hover:text-pine-dark transition-colors">Clínicas</a>
                 <a href="#experiencia-real" class="hover:text-pine-dark transition-colors">Experiencia Real</a>
                 <a href="#planes" class="hover:text-pine-dark transition-colors">Precios</a>
-                <a href="#faq" class="hover:text-pine-dark transition-colors">Preguntas Frecuentes</a>
+                <a href="#faq" class="hover:text-pine-dark transition-colors">Preguntas</a>
             </nav>
             <div class="shrink-0">
                 <a href="#demo" class="bg-pine-dark hover:bg-pine text-paper px-4 py-2 rounded-lg font-medium text-sm transition-all">
@@ -102,7 +112,7 @@
 
                 <!-- Live Chat Demo Widget (tilted phone frame) -->
                 <div id="demo" class="w-full lg:w-1/2 flex justify-center items-center scroll-mt-24">
-                    <div class="bg-pine-dark rounded-[28px] p-3.5 w-full max-w-[320px] shadow-[0_24px_48px_rgba(15,61,46,0.25)] rotate-0 lg:-rotate-[1.5deg]">
+                    <div id="phone-frame" class="bg-pine-dark rounded-[28px] p-3.5 w-full max-w-[320px] shadow-[0_24px_48px_rgba(15,61,46,0.25)] rotate-0 lg:-rotate-[1.5deg]">
                         <div class="bg-white rounded-[18px] overflow-hidden">
                             <div class="bg-pine px-4 py-3.5 flex items-center space-x-3">
                                 <div class="w-9 h-9 bg-sage rounded-full flex items-center justify-center text-pine-dark font-serif font-semibold text-sm shrink-0">
@@ -527,6 +537,28 @@
         const chatForm = document.getElementById("chat-form");
         const userInput = document.getElementById("user-input");
         const sendBtn = document.getElementById("send-btn");
+        const phoneFrame = document.getElementById("phone-frame");
+
+        // Al hacer clic en cualquier botón "#demo" (hero, nav, precios), el scroll
+        // nativo a veces es casi imperceptible en desktop porque el widget ya está
+        // a la vista junto al botón. Para que quede claro que la acción funcionó,
+        // enfocamos el input del chat y agregamos un resaltado breve alrededor del
+        // teléfono. El retraso deja que el scroll suave (scroll-smooth) termine
+        // primero, para no pelear con el auto-scroll que algunos navegadores hacen
+        // al enfocar un input.
+        document.querySelectorAll('a[href="#demo"]').forEach((link) => {
+            link.addEventListener("click", () => {
+                setTimeout(() => {
+                    userInput.focus();
+                    phoneFrame.classList.remove("demo-highlight");
+                    void phoneFrame.offsetWidth; // fuerza reflow para poder re-disparar la animación
+                    phoneFrame.classList.add("demo-highlight");
+                }, 500);
+            });
+        });
+        phoneFrame.addEventListener("animationend", () => {
+            phoneFrame.classList.remove("demo-highlight");
+        });
 
         function appendMessage(text, isUser = false) {
             const msgContainer = document.createElement("div");
