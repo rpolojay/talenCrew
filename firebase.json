@@ -1,4 +1,7 @@
 {
+  "firestore": {
+    "rules": "firestore.rules"
+  },
   "functions": {
     "source": "functions"
   },
@@ -18,7 +21,8 @@
       "package-lock.json",
       "*.md",
       "*.docx",
-      "*.txt"
+      "*.txt",
+      "*.rules"
     ],
     "rewrites": [
       {

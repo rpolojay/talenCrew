@@ -1,0 +1,77 @@
+rules_version = '2';
+
+// ============================================================================
+// TODO antes del primer cliente real:
+// `bots`, `conversations` y `leads` hoy permiten lectura a CUALQUIER usuario
+// autenticado (no solo al dueño del negocio) — ver los comentarios en cada
+// `match` abajo. Esto es aceptable únicamente mientras todos los datos sean
+// de prueba. Antes de dar acceso a un cliente real hay que restringir esas
+// lecturas para que cada cliente solo vea sus propios datos, por ejemplo
+// guardando un `ownerEmail` (o el ID del documento de `clients`) en cada
+// bot/conversación/lead y comparándolo contra request.auth.token.email.
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null &&
+        request.auth.token.email in [
+          'seacrewagency@gmail.com',
+          'hola@veloiapp.com',
+          'veloiapp@gmail.com'
+        ];
+    }
+
+    // clients — creación pública SOLO para registro de trial (trial.html).
+    // Lectura: el admin ve todo; un cliente autenticado solo su propio
+    // documento (necesario para que client.html pueda encontrarlo por email).
+    match /clients/{clientId} {
+      allow create: if (request.resource.data.isTrial == true) || isAdmin();
+      allow read: if isAdmin() ||
+        (request.auth != null && request.auth.token.email == resource.data.email);
+      allow update, delete: if isAdmin();
+    }
+
+    // bots — mismo patrón de creación que clients (trial.html crea ambos
+    // a la vez). Lectura abierta a cualquier autenticado — TODO arriba:
+    // falta aislar por dueño antes de tener clientes reales.
+    match /bots/{botId} {
+      allow create: if (request.resource.data.isTrial == true) || isAdmin();
+      allow read: if request.auth != null;
+      allow update, delete: if isAdmin();
+    }
+
+    // conversations — nadie crea aquí hoy (ni liveDemoAgent ni ningún HTML
+    // del repo lo hace), así que create/update/delete quedan solo para
+    // admin. Lectura abierta a cualquier autenticado — TODO arriba.
+    match /conversations/{convId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // leads — igual que conversations, EXCEPTO update/delete: client.html
+    // los usa activamente (drag-and-drop del embudo, botón de borrar), así
+    // que se quedan abiertos a cualquier autenticado para no romper esa
+    // función — solo "create" se restringe a admin (nada los crea hoy).
+    // Lectura abierta a cualquier autenticado — TODO arriba.
+    match /leads/{leadId} {
+      allow read: if request.auth != null;
+      allow create: if isAdmin();
+      allow update, delete: if request.auth != null;
+    }
+
+    // onboarding_submissions — formulario público de intake (onboarding.html),
+    // sin login. Mismo criterio que trial.html: crear es público, leer/editar
+    // solo admin.
+    match /onboarding_submissions/{subId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Cualquier otra colección no listada arriba: denegado explícitamente.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
