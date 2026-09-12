@@ -80,6 +80,8 @@
     input:focus, textarea:focus, select:focus { border-color: var(--pine); }
     textarea { resize: vertical; min-height: 120px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .step-link { color: var(--pine-dark); font-weight: 600; font-size: 12px; text-decoration: none; }
+    .step-link:hover { text-decoration: underline; }
     .check-item { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
     .check-circle { width: 28px; height: 28px; border-radius: 50%; background: var(--paper); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--muted); cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
     .check-circle.done { background: var(--pine-dark); border-color: var(--pine-dark); color: var(--paper); }
@@ -320,9 +322,9 @@
   const ONBOARDING_STEPS = [
     { key: 'confirmarPlan', label: 'Confirmar plan e intención del cliente' },
     { key: 'recopilarInfo', label: 'Recopilar información completa del negocio' },
-    { key: 'phoneNumberId', label: 'Obtener Phone Number ID desde Meta' },
-    { key: 'crearClients', label: 'Crear documento en clients' },
-    { key: 'crearBots', label: 'Crear documento en bots con system prompt' },
+    { key: 'phoneNumberId', label: 'Obtener Phone Number ID desde Meta', url: 'https://business.facebook.com' },
+    { key: 'crearClients', label: 'Crear documento en clients', url: 'https://console.firebase.google.com/project/gen-lang-client-0598503352/firestore/data' },
+    { key: 'crearBots', label: 'Crear documento en bots con system prompt', url: 'https://console.firebase.google.com/project/gen-lang-client-0598503352/firestore/data' },
     { key: 'revisarTono', label: 'Revisar y ajustar tono del prompt' },
     { key: 'mensajePrueba', label: 'Enviar mensaje de prueba' },
     { key: 'confirmarAgendamiento', label: 'Confirmar enlace de agendamiento' },
@@ -420,7 +422,7 @@
     checklistEl.innerHTML = ONBOARDING_STEPS.map((step, i) => `
       <div class="check-item">
         <div class="check-circle ${steps[step.key] ? 'done' : ''}" onclick="toggleOnboardingStep('${clientId}', '${step.key}', ${!steps[step.key]})">${steps[step.key] ? '✓' : i + 1}</div>
-        <div><div class="check-title">${step.label}</div></div>
+        <div><div class="check-title">${step.label}${step.url ? ` <a href="${step.url}" target="_blank" rel="noopener" class="step-link">Abrir →</a>` : ''}</div></div>
       </div>
     `).join('');
     const done = ONBOARDING_STEPS.filter(s => steps[s.key]).length;
