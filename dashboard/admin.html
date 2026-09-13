@@ -278,7 +278,13 @@
             1. business.facebook.com<br/>
             2. Configuracion → Cuentas WhatsApp<br/>
             3. Agregar numero → Verificar con SMS<br/>
-            4. Copiar Phone Number ID
+            4. Copiar Phone Number ID<br/>
+            5. Copiar el Access Token (temporal para pruebas, o permanente vía System User para producción)<br/>
+            6. Copiar el App Secret (Configuración → Básica → "Secreto de la aplicación")<br/>
+            7. Configurar la Callback URL del webhook: https://us-central1-gen-lang-client-0598503352.cloudfunctions.net/whatsappWebhook<br/>
+            8. Ingresar el Verify Token acordado (debe coincidir exactamente con el guardado como secreto WHATSAPP_VERIFY_TOKEN)<br/>
+            9. Suscribirse al campo "messages" en la configuración de Webhooks<br/>
+            10. Confirmar que el bot correspondiente existe en Firestore (colección bots) con el whatsappPhoneId correcto y isActive: true
           </div>
         </div>
         <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(15,61,46,0.14);">
@@ -304,7 +310,7 @@
         </div>
         <div id="onboardingProgressBar" style="display:none; margin: 20px 0 24px; max-width: 420px;">
           <div style="display:flex; justify-content:space-between; font-size:12px; color:#4A524C; margin-bottom:6px;">
-            <span>Progreso</span><span id="progressText">0 / 12</span>
+            <span>Progreso</span><span id="progressText">0 / 15</span>
           </div>
           <div style="background: #FAF6EF; border: 1px solid rgba(15,61,46,0.14); border-radius: 100px; height: 8px; overflow:hidden;">
             <div id="progressFill" style="background: #0A2B20; height: 100%; width: 0%; transition: width 0.2s;"></div>
@@ -344,6 +350,9 @@
     { key: 'confirmarPlan', label: 'Confirmar plan e intención del cliente' },
     { key: 'recopilarInfo', label: 'Recopilar información completa del negocio' },
     { key: 'phoneNumberId', label: 'Obtener Phone Number ID desde Meta', url: 'https://business.facebook.com' },
+    { key: 'verificacionNegocioMeta', label: 'Iniciar verificación de negocio en Meta, si no está hecha (puede tardar varios días)' },
+    { key: 'accessTokenPermanente', label: 'Generar Access Token permanente vía System User' },
+    { key: 'configurarWebhookMeta', label: 'Configurar Webhook (Callback URL + Verify Token + suscripción a "messages") — solo la primera vez, no por cada cliente si comparten la misma App de Meta' },
     { key: 'crearClients', label: 'Crear documento en clients', url: 'https://console.firebase.google.com/project/gen-lang-client-0598503352/firestore/data',
       notes: ['Colección: clients', 'businessName', 'contactName', 'whatsapp', 'email', 'plan', 'niche', 'isActive: false'] },
     { key: 'crearBots', label: 'Crear documento en bots con system prompt', url: 'https://console.firebase.google.com/project/gen-lang-client-0598503352/firestore/data',
