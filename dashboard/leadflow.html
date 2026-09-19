@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VeloiApp — LeadFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --pine: #0F3D2E;
+      --pine-dark: #0A2B20;
+      --gold: #C89B3C;
+      --sage: #DCE9DE;
+      --paper: #FAF6EF;
+      --card: #FFFFFF;
+      --border: rgba(15,61,46,0.14);
+      --text: #1B1F1C;
+      --muted: #4A524C;
+      --danger: #B3423A;
+      --warning: #C89B3C;
+    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--paper); color: var(--text); }
+
+    /* TOPBAR */
+    .topbar {
+      background: var(--card); border-bottom: 1px solid var(--border);
+      padding: 14px 20px; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 50;
+      flex-wrap: wrap; gap: 10px;
+    }
+    .topbar-logo { font-size: 18px; font-weight: 600; font-family: 'Fraunces', serif; color: var(--pine-dark); }
+    .topbar-logo span { color: var(--gold); }
+    .topbar-logo small { display: block; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .topbar-email { font-size: 12px; color: var(--muted); }
+    .btn-logout { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; }
+    .company-select { font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--pine-dark); background: var(--sage); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; }
+    .lang-toggle { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+    .lang-btn { font-family: inherit; font-size: 11px; font-weight: 700; padding: 7px 11px; border: none; background: #fff; color: var(--muted); cursor: pointer; }
+    .lang-btn.active { background: var(--pine); color: #fff; }
+    .lang-btn:not(.active):hover { background: #F3F0E8; }
+
+    /* MAIN */
+    .main { padding: 20px; max-width: 1200px; margin: 0 auto; }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
+    @media (min-width: 640px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .stat-value { font-size: 28px; font-weight: 500; font-family: 'Fraunces', serif; color: var(--pine-dark); }
+    .stat-sub { font-size: 11px; color: var(--pine); margin-top: 4px; }
+
+    .section { margin-bottom: 32px; }
+    .section-title { font-size: 17px; font-weight: 500; font-family: 'Fraunces', serif; color: var(--pine-dark); margin-bottom: 4px; }
+    .section-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+
+    /* LOGIN */
+    .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 400px; text-align: center; }
+    .login-logo { font-size: 26px; font-weight: 600; font-family: 'Fraunces', serif; color: var(--pine-dark); margin-bottom: 6px; }
+    .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+    .btn-google { width: 100%; padding: 13px; background: #fff; color: var(--text); border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: inherit; }
+    .btn-google:hover { background: #F3F0E8; }
+    .login-error { margin-top: 14px; font-size: 13px; color: var(--danger); display: none; }
+
+    /* HIDDEN */
+    .hidden { display: none !important; }
+
+    /* KANBAN (mismo patrón visual que el embudo de client.html) */
+    .kanban-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; }
+    .kanban-col {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      min-width: 230px; max-width: 230px; flex-shrink: 0; display: flex; flex-direction: column;
+    }
+    .kanban-col-header {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+      color: var(--pine-dark);
+    }
+    .kanban-col-count {
+      background: var(--sage); color: var(--pine-dark); font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 100px;
+    }
+    .kanban-col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 80px; flex: 1; }
+    .kanban-col-body.drag-over { background: rgba(15,61,46,0.06); }
+    .kanban-card {
+      background: var(--paper); border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 12px; cursor: grab; font-size: 12.5px;
+    }
+    .kanban-card:active { cursor: grabbing; }
+    .kanban-card:hover { border-color: var(--pine); }
+    .kanban-card-name { font-weight: 700; margin-bottom: 3px; color: var(--text); }
+    .kanban-card-meta { color: var(--muted); font-size: 11px; margin-bottom: 6px; }
+    .kanban-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .kanban-empty { color: var(--muted); font-size: 11.5px; text-align: center; padding: 16px 8px; }
+
+    /* BADGES / TAGS */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 100px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .badge-score-high { background: rgba(15,61,46,0.12); color: var(--pine-dark); }
+    .badge-score-mid { background: rgba(200,155,60,0.18); color: #8A6A28; }
+    .badge-score-low { background: rgba(179,66,58,0.1); color: var(--danger); }
+    .badge-open { background: rgba(179,66,58,0.12); color: var(--danger); }
+    .badge-acknowledged { background: rgba(200,155,60,0.18); color: #8A6A28; }
+    .badge-resolved { background: rgba(15,61,46,0.1); color: var(--pine-dark); }
+
+    /* HANDOFFS */
+    .handoff-list { display: flex; flex-direction: column; gap: 10px; }
+    .handoff-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; cursor: pointer; }
+    .handoff-card:hover { border-color: var(--pine); }
+    .handoff-card.is-resolved { opacity: 0.6; }
+    .handoff-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+    .handoff-name { font-weight: 700; font-size: 13.5px; }
+    .handoff-meta { font-size: 11px; color: var(--muted); }
+    .handoff-reason { font-size: 12.5px; color: var(--text); margin-bottom: 10px; }
+    .handoff-actions { display: flex; gap: 8px; }
+    .btn-small { font-family: inherit; font-size: 11.5px; font-weight: 700; padding: 6px 12px; border-radius: 7px; cursor: pointer; border: 1px solid var(--border); background: #fff; color: var(--pine-dark); }
+    .btn-small:hover { background: var(--sage); }
+    .btn-small.primary { background: var(--pine); color: #fff; border-color: var(--pine); }
+    .btn-small.primary:hover { background: var(--pine-dark); }
+    .empty-state { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+
+    /* LEAD DETAIL MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,61,46,0.45); z-index: 1000; padding: 20px; overflow-y: auto; }
+    .modal-box { background: #fff; border: 1px solid var(--border); border-radius: 16px; max-width: 640px; margin: 0 auto; padding: 24px; }
+    .modal-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; gap: 12px; }
+    .modal-title { font-size: 18px; font-weight: 600; font-family: 'Fraunces', serif; color: var(--pine-dark); }
+    .modal-title-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .modal-close { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; }
+    .detail-block { margin-bottom: 18px; }
+    .detail-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); margin-bottom: 6px; }
+    .detail-text { font-size: 13px; line-height: 1.55; color: var(--text); }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .score-bar-wrap { background: var(--sage); border-radius: 100px; height: 8px; overflow: hidden; margin-top: 6px; }
+    .score-bar { background: var(--pine); height: 100%; border-radius: 100px; }
+    .reply-box { background: var(--paper); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
+    .timeline { display: flex; flex-direction: column; gap: 0; }
+    .timeline-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .timeline-item:last-child { border-bottom: none; }
+    .timeline-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pine); margin-top: 5px; flex-shrink: 0; }
+    .timeline-body { flex: 1; }
+    .timeline-type { font-size: 12.5px; font-weight: 700; color: var(--pine-dark); }
+    .timeline-time { font-size: 10.5px; color: var(--muted); }
+    .timeline-detail { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">Veloi<span style="color:var(--gold)">App</span></div>
+    <div class="login-sub" id="lblLoginSub">LeadFlow · Accede con tu cuenta</div>
+    <button class="btn-google" onclick="signIn()">
+      <svg width="16" height="16" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      <span id="lblGoogleBtn">Continuar con Google</span>
+    </button>
+    <div class="login-error" id="loginError">No tienes acceso a ninguna empresa de LeadFlow. Contacta a VeloiApp.</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashView" class="hidden">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">Veloi<span>App</span><small>LeadFlow</small></div>
+      <select id="companySelect" class="company-select hidden" onchange="switchCompany(this.value)"></select>
+    </div>
+    <div class="topbar-right">
+      <div class="lang-toggle" role="group" aria-label="Idioma / Language">
+        <button class="lang-btn" id="langBtnEs" onclick="setLang('es')">ES</button>
+        <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
+      </div>
+      <span class="topbar-email" id="topEmail"></span>
+      <button class="btn-logout" id="lblLogout" onclick="signOut()">Salir</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label" id="lblStatTotal">Leads Totales</div>
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-sub" id="lblStatTotalSub">Capturados en total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" id="lblStatActive">En Pipeline</div>
+        <div class="stat-value" id="statActive">0</div>
+        <div class="stat-sub" id="lblStatActiveSub">Sin cerrar todavía</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" id="lblStatQualified">Calificados</div>
+        <div class="stat-value" id="statQualified">0</div>
+        <div class="stat-sub" id="lblStatQualifiedSub">Link enviado o cita agendada</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" id="lblStatHandoffs">Hand-offs Abiertos</div>
+        <div class="stat-value" id="statHandoffs">0</div>
+        <div class="stat-sub" id="lblStatHandoffsSub">Esperando revisión humana</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title" id="lblPipelineTitle">Pipeline</div>
+      <div class="section-sub" id="lblPipelineSub">Arrastra una tarjeta entre columnas para mover al lead de etapa manualmente. Haz clic en una tarjeta para ver el detalle.</div>
+      <div class="kanban-board" id="kanbanBoard"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title" id="lblHandoffsTitle">Cola de Hand-offs</div>
+      <div class="section-sub" id="lblHandoffsSub">Casos que la IA escaló a una persona. Haz clic en uno para ver la conversación completa.</div>
+      <div class="handoff-list" id="handoffList"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LEAD DETAIL MODAL -->
+<div id="leadModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="modalName">—</div>
+        <div class="modal-title-sub" id="modalMeta">—</div>
+      </div>
+      <button class="modal-close" onclick="closeLeadModal()">✕</button>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-label" id="lblModalMessage">Mensaje del lead</div>
+      <div class="detail-text" id="modalMessage">—</div>
+    </div>
+
+    <div class="detail-block" id="modalAnalysisBlock">
+      <div class="detail-label" id="lblModalAnalysis">Análisis de IA</div>
+      <div class="detail-grid" id="modalAnalysisTags" style="margin-bottom:8px;"></div>
+      <div class="detail-text" id="modalAnalysisReason">—</div>
+    </div>
+
+    <div class="detail-block" id="modalScoreBlock">
+      <div class="detail-label" id="lblModalScore">Score</div>
+      <div class="detail-text" id="modalScoreText">—</div>
+      <div class="score-bar-wrap"><div class="score-bar" id="modalScoreBar" style="width:0%"></div></div>
+    </div>
+
+    <div class="detail-block" id="modalReplyBlock">
+      <div class="detail-label" id="lblModalReply">Respuesta automática enviada</div>
+      <div class="reply-box" id="modalReplyText">—</div>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-label" id="lblModalHistory">Historial</div>
+      <div class="timeline" id="modalTimeline"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const app = initializeApp({
+    apiKey: "AIzaSyCLvjCxWXivE-THeoPw56rPDo9PXavsIHQ",
+    authDomain: "gen-lang-client-0598503352.firebaseapp.com",
+    projectId: "gen-lang-client-0598503352",
+    storageBucket: "gen-lang-client-0598503352.firebasestorage.app",
+    messagingSenderId: "869550093470",
+    appId: "1:869550093470:web:7bb6989d149af7038db78f"
+  });
+
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  // Mismo criterio de admin que dashboard/admin.html y firestore.rules
+  // isAdmin() — un admin ve todas las empresas de LeadFlow, no solo la suya.
+  const ADMIN_EMAILS = ['seacrewagency@gmail.com', 'hola@veloiapp.com', 'veloiapp@gmail.com'];
+
+  const STATUS_ORDER = ['NEW', 'ANALYZING', 'CONTACTED', 'QUALIFIED', 'BOOKING_SENT', 'APPOINTMENT_BOOKED', 'HUMAN_REVIEW', 'NURTURE', 'CLOSED'];
+  const STATUS_ICONS = {
+    NEW: '🆕', ANALYZING: '🔎', CONTACTED: '💬', QUALIFIED: '✅', BOOKING_SENT: '📤',
+    APPOINTMENT_BOOKED: '📅', HUMAN_REVIEW: '🧑‍💼', NURTURE: '🌱', CLOSED: '🔒',
+  };
+
+  // ===== i18n — solo texto fijo de interfaz. Los datos (nombres, mensajes,
+  // análisis de la IA) vienen ya en el idioma correcto desde la fuente y
+  // nunca se traducen aquí. =====
+  const I18N = {
+    es: {
+      loginSub: 'LeadFlow · Accede con tu cuenta',
+      googleBtn: 'Continuar con Google',
+      loginError: 'No tienes acceso a ninguna empresa de LeadFlow. Contacta a VeloiApp.',
+      logout: 'Salir',
+      statTotal: 'Leads Totales', statTotalSub: 'Capturados en total',
+      statActive: 'En Pipeline', statActiveSub: 'Sin cerrar todavía',
+      statQualified: 'Calificados', statQualifiedSub: 'Link enviado o cita agendada',
+      statHandoffs: 'Hand-offs Abiertos', statHandoffsSub: 'Esperando revisión humana',
+      pipelineTitle: 'Pipeline',
+      pipelineSub: 'Arrastra una tarjeta entre columnas para mover al lead de etapa manualmente. Haz clic en una tarjeta para ver el detalle.',
+      handoffsTitle: 'Cola de Hand-offs',
+      handoffsSub: 'Casos que la IA escaló a una persona. Haz clic en uno para ver la conversación completa.',
+      handoffsEmpty: 'No hay hand-offs registrados todavía.',
+      kanbanEmpty: 'Sin leads aquí',
+      noName: 'Sin nombre',
+      leadNoName: 'Lead sin nombre',
+      noContact: 'Sin contacto',
+      capturedAt: 'Capturado',
+      modalMessage: 'Mensaje del lead',
+      modalAnalysis: 'Análisis de IA',
+      modalScore: 'Score',
+      modalReply: 'Respuesta automática enviada',
+      modalHistory: 'Historial',
+      confidence: 'Confianza',
+      needsHuman: 'Necesita humano',
+      inServiceArea: 'en zona de servicio',
+      yes: 'sí', no: 'no',
+      loadingHistory: 'Cargando historial...',
+      noEvents: 'Sin eventos registrados.',
+      historyError: 'No se pudo cargar el historial.',
+      ack: 'Reconocer',
+      resolve: 'Resolver',
+      noReason: 'Sin motivo registrado.',
+      columns: { NEW: 'Nuevo', ANALYZING: 'Analizando', CONTACTED: 'Contactado', QUALIFIED: 'Calificado', BOOKING_SENT: 'Link Enviado', APPOINTMENT_BOOKED: 'Cita Agendada', HUMAN_REVIEW: 'Revisión Humana', NURTURE: 'Nutrición', CLOSED: 'Cerrado' },
+      qualification: { qualified: 'Calificado', needs_more_info: 'Falta información', unqualified: 'No calificado' },
+      urgency: { high: 'Urgencia alta', medium: 'Urgencia media', low: 'Urgencia baja' },
+      trigger: {
+        AI_LOW_CONFIDENCE: 'Confianza baja de IA',
+        SENSITIVE_TOPIC: 'Tema sensible',
+        PRICE_NEGOTIATION: 'Negociación de precio',
+        CUSTOMER_REQUEST: 'Solicitud del cliente',
+        BUSINESS_RULE: 'Regla de negocio',
+      },
+      event: {
+        STATUS_CHANGE: 'Cambio de estado',
+        AI_ANALYSIS: 'Análisis de IA',
+        AI_REPLY_GENERATED: 'Respuesta generada',
+        FOLLOW_UP_SENT: 'Seguimiento enviado',
+        HANDOFF_CREATED: 'Hand-off creado',
+        BOOKING_CONFIRMED: 'Cita confirmada',
+        MANUAL_EDIT: 'Edición manual',
+      },
+      handoffStatus: { OPEN: 'Abierto', ACKNOWLEDGED: 'Reconocido', RESOLVED: 'Resuelto' },
+    },
+    en: {
+      loginSub: 'LeadFlow · Sign in with your account',
+      googleBtn: 'Continue with Google',
+      loginError: "You don't have access to any LeadFlow company. Contact VeloiApp.",
+      logout: 'Sign out',
+      statTotal: 'Total Leads', statTotalSub: 'Captured overall',
+      statActive: 'In Pipeline', statActiveSub: 'Not closed yet',
+      statQualified: 'Qualified', statQualifiedSub: 'Booking link sent or appointment booked',
+      statHandoffs: 'Open Hand-offs', statHandoffsSub: 'Waiting for human review',
+      pipelineTitle: 'Pipeline',
+      pipelineSub: 'Drag a card between columns to move a lead manually. Click a card to see its detail.',
+      handoffsTitle: 'Hand-off Queue',
+      handoffsSub: 'Cases the AI escalated to a person. Click one to see the full conversation.',
+      handoffsEmpty: 'No hand-offs recorded yet.',
+      kanbanEmpty: 'No leads here',
+      noName: 'No name',
+      leadNoName: 'Unnamed lead',
+      noContact: 'No contact info',
+      capturedAt: 'Captured',
+      modalMessage: "Lead's message",
+      modalAnalysis: 'AI Analysis',
+      modalScore: 'Score',
+      modalReply: 'Auto-reply sent',
+      modalHistory: 'Event History',
+      confidence: 'Confidence',
+      needsHuman: 'Needs human',
+      inServiceArea: 'in service area',
+      yes: 'yes', no: 'no',
+      loadingHistory: 'Loading history...',
+      noEvents: 'No events recorded.',
+      historyError: 'Could not load the history.',
+      ack: 'Acknowledge',
+      resolve: 'Resolve',
+      noReason: 'No reason recorded.',
+      columns: { NEW: 'New', ANALYZING: 'Analyzing', CONTACTED: 'Contacted', QUALIFIED: 'Qualified', BOOKING_SENT: 'Booking Sent', APPOINTMENT_BOOKED: 'Appointment Booked', HUMAN_REVIEW: 'Human Review', NURTURE: 'Nurture', CLOSED: 'Closed' },
+      qualification: { qualified: 'Qualified', needs_more_info: 'Needs more info', unqualified: 'Unqualified' },
+      urgency: { high: 'High urgency', medium: 'Medium urgency', low: 'Low urgency' },
+      trigger: {
+        AI_LOW_CONFIDENCE: 'Low AI confidence',
+        SENSITIVE_TOPIC: 'Sensitive topic',
+        PRICE_NEGOTIATION: 'Price negotiation',
+        CUSTOMER_REQUEST: 'Customer request',
+        BUSINESS_RULE: 'Business rule',
+      },
+      event: {
+        STATUS_CHANGE: 'Status change',
+        AI_ANALYSIS: 'AI analysis',
+        AI_REPLY_GENERATED: 'Reply generated',
+        FOLLOW_UP_SENT: 'Follow-up sent',
+        HANDOFF_CREATED: 'Hand-off created',
+        BOOKING_CONFIRMED: 'Booking confirmed',
+        MANUAL_EDIT: 'Manual edit',
+      },
+      handoffStatus: { OPEN: 'Open', ACKNOWLEDGED: 'Acknowledged', RESOLVED: 'Resolved' },
+    },
+  };
+
+  // Idioma activo: arranca en 'es', pero si el usuario ya lo cambió antes en
+  // esta misma pestaña (sessionStorage), esa elección manda por encima del
+  // idioma configurado en la empresa hasta que cierre la pestaña.
+  let currentLang = 'es';
+  let langManuallySet = false;
+
+  function getStoredLang() {
+    try { return sessionStorage.getItem('leadflow_lang'); } catch { return null; }
+  }
+  function storeLang(lang) {
+    try { sessionStorage.setItem('leadflow_lang', lang); } catch {}
+  }
+  {
+    const stored = getStoredLang();
+    if (stored === 'en' || stored === 'es') {
+      currentLang = stored;
+      langManuallySet = true;
+    }
+  }
+
+  function t(key) {
+    return I18N[currentLang][key];
+  }
+
+  function applyCompanyDefaultLang(company) {
+    if (!langManuallySet) {
+      currentLang = company?.language === 'en' ? 'en' : 'es';
+    }
+  }
+
+  window.setLang = (lang) => {
+    if (lang !== 'es' && lang !== 'en') return;
+    currentLang = lang;
+    langManuallySet = true;
+    storeLang(lang);
+    renderAll();
+  };
+
+  function applyStaticI18n() {
+    document.getElementById('langBtnEs').classList.toggle('active', currentLang === 'es');
+    document.getElementById('langBtnEn').classList.toggle('active', currentLang === 'en');
+    document.getElementById('lblLoginSub').textContent = t('loginSub');
+    document.getElementById('lblGoogleBtn').textContent = t('googleBtn');
+    document.getElementById('loginError').textContent = t('loginError');
+    document.getElementById('lblLogout').textContent = t('logout');
+    document.getElementById('lblStatTotal').textContent = t('statTotal');
+    document.getElementById('lblStatTotalSub').textContent = t('statTotalSub');
+    document.getElementById('lblStatActive').textContent = t('statActive');
+    document.getElementById('lblStatActiveSub').textContent = t('statActiveSub');
+    document.getElementById('lblStatQualified').textContent = t('statQualified');
+    document.getElementById('lblStatQualifiedSub').textContent = t('statQualifiedSub');
+    document.getElementById('lblStatHandoffs').textContent = t('statHandoffs');
+    document.getElementById('lblStatHandoffsSub').textContent = t('statHandoffsSub');
+    document.getElementById('lblPipelineTitle').textContent = t('pipelineTitle');
+    document.getElementById('lblPipelineSub').textContent = t('pipelineSub');
+    document.getElementById('lblHandoffsTitle').textContent = t('handoffsTitle');
+    document.getElementById('lblHandoffsSub').textContent = t('handoffsSub');
+    document.getElementById('lblModalMessage').textContent = t('modalMessage');
+    document.getElementById('lblModalAnalysis').textContent = t('modalAnalysis');
+    document.getElementById('lblModalScore').textContent = t('modalScore');
+    document.getElementById('lblModalReply').textContent = t('modalReply');
+    document.getElementById('lblModalHistory').textContent = t('modalHistory');
+  }
+
+  function renderAll() {
+    applyStaticI18n();
+    renderStats();
+    renderKanban();
+    renderHandoffs();
+    if (openLeadId) renderLeadModal(openLeadId);
+  }
+  // ===== fin i18n =====
+
+  let currentUserEmail = null;
+  let isAdminUser = false;
+  let allCompanies = [];
+  let currentCompanyId = null;
+  let currentLeads = [];
+  let currentHandoffs = [];
+  let openLeadId = null;
+  let currentModalEvents = null;
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+  }
+
+  function tsToDate(ts) {
+    return ts && typeof ts.toMillis === 'function' ? ts.toDate() : (ts && ts.seconds ? new Date(ts.seconds * 1000) : null);
+  }
+
+  function fmtDate(ts) {
+    const d = tsToDate(ts);
+    return d ? d.toLocaleString(currentLang === 'en' ? 'en-US' : 'es-CO') : '—';
+  }
+
+  applyStaticI18n();
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('dashView').classList.add('hidden');
+      return;
+    }
+
+    currentUserEmail = user.email;
+    isAdminUser = ADMIN_EMAILS.includes(user.email);
+
+    let companies = [];
+    try {
+      if (isAdminUser) {
+        const snap = await getDocs(collection(db, 'leadflow_companies'));
+        snap.forEach((d) => companies.push({ id: d.id, ...d.data() }));
+      } else {
+        const snap = await getDocs(query(
+          collection(db, 'leadflow_companies'),
+          where('allowedUsers', 'array-contains', user.email)
+        ));
+        snap.forEach((d) => companies.push({ id: d.id, ...d.data() }));
+      }
+    } catch (err) {
+      console.error('Error cargando leadflow_companies:', err);
+    }
+
+    if (companies.length === 0) {
+      applyStaticI18n();
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('dashView').classList.add('hidden');
+      await fbSignOut(auth);
+      return;
+    }
+
+    allCompanies = companies;
+    applyCompanyDefaultLang(companies[0]);
+    applyStaticI18n();
+
+    document.getElementById('loginView').classList.add('hidden');
+    document.getElementById('dashView').classList.remove('hidden');
+    document.getElementById('topEmail').textContent = user.email;
+
+    const select = document.getElementById('companySelect');
+    select.innerHTML = companies.map((c) => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name || c.id)}</option>`).join('');
+    select.classList.toggle('hidden', companies.length <= 1);
+
+    currentCompanyId = companies[0].id;
+    await loadCompanyData(currentCompanyId);
+  });
+
+  window.switchCompany = async (companyId) => {
+    currentCompanyId = companyId;
+    applyCompanyDefaultLang(allCompanies.find((c) => c.id === companyId));
+    applyStaticI18n();
+    await loadCompanyData(companyId);
+  };
+
+  async function loadCompanyData(companyId) {
+    try {
+      const leadsSnap = await getDocs(query(collection(db, 'leadflow_leads'), where('companyId', '==', companyId)));
+      currentLeads = [];
+      leadsSnap.forEach((d) => currentLeads.push({ id: d.id, ...d.data() }));
+      currentLeads.sort((a, b) => (tsToDate(b.capturedAt)?.getTime() || 0) - (tsToDate(a.capturedAt)?.getTime() || 0));
+
+      const handoffsSnap = await getDocs(query(collection(db, 'leadflow_handoffs'), where('companyId', '==', companyId)));
+      currentHandoffs = [];
+      handoffsSnap.forEach((d) => currentHandoffs.push({ id: d.id, ...d.data() }));
+      currentHandoffs.sort((a, b) => (tsToDate(b.createdAt)?.getTime() || 0) - (tsToDate(a.createdAt)?.getTime() || 0));
+    } catch (err) {
+      console.error('Error cargando datos de LeadFlow:', err);
+      currentLeads = [];
+      currentHandoffs = [];
+    }
+
+    renderStats();
+    renderKanban();
+    renderHandoffs();
+  }
+
+  function renderStats() {
+    const closed = currentLeads.filter((l) => l.status === 'CLOSED').length;
+    const qualified = currentLeads.filter((l) => l.status === 'BOOKING_SENT' || l.status === 'APPOINTMENT_BOOKED').length;
+    const openHandoffs = currentHandoffs.filter((h) => h.status !== 'RESOLVED').length;
+
+    document.getElementById('statTotal').textContent = currentLeads.length;
+    document.getElementById('statActive').textContent = currentLeads.length - closed;
+    document.getElementById('statQualified').textContent = qualified;
+    document.getElementById('statHandoffs').textContent = openHandoffs;
+  }
+
+  function scoreBadgeClass(adjusted) {
+    if (adjusted >= 70) return 'badge-score-high';
+    if (adjusted >= 40) return 'badge-score-mid';
+    return 'badge-score-low';
+  }
+
+  function renderKanban() {
+    const board = document.getElementById('kanbanBoard');
+    const groups = {};
+    STATUS_ORDER.forEach((key) => groups[key] = []);
+    currentLeads.forEach((l) => {
+      (groups[l.status] || groups.NEW).push(l);
+    });
+
+    const columnLabels = t('columns');
+
+    board.innerHTML = STATUS_ORDER.map((key) => {
+      const items = groups[key] || [];
+      const cards = items.length === 0
+        ? `<div class="kanban-empty">${t('kanbanEmpty')}</div>`
+        : items.map((l) => {
+            const name = l.contact?.name || l.contact?.phone || l.contact?.email || t('noName');
+            const contact = l.contact?.phone || l.contact?.email || '—';
+            const score = l.score?.adjusted;
+            const scoreBadge = typeof score === 'number'
+              ? `<span class="badge ${scoreBadgeClass(score)}">${score}/100</span>`
+              : '';
+            return `
+              <div class="kanban-card" draggable="true" data-lead-id="${l.id}" onclick="openLeadDetail('${l.id}')">
+                <div class="kanban-card-name">${escapeHtml(name)}</div>
+                <div class="kanban-card-meta">${escapeHtml(l.serviceRequested || contact)}</div>
+                <div class="kanban-card-foot">
+                  <span class="kanban-card-meta" style="margin:0;">${escapeHtml(contact)}</span>
+                  ${scoreBadge}
+                </div>
+              </div>`;
+          }).join('');
+
+      return `
+        <div class="kanban-col" data-status="${key}">
+          <div class="kanban-col-header"><span>${STATUS_ICONS[key]} ${escapeHtml(columnLabels[key])}</span><span class="kanban-col-count">${items.length}</span></div>
+          <div class="kanban-col-body" id="col-${key}">${cards}</div>
+        </div>`;
+    }).join('');
+
+    attachKanbanDragEvents();
+  }
+
+  function attachKanbanDragEvents() {
+    document.querySelectorAll('.kanban-card').forEach((card) => {
+      card.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', card.dataset.leadId);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+    });
+
+    document.querySelectorAll('.kanban-col-body').forEach((colBody) => {
+      colBody.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        colBody.classList.add('drag-over');
+      });
+      colBody.addEventListener('dragleave', () => colBody.classList.remove('drag-over'));
+      colBody.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        colBody.classList.remove('drag-over');
+        const leadId = e.dataTransfer.getData('text/plain');
+        const newStatus = colBody.closest('.kanban-col').dataset.status;
+        if (!leadId || !newStatus) return;
+
+        const lead = currentLeads.find((l) => l.id === leadId);
+        if (!lead || lead.status === newStatus) return;
+        lead.status = newStatus;
+        renderKanban();
+        renderStats();
+
+        try {
+          // Solo actualiza el estado — el historial en leadflow_lead_events
+          // lo escriben las Cloud Functions con el Admin SDK; las reglas de
+          // Firestore no permiten crear eventos desde el dashboard.
+          await updateDoc(doc(db, 'leadflow_leads', leadId), { status: newStatus, updatedAt: serverTimestamp() });
+        } catch (err) {
+          console.error('No se pudo actualizar el estado del lead:', err);
+        }
+      });
+    });
+  }
+
+  function renderHandoffs() {
+    const list = document.getElementById('handoffList');
+    if (currentHandoffs.length === 0) {
+      list.innerHTML = `<div class="empty-state">${t('handoffsEmpty')}</div>`;
+      return;
+    }
+
+    const statusLabels = t('handoffStatus');
+    const triggerLabels = t('trigger');
+
+    list.innerHTML = currentHandoffs.map((h) => {
+      const name = h.snapshot?.contact?.name || h.snapshot?.contact?.phone || h.snapshot?.contact?.email || t('leadNoName');
+      const statusBadgeClass = h.status === 'RESOLVED' ? 'badge-resolved' : h.status === 'ACKNOWLEDGED' ? 'badge-acknowledged' : 'badge-open';
+      const statusLabel = statusLabels[h.status] || statusLabels.OPEN;
+
+      let actions = '';
+      if (h.status !== 'ACKNOWLEDGED' && h.status !== 'RESOLVED') {
+        actions += `<button class="btn-small" onclick="event.stopPropagation(); acknowledgeHandoff('${h.id}')">${t('ack')}</button>`;
+      }
+      if (h.status !== 'RESOLVED') {
+        actions += `<button class="btn-small primary" onclick="event.stopPropagation(); resolveHandoff('${h.id}')">${t('resolve')}</button>`;
+      }
+
+      return `
+        <div class="handoff-card ${h.status === 'RESOLVED' ? 'is-resolved' : ''}" onclick="openLeadDetail('${h.leadId}')">
+          <div class="handoff-head">
+            <div>
+              <div class="handoff-name">${escapeHtml(name)}</div>
+              <div class="handoff-meta">${escapeHtml(triggerLabels[h.triggeredBy] || h.triggeredBy)} · ${fmtDate(h.createdAt)}</div>
+            </div>
+            <span class="badge ${statusBadgeClass}">${escapeHtml(statusLabel)}</span>
+          </div>
+          <div class="handoff-reason">${escapeHtml(h.reason || t('noReason'))}</div>
+          ${actions ? `<div class="handoff-actions">${actions}</div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  window.acknowledgeHandoff = async (handoffId) => {
+    try {
+      await updateDoc(doc(db, 'leadflow_handoffs', handoffId), { status: 'ACKNOWLEDGED' });
+      const h = currentHandoffs.find((x) => x.id === handoffId);
+      if (h) h.status = 'ACKNOWLEDGED';
+      renderHandoffs();
+    } catch (err) {
+      console.error('No se pudo reconocer el hand-off:', err);
+    }
+  };
+
+  window.resolveHandoff = async (handoffId) => {
+    try {
+      await updateDoc(doc(db, 'leadflow_handoffs', handoffId), {
+        status: 'RESOLVED',
+        resolvedBy: currentUserEmail,
+        resolvedAt: serverTimestamp(),
+      });
+      const h = currentHandoffs.find((x) => x.id === handoffId);
+      if (h) h.status = 'RESOLVED';
+      renderHandoffs();
+      renderStats();
+    } catch (err) {
+      console.error('No se pudo resolver el hand-off:', err);
+    }
+  };
+
+  function renderLeadModalStatic(lead) {
+    const name = lead.contact?.name || t('noName');
+    const contactBits = [lead.contact?.phone, lead.contact?.email].filter(Boolean).join(' · ');
+    document.getElementById('modalName').textContent = name;
+    document.getElementById('modalMeta').textContent = `${contactBits || t('noContact')} · ${t('capturedAt')} ${fmtDate(lead.capturedAt)}`;
+    document.getElementById('modalMessage').textContent = lead.message || '—';
+
+    const analysisBlock = document.getElementById('modalAnalysisBlock');
+    if (lead.analysis) {
+      analysisBlock.classList.remove('hidden');
+      const qualLabels = t('qualification');
+      const urgLabels = t('urgency');
+      document.getElementById('modalAnalysisTags').innerHTML = `
+        <span class="badge badge-score-mid">${escapeHtml(qualLabels[lead.analysis.qualification] || lead.analysis.qualification)}</span>
+        <span class="badge badge-score-mid">${escapeHtml(urgLabels[lead.analysis.urgency] || lead.analysis.urgency)}</span>
+        <span class="badge badge-score-mid">${t('confidence')} ${Math.round((lead.analysis.confidence || 0) * 100)}%</span>
+        ${lead.analysis.needs_human ? `<span class="badge badge-open">${t('needsHuman')}</span>` : ''}
+      `;
+      document.getElementById('modalAnalysisReason').textContent = lead.analysis.reason || '—';
+    } else {
+      analysisBlock.classList.add('hidden');
+    }
+
+    const scoreBlock = document.getElementById('modalScoreBlock');
+    if (lead.score) {
+      scoreBlock.classList.remove('hidden');
+      document.getElementById('modalScoreText').textContent = `${lead.score.adjusted}/100 · ${t('inServiceArea')}: ${lead.score.inServiceArea ? t('yes') : t('no')}`;
+      document.getElementById('modalScoreBar').style.width = `${Math.min(100, lead.score.adjusted)}%`;
+    } else {
+      scoreBlock.classList.add('hidden');
+    }
+
+    const replyBlock = document.getElementById('modalReplyBlock');
+    if (lead.autoReply?.text) {
+      replyBlock.classList.remove('hidden');
+      document.getElementById('modalReplyText').textContent = lead.autoReply.text;
+    } else {
+      replyBlock.classList.add('hidden');
+    }
+  }
+
+  function renderModalTimeline(events) {
+    const timeline = document.getElementById('modalTimeline');
+    if (!events || events.length === 0) {
+      timeline.innerHTML = `<div class="timeline-detail">${t('noEvents')}</div>`;
+      return;
+    }
+    const eventLabels = t('event');
+    timeline.innerHTML = events.map((e) => {
+      const transition = e.fromStatus || e.toStatus
+        ? `${escapeHtml(e.fromStatus || '—')} → ${escapeHtml(e.toStatus || '—')}`
+        : '';
+      return `
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-body">
+            <div class="timeline-type">${escapeHtml(eventLabels[e.type] || e.type)} <span class="timeline-time">· ${escapeHtml(e.actor || '')}</span></div>
+            <div class="timeline-time">${fmtDate(e.timestamp)}</div>
+            ${transition ? `<div class="timeline-detail">${transition}</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Re-renderiza el modal ya abierto (usado al cambiar idioma) sin volver a
+  // pedir leadflow_lead_events — usa los eventos ya cacheados en currentModalEvents.
+  function renderLeadModal(leadId) {
+    const lead = currentLeads.find((l) => l.id === leadId);
+    if (!lead) return;
+    renderLeadModalStatic(lead);
+    if (currentModalEvents === null) {
+      document.getElementById('modalTimeline').innerHTML = `<div class="timeline-detail">${t('loadingHistory')}</div>`;
+    } else {
+      renderModalTimeline(currentModalEvents);
+    }
+  }
+
+  window.openLeadDetail = async (leadId) => {
+    const lead = currentLeads.find((l) => l.id === leadId);
+    if (!lead) return;
+
+    openLeadId = leadId;
+    currentModalEvents = null;
+    renderLeadModalStatic(lead);
+    document.getElementById('modalTimeline').innerHTML = `<div class="timeline-detail">${t('loadingHistory')}</div>`;
+    document.getElementById('leadModal').style.display = 'block';
+
+    try {
+      const eventsSnap = await getDocs(query(collection(db, 'leadflow_lead_events'), where('leadId', '==', leadId)));
+      const events = [];
+      eventsSnap.forEach((d) => events.push({ id: d.id, ...d.data() }));
+      events.sort((a, b) => (tsToDate(a.timestamp)?.getTime() || 0) - (tsToDate(b.timestamp)?.getTime() || 0));
+      currentModalEvents = events;
+      renderModalTimeline(events);
+    } catch (err) {
+      console.error('Error cargando leadflow_lead_events:', err);
+      currentModalEvents = [];
+      document.getElementById('modalTimeline').innerHTML = `<div class="timeline-detail">${t('historyError')}</div>`;
+    }
+  };
+
+  window.closeLeadModal = () => {
+    document.getElementById('leadModal').style.display = 'none';
+    openLeadId = null;
+    currentModalEvents = null;
+  };
+
+  window.signIn = async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  window.signOut = async () => {
+    await fbSignOut(auth);
+  };
+</script>
+</body>
+</html>
