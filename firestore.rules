@@ -77,6 +77,59 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // ==========================================================================
+    // VELOIAPP LEADFLOW — producto nuevo y separado, colecciones propias
+    // (leadflow_*), sin tocar clients/bots/conversations/leads de arriba.
+    //
+    // A diferencia del TODO pendiente en esas colecciones (lectura abierta a
+    // cualquier autenticado), aquí el aislamiento por tenant se implementa
+    // desde el día uno: cada doc de leads/events/handoffs lleva `companyId`,
+    // y el acceso de un usuario no-admin se valida contra
+    // `leadflow_companies/{companyId}.allowedUsers`.
+    //
+    // Nada de esto lo crea un cliente/browser directamente salvo las
+    // actualizaciones puntuales del dashboard (mover una tarjeta del embudo,
+    // resolver un handoff) — la creación real de leads/events la hacen las
+    // Cloud Functions con el Admin SDK, que no pasa por estas reglas.
+    // ==========================================================================
+
+    function isLeadflowCompanyMember(companyId) {
+      return request.auth != null &&
+        request.auth.token.email in
+          get(/databases/$(database)/documents/leadflow_companies/$(companyId)).data.allowedUsers;
+    }
+
+    // leadflow_companies — configuración del tenant (idioma, reglas de
+    // negocio, scoring, booking). Solo admin escribe hoy (se siembra a mano
+    // o vía script); los usuarios del negocio solo leen su propia empresa.
+    match /leadflow_companies/{companyId} {
+      allow read: if isAdmin() || isLeadflowCompanyMember(companyId);
+      allow write: if isAdmin();
+    }
+
+    // leadflow_leads — creados/analizados solo por las Cloud Functions
+    // (Admin SDK). El dashboard puede actualizar (ej. mover de etapa a
+    // mano) si el usuario pertenece a la empresa dueña del lead.
+    match /leadflow_leads/{leadId} {
+      allow read, update: if isAdmin() || isLeadflowCompanyMember(resource.data.companyId);
+      allow create, delete: if isAdmin();
+    }
+
+    // leadflow_lead_events — historial append-only. Nunca se edita ni se
+    // borra desde el cliente; solo lectura para auditoría en el dashboard.
+    match /leadflow_lead_events/{eventId} {
+      allow read: if isAdmin() || isLeadflowCompanyMember(resource.data.companyId);
+      allow create, update, delete: if isAdmin();
+    }
+
+    // leadflow_handoffs — cola de casos escalados a humano. El dashboard
+    // necesita poder marcarlos como ACKNOWLEDGED/RESOLVED, por eso update
+    // está abierto a miembros de la empresa; create solo vía Cloud Function.
+    match /leadflow_handoffs/{handoffId} {
+      allow read, update: if isAdmin() || isLeadflowCompanyMember(resource.data.companyId);
+      allow create, delete: if isAdmin();
+    }
+
     // Cualquier otra colección no listada arriba: denegado explícitamente.
     match /{document=**} {
       allow read, write: if false;

@@ -226,3 +226,8 @@ exports.seedTestBot = onRequest({ secrets: [WHATSAPP_VERIFY_TOKEN] }, async (req
   });
   return res.status(200).json({ id: ref.id });
 });
+
+// VeloiApp LeadFlow — producto nuevo y separado (colecciones leadflow_*),
+// implementado en ./leadflow/. No comparte código con liveDemoAgent,
+// whatsappWebhook ni seedTestBot de arriba.
+Object.assign(exports, require("./leadflow"));
