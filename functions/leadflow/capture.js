@@ -30,7 +30,12 @@ function toMillis(ts) {
 
 function buildBookingLink(company, leadId, name) {
   const url = new URL(company.bookingLink);
-  url.searchParams.set("leadId", leadId);
+  // Cal.com solo guarda un query param en booking.metadata (y por lo tanto
+  // en el payload del webhook BOOKING_CREATED) si usa la sintaxis con
+  // corchetes `metadata[key]=value` — un `?leadId=xxx` plano se ignora.
+  // Ver leadflowCalBookingWebhook en ./booking.js, que depende de esto
+  // para encontrar el lead correspondiente a la cita agendada.
+  url.searchParams.set("metadata[leadId]", leadId);
   if (name) url.searchParams.set("name", name);
   return url.toString();
 }
