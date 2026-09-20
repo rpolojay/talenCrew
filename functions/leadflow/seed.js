@@ -39,7 +39,7 @@ exports.leadflowSeedDemoCompany = onRequest({ secrets: [WHATSAPP_VERIFY_TOKEN] }
       tone: "warm, professional, concise",
     },
 
-    bookingLink: "https://cal.com/abc-roofing/consultation",
+    bookingLink: "https://cal.com/leadsflows/15min",
 
     scoringRules: {
       inServiceAreaWeight: 30,
