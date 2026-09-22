@@ -166,7 +166,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
       fromStatus: LEAD_STATUS.ANALYZING, toStatus: LEAD_STATUS.HUMAN_REVIEW, actor: "system:analysis_failure",
     });
     const handoffId = await createHandoff(db, {
-      leadId, companyId, lead: baseLead, analysis: null, score: null,
+      leadId, companyId, company, lead: baseLead, analysis: null, score: null,
       triggeredBy: HANDOFF_TRIGGER.AI_LOW_CONFIDENCE,
       reason: `AI analysis failed or returned invalid output: ${err.message}`,
       recommendedNextAction: "Review this lead manually — the automated analysis could not be completed.",
@@ -222,7 +222,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
   if (route === "NEEDS_HUMAN") {
     const reasonLower = (analysisResult.analysis.reason || "").toLowerCase();
     handoffId = await createHandoff(db, {
-      leadId, companyId, lead: baseLead, analysis: analysisResult.analysis, score,
+      leadId, companyId, company, lead: baseLead, analysis: analysisResult.analysis, score,
       triggeredBy: reasonLower.includes("price") || reasonLower.includes("negotiat")
         ? HANDOFF_TRIGGER.PRICE_NEGOTIATION
         : HANDOFF_TRIGGER.AI_LOW_CONFIDENCE,

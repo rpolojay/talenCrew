@@ -29,24 +29,19 @@ function buildSubject(company, language) {
   return build(company.name);
 }
 
-// Envía un correo de texto plano a un lead vía Resend. Nunca lanza: el envío
-// es no crítico para el pipeline (el texto ya quedó guardado en el lead), así
+// Envía un correo de texto plano vía Resend. Nunca lanza: ningún envío es
+// crítico para el pipeline (el contenido ya quedó guardado en Firestore), así
 // que las fallas se registran y se devuelven para que el caller las guarde.
 //
 // Devuelve { sentAt, emailId, error }:
 //   - éxito: sentAt = Timestamp real del envío, emailId = id de Resend
 //   - falla: sentAt = null, error = mensaje
-async function sendLeadEmail({ to, company, language, text, logContext }) {
+async function sendEmail({ from, to, subject, text, logContext }) {
   try {
     const resend = new Resend(RESEND_API_KEY.value());
     // El SDK de Resend no lanza en errores de la API — los devuelve en
     // `error` (dominio sin verificar, rate limit, email inválido, etc.).
-    const { data, error } = await resend.emails.send({
-      from: buildFrom(company),
-      to,
-      subject: buildSubject(company, language),
-      text,
-    });
+    const { data, error } = await resend.emails.send({ from, to, subject, text });
     if (error) throw new Error(`${error.name || "resend_error"}: ${error.message}`);
     return { sentAt: Timestamp.now(), emailId: data?.id ?? null, error: null };
   } catch (err) {
@@ -55,4 +50,15 @@ async function sendLeadEmail({ to, company, language, text, logContext }) {
   }
 }
 
-module.exports = { sendLeadEmail, buildFrom };
+// Email al lead, en nombre de la empresa (ver buildFrom).
+async function sendLeadEmail({ to, company, language, text, logContext }) {
+  return sendEmail({
+    from: buildFrom(company),
+    to,
+    subject: buildSubject(company, language),
+    text,
+    logContext,
+  });
+}
+
+module.exports = { sendEmail, sendLeadEmail, buildFrom };
