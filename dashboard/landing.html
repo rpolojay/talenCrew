@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LeadFlow by VeloiApp — Never lose another lead to a slow response</title>
+<meta name="description" content="LeadFlow automatically captures, qualifies, responds to, and schedules appointments with your leads — 24/7, with a human always one step away." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --pine: #0F3D2E;
+    --pine-dark: #0A2B20;
+    --gold: #C89B3C;
+    --sage: #DCE9DE;
+    --paper: #FAF6EF;
+    --card: #FFFFFF;
+    --border: rgba(15,61,46,0.14);
+    --text: #1B1F1C;
+    --muted: #4A524C;
+    --danger: #B3423A;
+    --warning: #C89B3C;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--paper); color: var(--text); line-height: 1.5; }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  h1, h2, h3 { font-family: 'Fraunces', serif; color: var(--pine-dark); font-weight: 500; letter-spacing: -0.01em; }
+  .eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--gold); margin-bottom: 10px; }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; font-size: 14.5px; font-weight: 700; padding: 13px 22px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; text-decoration: none; white-space: nowrap; }
+  .btn-primary { background: var(--pine); color: #fff; }
+  .btn-primary:hover { background: var(--pine-dark); }
+  .btn-secondary { background: transparent; color: var(--pine-dark); border-color: var(--border); }
+  .btn-secondary:hover { background: var(--sage); }
+  .btn-small { font-size: 12.5px; padding: 9px 16px; border-radius: 8px; }
+
+  /* NAV */
+  .nav { position: sticky; top: 0; z-index: 100; background: rgba(250,246,239,0.92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; gap: 16px; }
+  .nav-logo { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 600; color: var(--pine-dark); display: flex; align-items: baseline; gap: 6px; }
+  .nav-logo small { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); }
+  .nav-links { display: flex; align-items: center; gap: 26px; font-size: 13.5px; font-weight: 600; color: var(--muted); }
+  .nav-links a:hover { color: var(--pine-dark); }
+  .nav-right { display: flex; align-items: center; gap: 14px; }
+  .lang-toggle { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+  .lang-btn { font-family: inherit; font-size: 11px; font-weight: 700; padding: 7px 11px; border: none; background: #fff; color: var(--muted); cursor: pointer; }
+  .lang-btn.active { background: var(--pine); color: #fff; }
+  .lang-btn:not(.active):hover { background: #F3F0E8; }
+  @media (max-width: 780px) { .nav-links { display: none; } }
+
+  /* HERO */
+  .hero { padding: 72px 0 56px; }
+  .hero-grid { display: grid; grid-template-columns: 1fr; gap: 40px; align-items: center; }
+  @media (min-width: 960px) { .hero-grid { grid-template-columns: 1.05fr 1fr; gap: 48px; } }
+  .hero h1 { font-size: clamp(32px, 4.6vw, 48px); line-height: 1.08; margin-bottom: 18px; }
+  .hero p.sub { font-size: 17px; color: var(--muted); max-width: 520px; margin-bottom: 28px; }
+  .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+
+  /* HERO KANBAN MOCKUP */
+  .mockup-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; box-shadow: 0 24px 60px -30px rgba(15,61,46,0.35); }
+  .mockup-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 0 2px; }
+  .mockup-title { font-size: 12px; font-weight: 700; color: var(--pine-dark); text-transform: uppercase; letter-spacing: 0.4px; }
+  .mockup-caption { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 10px; padding: 0 2px; }
+  .kanban-board { display: flex; gap: 10px; overflow-x: auto; }
+  .kanban-col { background: var(--paper); border: 1px solid var(--border); border-radius: 12px; min-width: 160px; max-width: 160px; flex-shrink: 0; }
+  .kanban-col-header { padding: 9px 10px; border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: var(--pine-dark); display: flex; justify-content: space-between; align-items: center; }
+  .kanban-col-count { background: var(--sage); color: var(--pine-dark); font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 100px; }
+  .kanban-col-body { padding: 8px; display: flex; flex-direction: column; gap: 7px; }
+  .kanban-card { background: #fff; border: 1px solid var(--border); border-radius: 9px; padding: 9px 10px; font-size: 11px; }
+  .kanban-card-name { font-weight: 700; margin-bottom: 3px; color: var(--text); }
+  .kanban-card-meta { color: var(--muted); font-size: 10px; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 100px; font-size: 9.5px; font-weight: 700; white-space: nowrap; margin-top: 6px; }
+  .badge-score-high { background: rgba(15,61,46,0.12); color: var(--pine-dark); }
+  .badge-score-mid { background: rgba(200,155,60,0.18); color: #8A6A28; }
+
+  /* SECTIONS */
+  section { padding: 64px 0; }
+  .section-head { text-align: center; max-width: 620px; margin: 0 auto 40px; }
+  .section-head h2 { font-size: clamp(26px, 3.4vw, 34px); margin-bottom: 12px; }
+  .section-head p { color: var(--muted); font-size: 15.5px; }
+  .alt-bg { background: var(--card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+  /* PROBLEM CARDS */
+  .grid-3 { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  @media (min-width: 700px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 700px) { .grid-4 { grid-template-columns: repeat(4, 1fr); } }
+  .grid-4 { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  .prob-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+  .prob-icon { font-size: 22px; margin-bottom: 12px; }
+  .prob-card h3 { font-size: 16.5px; margin-bottom: 8px; }
+  .prob-card p { font-size: 13.5px; color: var(--muted); }
+
+  /* HOW IT WORKS */
+  .flow { display: flex; flex-wrap: wrap; gap: 0; align-items: stretch; justify-content: center; }
+  .flow-step { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px 18px; width: 160px; text-align: center; position: relative; }
+  .flow-num { width: 30px; height: 30px; border-radius: 50%; background: var(--pine); color: #fff; font-family: 'Fraunces', serif; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+  .flow-step h3 { font-size: 13.5px; margin-bottom: 6px; }
+  .flow-step p { font-size: 11.5px; color: var(--muted); }
+  .flow-arrow { display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 20px; width: 36px; flex-shrink: 0; }
+  @media (max-width: 640px) { .flow-arrow { width: 100%; transform: rotate(90deg); padding: 4px 0; } .flow { flex-direction: column; align-items: center; } .flow-step { width: 100%; max-width: 280px; } }
+
+  /* DEMO CHAT */
+  .demo-grid { display: grid; grid-template-columns: 1fr; gap: 32px; align-items: center; }
+  @media (min-width: 900px) { .demo-grid { grid-template-columns: 0.9fr 1.1fr; } }
+  .demo-tag { display: inline-flex; align-items: center; gap: 8px; background: var(--sage); color: var(--pine-dark); font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 100px; margin-bottom: 14px; }
+  .demo-company { font-size: 13.5px; color: var(--muted); margin-bottom: 18px; }
+  .demo-company strong { color: var(--pine-dark); }
+  .chat-window { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 24px 60px -30px rgba(15,61,46,0.3); }
+  .chat-bubble { border-radius: 14px; padding: 12px 15px; font-size: 13.5px; line-height: 1.5; max-width: 88%; margin-bottom: 12px; }
+  .chat-bubble.lead { background: var(--paper); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+  .chat-bubble.system { background: var(--pine); color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
+  .chat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); margin-bottom: 5px; }
+  .chat-bubble.system + .chat-label, .chat-label.right { text-align: right; }
+  .demo-disclaimer { font-size: 11.5px; color: var(--muted); font-style: italic; margin-top: 14px; }
+
+  /* TRY-IT-YOURSELF FORM */
+  .form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-row label { font-size: 12px; font-weight: 700; color: var(--pine-dark); }
+  .form-row input, .form-row textarea {
+    font-family: inherit; font-size: 13.5px; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 8px; background: #fff; color: var(--text); width: 100%; resize: vertical;
+  }
+  .form-row input:focus, .form-row textarea:focus { outline: none; border-color: var(--pine); }
+  .form-error { background: rgba(179,66,58,0.08); border: 1px solid rgba(179,66,58,0.3); color: var(--danger); font-size: 12.5px; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; }
+  .form-disclaimer { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 12px; }
+  #formSubmitBtn { width: 100%; }
+  #formSubmitBtn:disabled { opacity: 0.65; cursor: default; }
+  .form-result-intro { font-size: 13.5px; font-weight: 700; color: var(--pine-dark); margin-bottom: 14px; }
+  .form-idle-panel { display: flex; align-items: center; justify-content: center; min-height: 180px; color: var(--muted); font-size: 13px; text-align: center; padding: 24px; }
+
+  /* FEATURES */
+  .feat-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+  .feat-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--sage); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 14px; }
+  .feat-card h3 { font-size: 15px; margin-bottom: 6px; }
+  .feat-card p { font-size: 13px; color: var(--muted); }
+
+  /* PRICING */
+  .price-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  @media (min-width: 780px) { .price-grid { grid-template-columns: repeat(3, 1fr); } }
+  .price-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; display: flex; flex-direction: column; }
+  .price-card.featured { border-color: var(--pine); box-shadow: 0 20px 50px -30px rgba(15,61,46,0.4); position: relative; }
+  .price-featured-tag { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #fff; font-size: 10.5px; font-weight: 700; padding: 4px 12px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .price-name { font-size: 18px; font-weight: 600; font-family: 'Fraunces', serif; color: var(--pine-dark); margin-bottom: 4px; }
+  .price-sub { font-size: 12.5px; color: var(--muted); margin-bottom: 16px; }
+  .price-value { font-family: 'Fraunces', serif; font-size: 20px; color: var(--pine-dark); font-weight: 500; margin-bottom: 20px; }
+  .price-list { list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: var(--text); margin-bottom: 24px; flex: 1; }
+  .price-list li { display: flex; align-items: flex-start; gap: 8px; }
+  .price-list li::before { content: "✓"; color: var(--pine); font-weight: 700; flex-shrink: 0; }
+
+  /* FAQ */
+  .faq-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+  .faq-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+  .faq-item h3 { font-size: 14.5px; font-family: 'Inter', sans-serif; font-weight: 700; color: var(--pine-dark); margin-bottom: 6px; }
+  .faq-item p { font-size: 13.5px; color: var(--muted); }
+
+  /* CTA BAND */
+  .cta-band { background: var(--pine); color: #fff; text-align: center; padding: 60px 0; }
+  .cta-band h2 { color: #fff; margin-bottom: 12px; }
+  .cta-band p { color: rgba(255,255,255,0.78); margin-bottom: 26px; max-width: 480px; margin-left: auto; margin-right: auto; font-size: 15px; }
+  .cta-band .btn-primary { background: var(--gold); }
+  .cta-band .btn-primary:hover { background: #B08A34; }
+
+  /* FOOTER */
+  footer { padding: 40px 0; border-top: 1px solid var(--border); }
+  .footer-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; }
+  .footer-logo { font-family: 'Fraunces', serif; font-weight: 600; font-size: 16px; color: var(--pine-dark); }
+  .footer-links { display: flex; gap: 20px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+  .footer-links a:hover { color: var(--pine-dark); }
+  .footer-copy { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <div class="nav-logo">Lead<span style="color:var(--gold)">Flow</span><small>by VeloiApp</small></div>
+    <div class="nav-links">
+      <a href="#features" data-i18n="navFeatures">Features</a>
+      <a href="#how-it-works" data-i18n="navHow">How it Works</a>
+      <a href="#pricing" data-i18n="navPricing">Pricing</a>
+    </div>
+    <div class="nav-right">
+      <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+        <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="langBtnEs" onclick="setLang('es')">ES</button>
+      </div>
+      <a class="btn btn-primary btn-small" href="mailto:hola@veloiapp.com?subject=LeadFlow%20Demo%20Request" data-i18n="navDemo">Request Demo</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow" data-i18n="heroEyebrow">AI Lead Response for Home Service &amp; Local Businesses</div>
+      <h1 data-i18n="heroHeadline">Never lose another lead to a slow response</h1>
+      <p class="sub" data-i18n="heroSub">LeadFlow automatically captures, qualifies, responds to, and schedules appointments with your leads — 24/7, with a human always one step away.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="mailto:hola@veloiapp.com?subject=LeadFlow%20Demo%20Request" data-i18n="heroCtaPrimary">Request a Demo</a>
+        <a class="btn btn-secondary" href="#how-it-works" data-i18n="heroCtaSecondary">See How It Works</a>
+      </div>
+    </div>
+    <div>
+      <div class="mockup-card">
+        <div class="mockup-head">
+          <span class="mockup-title" data-i18n="heroMockupTitle">Pipeline</span>
+        </div>
+        <div class="kanban-board">
+          <div class="kanban-col">
+            <div class="kanban-col-header"><span data-i18n="colNew">New</span><span class="kanban-col-count">3</span></div>
+            <div class="kanban-col-body">
+              <div class="kanban-card"><div class="kanban-card-name">M. Alvarez</div><div class="kanban-card-meta" data-i18n="cardRoofLeak">Roof leak — storm</div></div>
+              <div class="kanban-card"><div class="kanban-card-name">J. Cole</div><div class="kanban-card-meta" data-i18n="cardInspection">Inspection request</div></div>
+            </div>
+          </div>
+          <div class="kanban-col">
+            <div class="kanban-col-header"><span data-i18n="colQualified">Qualified</span><span class="kanban-col-count">2</span></div>
+            <div class="kanban-col-body">
+              <div class="kanban-card"><div class="kanban-card-name">D. Reyes</div><div class="kanban-card-meta" data-i18n="cardReplacement">Roof replacement</div><span class="badge badge-score-high">86/100</span></div>
+            </div>
+          </div>
+          <div class="kanban-col">
+            <div class="kanban-col-header"><span data-i18n="colBooking">Booking Sent</span><span class="kanban-col-count">1</span></div>
+            <div class="kanban-col-body">
+              <div class="kanban-card"><div class="kanban-card-name">S. Nguyen</div><div class="kanban-card-meta" data-i18n="cardEstimate">Free estimate</div><span class="badge badge-score-mid" data-i18n="cardLinkSent">Link sent</span></div>
+            </div>
+          </div>
+          <div class="kanban-col">
+            <div class="kanban-col-header"><span data-i18n="colBooked">Booked</span><span class="kanban-col-count">1</span></div>
+            <div class="kanban-col-body">
+              <div class="kanban-card"><div class="kanban-card-name">R. Patel</div><div class="kanban-card-meta" data-i18n="cardThu">Thu 10:00 AM</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="mockup-caption" data-i18n="heroMockupCaption">Sample pipeline — illustrative data.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt-bg">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 data-i18n="probHeadline">Every slow response is a lost customer</h2>
+      <p data-i18n="probSub">Most leads don't wait around. Here's what's quietly costing you business.</p>
+    </div>
+    <div class="grid-4">
+      <div class="prob-card"><div class="prob-icon">⏱️</div><h3 data-i18n="prob1Title">Leads go cold in minutes</h3><p data-i18n="prob1Body">The average lead contacts several competitors. Whoever replies first usually wins the job.</p></div>
+      <div class="prob-card"><div class="prob-icon">📋</div><h3 data-i18n="prob2Title">Follow-up gets forgotten</h3><p data-i18n="prob2Body">Busy teams lose track of who they've messaged, leaving warm leads to go quiet on their own.</p></div>
+      <div class="prob-card"><div class="prob-icon">🕘</div><h3 data-i18n="prob3Title">After-hours messages wait until morning</h3><p data-i18n="prob3Body">A message sent at 9pm shouldn't sit unanswered until your team is back at their desk.</p></div>
+      <div class="prob-card"><div class="prob-icon">🎯</div><h3 data-i18n="prob4Title">Unqualified leads waste your team's time</h3><p data-i18n="prob4Body">Without qualification up front, your team spends hours on conversations that were never going to close.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 data-i18n="howHeadline">How LeadFlow works</h2>
+      <p data-i18n="howSub">One continuous flow, from first message to booked appointment.</p>
+    </div>
+    <div class="flow">
+      <div class="flow-step"><div class="flow-num">1</div><h3 data-i18n="flowCapture">Capture</h3><p data-i18n="flowCaptureBody">Every inbound message is logged as a lead the moment it arrives.</p></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="flow-num">2</div><h3 data-i18n="flowAnalyze">Analyze</h3><p data-i18n="flowAnalyzeBody">AI reads the message for intent, urgency, and service needed.</p></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="flow-num">3</div><h3 data-i18n="flowQualify">Qualify</h3><p data-i18n="flowQualifyBody">Leads are scored against your service area and criteria.</p></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="flow-num">4</div><h3 data-i18n="flowRespond">Respond</h3><p data-i18n="flowRespondBody">A tailored reply goes out automatically, 24/7.</p></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="flow-num">5</div><h3 data-i18n="flowSchedule">Schedule</h3><p data-i18n="flowScheduleBody">Qualified leads get a booking link to lock in a time.</p></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="flow-num">6</div><h3 data-i18n="flowHandoff">Human Handoff</h3><p data-i18n="flowHandoffBody">Anything sensitive or uncertain is escalated to your team.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt-bg">
+  <div class="wrap">
+    <div class="demo-grid">
+      <div>
+        <span class="demo-tag" data-i18n="demoTag">Live Example</span>
+        <h2 data-i18n="demoHeadline">See a qualified response in action</h2>
+        <p class="demo-company" data-i18n="demoCompany"><strong>ABC Roofing</strong> — Miami, FL. A storm-damage repair company using LeadFlow to handle inbound WhatsApp leads.</p>
+        <p style="font-size:13.5px;color:var(--muted);" data-i18n="demoDesc">A new lead messages in describing their problem. LeadFlow reads the request, checks it against ABC Roofing's service area and rules, and replies — all before a human ever sees it.</p>
+      </div>
+      <div>
+        <div class="chat-window">
+          <div class="chat-label" data-i18n="demoLeadLabel">Incoming lead message</div>
+          <div class="chat-bubble lead" data-i18n="demoLeadMsg">"My roof is leaking after the storm, need someone this week."</div>
+          <div class="chat-label right" data-i18n="demoSystemLabel">LeadFlow's automated reply</div>
+          <div class="chat-bubble system" data-i18n="demoSystemMsg">"Sorry to hear about the leak — we do handle storm damage repair here in the Miami area. Is the leak actively dripping indoors right now? I can get a free on-site estimate scheduled for you this week — what days generally work best?"</div>
+        </div>
+        <div class="demo-disclaimer" data-i18n="demoDisclaimer">Example conversation shown for demonstration purposes.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 data-i18n="featHeadline">Everything you need to convert more leads</h2>
+      <p data-i18n="featSub">Built specifically for teams who can't afford to let a lead slip through.</p>
+    </div>
+    <div class="grid-4">
+      <div class="feat-card"><div class="feat-icon">🧠</div><h3 data-i18n="feat1Title">AI Analysis</h3><p data-i18n="feat1Body">Every message is read for intent, urgency, and the service being requested.</p></div>
+      <div class="feat-card"><div class="feat-icon">📊</div><h3 data-i18n="feat2Title">Scoring</h3><p data-i18n="feat2Body">Leads are scored against your service area and criteria so the best ones stand out.</p></div>
+      <div class="feat-card"><div class="feat-icon">💬</div><h3 data-i18n="feat3Title">Automated Response</h3><p data-i18n="feat3Body">Tailored replies go out instantly, day or night, in your business's tone.</p></div>
+      <div class="feat-card"><div class="feat-icon">🧑‍💼</div><h3 data-i18n="feat4Title">Human Handoff</h3><p data-i18n="feat4Body">Sensitive, high-value, or uncertain conversations are escalated to your team.</p></div>
+      <div class="feat-card"><div class="feat-icon">🗂️</div><h3 data-i18n="feat5Title">Pipeline / CRM</h3><p data-i18n="feat5Body">Every lead moves through a visual pipeline your team can track and manage.</p></div>
+      <div class="feat-card"><div class="feat-icon">📅</div><h3 data-i18n="feat6Title">Booking</h3><p data-i18n="feat6Body">Qualified leads get a scheduling link so appointments book themselves.</p></div>
+      <div class="feat-card"><div class="feat-icon">🏢</div><h3 data-i18n="feat7Title">Multi-tenant</h3><p data-i18n="feat7Body">Manage multiple locations or brands from a single, organized account.</p></div>
+      <div class="feat-card"><div class="feat-icon">🌐</div><h3 data-i18n="feat8Title">Bilingual</h3><p data-i18n="feat8Body">Reach leads in English or Spanish, automatically, with no extra setup.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing" class="alt-bg">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 data-i18n="priceHeadline">Simple, transparent plans</h2>
+      <p data-i18n="priceSub">Pricing is tailored to your team and lead volume. Talk to us and we'll recommend the right fit.</p>
+    </div>
+    <div class="price-grid">
+      <div class="price-card">
+        <div class="price-name" data-i18n="priceStarterName">Starter</div>
+        <div class="price-sub" data-i18n="priceStarterSub">For a single location getting started</div>
+        <div class="price-value" data-i18n="priceContact1">Contact us for pricing</div>
+        <ul class="price-list">
+          <li data-i18n="priceStarter1">AI analysis &amp; automated response</li>
+          <li data-i18n="priceStarter2">Lead scoring</li>
+          <li data-i18n="priceStarter3">Pipeline / CRM view</li>
+          <li data-i18n="priceStarter4">Single location</li>
+        </ul>
+        <a class="btn btn-secondary" href="mailto:hola@veloiapp.com?subject=LeadFlow%20—%20Starter%20Plan" data-i18n="priceCta">Contact Us</a>
+      </div>
+      <div class="price-card featured">
+        <span class="price-featured-tag" data-i18n="priceMostPopular">Most Popular</span>
+        <div class="price-name" data-i18n="priceGrowthName">Growth</div>
+        <div class="price-sub" data-i18n="priceGrowthSub">For teams ready to automate scheduling</div>
+        <div class="price-value" data-i18n="priceContact2">Contact us for pricing</div>
+        <ul class="price-list">
+          <li data-i18n="priceGrowth1">Everything in Starter</li>
+          <li data-i18n="priceGrowth2">Automated booking &amp; scheduling</li>
+          <li data-i18n="priceGrowth3">Human handoff queue</li>
+          <li data-i18n="priceGrowth4">Bilingual (EN/ES) support</li>
+        </ul>
+        <a class="btn btn-primary" href="mailto:hola@veloiapp.com?subject=LeadFlow%20—%20Growth%20Plan" data-i18n="priceCta">Contact Us</a>
+      </div>
+      <div class="price-card">
+        <div class="price-name" data-i18n="priceEnterpriseName">Enterprise</div>
+        <div class="price-sub" data-i18n="priceEnterpriseSub">For multi-location or multi-brand teams</div>
+        <div class="price-value" data-i18n="priceContact3">Contact us for pricing</div>
+        <ul class="price-list">
+          <li data-i18n="priceEnterprise1">Everything in Growth</li>
+          <li data-i18n="priceEnterprise2">Multi-tenant / multi-location</li>
+          <li data-i18n="priceEnterprise3">Priority support</li>
+          <li data-i18n="priceEnterprise4">Custom onboarding</li>
+        </ul>
+        <a class="btn btn-secondary" href="mailto:hola@veloiapp.com?subject=LeadFlow%20—%20Enterprise%20Plan" data-i18n="priceCta">Contact Us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <h2 data-i18n="faqHeadline">Frequently asked questions</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item"><h3 data-i18n="faq1Q">Does LeadFlow work with our existing phone number or WhatsApp Business account?</h3><p data-i18n="faq1A">Yes. LeadFlow connects to your existing number through the official WhatsApp Business API — no need to switch numbers.</p></div>
+      <div class="faq-item"><h3 data-i18n="faq2Q">How does LeadFlow decide which leads are qualified?</h3><p data-i18n="faq2A">Each lead is scored against criteria you set — service area, service type, urgency, and how complete the request is — so your team can focus on the leads worth pursuing.</p></div>
+      <div class="faq-item"><h3 data-i18n="faq3Q">Can a real person take over a conversation?</h3><p data-i18n="faq3A">Yes. When a conversation is sensitive, high-value, or the AI isn't confident, it's handed off to your team in the queue for review.</p></div>
+      <div class="faq-item"><h3 data-i18n="faq4Q">How long does setup take?</h3><p data-i18n="faq4A">Most implementations are live within a few business days, depending on the details you share about your business and services.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="try-demo" class="alt-bg">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="demo-tag" data-i18n="tryTag">Try It Live</span>
+      <h2 data-i18n="tryHeadline">See LeadFlow respond to your message</h2>
+      <p data-i18n="tryDesc">Submit this like a real lead for ABC Roofing (Miami, FL) and watch LeadFlow analyze, qualify, and reply — live, in real time.</p>
+    </div>
+    <div class="demo-grid">
+      <div>
+        <form id="leadForm" novalidate>
+          <div class="form-row">
+            <label for="fName" data-i18n="formNameLabel">Full Name</label>
+            <input type="text" id="fName" name="name" autocomplete="name" required />
+          </div>
+          <div class="form-row-2">
+            <div class="form-row">
+              <label for="fEmail" data-i18n="formEmailLabel">Email</label>
+              <input type="email" id="fEmail" name="email" autocomplete="email" />
+            </div>
+            <div class="form-row">
+              <label for="fPhone" data-i18n="formPhoneLabel">Phone</label>
+              <input type="tel" id="fPhone" name="phone" autocomplete="tel" />
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="fService" data-i18n="formServiceLabel">Service Requested</label>
+            <input type="text" id="fService" name="service" />
+          </div>
+          <div class="form-row">
+            <label for="fMessage" data-i18n="formMessageLabel">Your Message</label>
+            <textarea id="fMessage" name="message" rows="4" required></textarea>
+          </div>
+          <div class="form-error" id="formError" style="display:none;"></div>
+          <button type="submit" class="btn btn-primary" id="formSubmitBtn" data-i18n="formSubmit">See My Response</button>
+          <p class="form-disclaimer" data-i18n="formDisclaimer">This demo submits to a live ABC Roofing (Miami, FL) test account, for demonstration purposes only — not a real service request.</p>
+        </form>
+      </div>
+      <div>
+        <div class="chat-window" id="formIdlePanel">
+          <div class="form-idle-panel" data-i18n="formIdle">Your response will appear here.</div>
+        </div>
+        <div class="chat-window" id="formLoadingPanel" style="display:none;">
+          <div class="form-idle-panel" data-i18n="formLoading">Analyzing your message…</div>
+        </div>
+        <div class="chat-window" id="formResultPanel" style="display:none;">
+          <div class="form-result-intro" id="formResultIntro" data-i18n="formResultIntro">Thanks! Here's how we'd respond:</div>
+          <div class="chat-label" data-i18n="demoLeadLabel">Incoming lead message</div>
+          <div class="chat-bubble lead" id="formResultLeadMsg"></div>
+          <div class="chat-label right" data-i18n="demoSystemLabel">LeadFlow's automated reply</div>
+          <div class="chat-bubble system" id="formResultReply"></div>
+          <div id="formResultBadges"></div>
+        </div>
+        <div class="demo-disclaimer" data-i18n="demoDisclaimer">Example conversation shown for demonstration purposes.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="cta-band">
+  <div class="wrap">
+    <h2 data-i18n="ctaHeadline">Ready to stop losing leads to slow responses?</h2>
+    <p data-i18n="ctaSub">Tell us about your business and we'll show you LeadFlow working with a scenario close to yours.</p>
+    <a class="btn btn-primary" href="mailto:hola@veloiapp.com?subject=LeadFlow%20Demo%20Request" data-i18n="ctaButton">Request a Demo</a>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-logo">Lead<span style="color:var(--gold)">Flow</span></div>
+    <div class="footer-links">
+      <a href="#features" data-i18n="navFeatures">Features</a>
+      <a href="#how-it-works" data-i18n="navHow">How it Works</a>
+      <a href="#pricing" data-i18n="navPricing">Pricing</a>
+      <a href="mailto:hola@veloiapp.com" data-i18n="footerContact">Contact</a>
+    </div>
+    <div class="footer-copy"><span id="footerYear"></span> <span data-i18n="footerCopy">VeloiApp — LeadFlow. All rights reserved.</span></div>
+  </div>
+</footer>
+
+<script>
+  const I18N = {
+    en: {
+      navFeatures: 'Features', navHow: 'How it Works', navPricing: 'Pricing', navDemo: 'Request Demo',
+      heroEyebrow: 'AI Lead Response for Home Service & Local Businesses',
+      heroHeadline: 'Never lose another lead to a slow response',
+      heroSub: 'LeadFlow automatically captures, qualifies, responds to, and schedules appointments with your leads — 24/7, with a human always one step away.',
+      heroCtaPrimary: 'Request a Demo', heroCtaSecondary: 'See How It Works',
+      heroMockupTitle: 'Pipeline', heroMockupCaption: 'Sample pipeline — illustrative data.',
+      colNew: 'New', colQualified: 'Qualified', colBooking: 'Booking Sent', colBooked: 'Booked',
+      cardRoofLeak: 'Roof leak — storm', cardInspection: 'Inspection request', cardReplacement: 'Roof replacement',
+      cardEstimate: 'Free estimate', cardLinkSent: 'Link sent', cardThu: 'Thu 10:00 AM',
+      probHeadline: 'Every slow response is a lost customer',
+      probSub: "Most leads don't wait around. Here's what's quietly costing you business.",
+      prob1Title: 'Leads go cold in minutes', prob1Body: "The average lead contacts several competitors. Whoever replies first usually wins the job.",
+      prob2Title: 'Follow-up gets forgotten', prob2Body: "Busy teams lose track of who they've messaged, leaving warm leads to go quiet on their own.",
+      prob3Title: 'After-hours messages wait until morning', prob3Body: "A message sent at 9pm shouldn't sit unanswered until your team is back at their desk.",
+      prob4Title: "Unqualified leads waste your team's time", prob4Body: "Without qualification up front, your team spends hours on conversations that were never going to close.",
+      howHeadline: 'How LeadFlow works', howSub: 'One continuous flow, from first message to booked appointment.',
+      flowCapture: 'Capture', flowCaptureBody: 'Every inbound message is logged as a lead the moment it arrives.',
+      flowAnalyze: 'Analyze', flowAnalyzeBody: 'AI reads the message for intent, urgency, and service needed.',
+      flowQualify: 'Qualify', flowQualifyBody: 'Leads are scored against your service area and criteria.',
+      flowRespond: 'Respond', flowRespondBody: 'A tailored reply goes out automatically, 24/7.',
+      flowSchedule: 'Schedule', flowScheduleBody: 'Qualified leads get a booking link to lock in a time.',
+      flowHandoff: 'Human Handoff', flowHandoffBody: 'Anything sensitive or uncertain is escalated to your team.',
+      demoTag: 'Live Example', demoHeadline: 'See a qualified response in action',
+      demoCompany: '<strong>ABC Roofing</strong> — Miami, FL. A storm-damage repair company using LeadFlow to handle inbound WhatsApp leads.',
+      demoDesc: "A new lead messages in describing their problem. LeadFlow reads the request, checks it against ABC Roofing's service area and rules, and replies — all before a human ever sees it.",
+      demoLeadLabel: 'Incoming lead message', demoLeadMsg: '"My roof is leaking after the storm, need someone this week."',
+      demoSystemLabel: "LeadFlow's automated reply",
+      demoSystemMsg: '"Sorry to hear about the leak — we do handle storm damage repair here in the Miami area. Is the leak actively dripping indoors right now? I can get a free on-site estimate scheduled for you this week — what days generally work best?"',
+      demoDisclaimer: 'Example conversation shown for demonstration purposes.',
+      tryTag: 'Try It Live', tryHeadline: 'See LeadFlow respond to your message',
+      tryDesc: 'Submit this like a real lead for ABC Roofing (Miami, FL) and watch LeadFlow analyze, qualify, and reply — live, in real time.',
+      formNameLabel: 'Full Name', formEmailLabel: 'Email', formPhoneLabel: 'Phone',
+      formServiceLabel: 'Service Requested', formMessageLabel: 'Your Message',
+      formSubmit: 'See My Response', formSubmitting: 'Sending…',
+      formDisclaimer: 'This demo submits to a live ABC Roofing (Miami, FL) test account, for demonstration purposes only — not a real service request.',
+      formIdle: 'Your response will appear here.', formLoading: 'Analyzing your message…',
+      formResultIntro: "Thanks! Here's how we'd respond:",
+      formErrorRequired: 'Please enter your name and a message.',
+      formErrorContact: 'Please enter an email or a phone number so we can reach you.',
+      formErrorThrottle: "You've submitted a few times already — please wait a minute and try again.",
+      formErrorGeneric: 'Something went wrong sending your message. Please try again.',
+      formNoReply: "Thanks — we've received your message and a team member will follow up personally.",
+      qualLabelQualified: 'Qualified', qualLabelNeedsInfo: 'Needs More Info', qualLabelUnqualified: 'Not Qualified',
+      urgLabelHigh: 'High Urgency', urgLabelMedium: 'Medium Urgency', urgLabelLow: 'Low Urgency',
+      featHeadline: 'Everything you need to convert more leads', featSub: "Built specifically for teams who can't afford to let a lead slip through.",
+      feat1Title: 'AI Analysis', feat1Body: 'Every message is read for intent, urgency, and the service being requested.',
+      feat2Title: 'Scoring', feat2Body: 'Leads are scored against your service area and criteria so the best ones stand out.',
+      feat3Title: 'Automated Response', feat3Body: "Tailored replies go out instantly, day or night, in your business's tone.",
+      feat4Title: 'Human Handoff', feat4Body: 'Sensitive, high-value, or uncertain conversations are escalated to your team.',
+      feat5Title: 'Pipeline / CRM', feat5Body: 'Every lead moves through a visual pipeline your team can track and manage.',
+      feat6Title: 'Booking', feat6Body: 'Qualified leads get a scheduling link so appointments book themselves.',
+      feat7Title: 'Multi-tenant', feat7Body: 'Manage multiple locations or brands from a single, organized account.',
+      feat8Title: 'Bilingual', feat8Body: 'Reach leads in English or Spanish, automatically, with no extra setup.',
+      priceHeadline: 'Simple, transparent plans', priceSub: "Pricing is tailored to your team and lead volume. Talk to us and we'll recommend the right fit.",
+      priceStarterName: 'Starter', priceStarterSub: 'For a single location getting started',
+      priceGrowthName: 'Growth', priceGrowthSub: 'For teams ready to automate scheduling',
+      priceEnterpriseName: 'Enterprise', priceEnterpriseSub: 'For multi-location or multi-brand teams',
+      priceContact1: 'Contact us for pricing', priceContact2: 'Contact us for pricing', priceContact3: 'Contact us for pricing',
+      priceMostPopular: 'Most Popular', priceCta: 'Contact Us',
+      priceStarter1: 'AI analysis & automated response', priceStarter2: 'Lead scoring', priceStarter3: 'Pipeline / CRM view', priceStarter4: 'Single location',
+      priceGrowth1: 'Everything in Starter', priceGrowth2: 'Automated booking & scheduling', priceGrowth3: 'Human handoff queue', priceGrowth4: 'Bilingual (EN/ES) support',
+      priceEnterprise1: 'Everything in Growth', priceEnterprise2: 'Multi-tenant / multi-location', priceEnterprise3: 'Priority support', priceEnterprise4: 'Custom onboarding',
+      faqHeadline: 'Frequently asked questions',
+      faq1Q: 'Does LeadFlow work with our existing phone number or WhatsApp Business account?',
+      faq1A: 'Yes. LeadFlow connects to your existing number through the official WhatsApp Business API — no need to switch numbers.',
+      faq2Q: 'How does LeadFlow decide which leads are qualified?',
+      faq2A: 'Each lead is scored against criteria you set — service area, service type, urgency, and how complete the request is — so your team can focus on the leads worth pursuing.',
+      faq3Q: 'Can a real person take over a conversation?',
+      faq3A: "Yes. When a conversation is sensitive, high-value, or the AI isn't confident, it's handed off to your team in the queue for review.",
+      faq4Q: 'How long does setup take?',
+      faq4A: 'Most implementations are live within a few business days, depending on the details you share about your business and services.',
+      ctaHeadline: 'Ready to stop losing leads to slow responses?',
+      ctaSub: "Tell us about your business and we'll show you LeadFlow working with a scenario close to yours.",
+      ctaButton: 'Request a Demo',
+      footerContact: 'Contact', footerCopy: 'VeloiApp — LeadFlow. All rights reserved.',
+    },
+    es: {
+      navFeatures: 'Funciones', navHow: 'Cómo Funciona', navPricing: 'Precios', navDemo: 'Solicitar Demo',
+      heroEyebrow: 'Respuesta de Leads con IA para Negocios de Servicios y Locales',
+      heroHeadline: 'No vuelvas a perder un lead por responder tarde',
+      heroSub: 'LeadFlow captura, califica, responde y agenda citas con tus leads automáticamente — 24/7, con una persona siempre a un paso de distancia.',
+      heroCtaPrimary: 'Solicitar una Demo', heroCtaSecondary: 'Ver Cómo Funciona',
+      heroMockupTitle: 'Pipeline', heroMockupCaption: 'Pipeline de ejemplo — datos ilustrativos.',
+      colNew: 'Nuevo', colQualified: 'Calificado', colBooking: 'Link Enviado', colBooked: 'Agendado',
+      cardRoofLeak: 'Fuga — tormenta', cardInspection: 'Solicitud de inspección', cardReplacement: 'Reemplazo de techo',
+      cardEstimate: 'Estimado gratis', cardLinkSent: 'Link enviado', cardThu: 'Jue 10:00 AM',
+      probHeadline: 'Cada respuesta lenta es un cliente perdido',
+      probSub: 'La mayoría de los leads no esperan. Esto es lo que te está costando negocio en silencio.',
+      prob1Title: 'Los leads se enfrían en minutos', prob1Body: 'El lead promedio contacta a varios competidores. Quien responde primero suele quedarse con el trabajo.',
+      prob2Title: 'El seguimiento se olvida', prob2Body: 'Los equipos ocupados pierden el rastro de a quién le escribieron, dejando que leads calientes se enfríen solos.',
+      prob3Title: 'Los mensajes fuera de horario esperan hasta el día siguiente', prob3Body: 'Un mensaje enviado a las 9pm no debería quedar sin respuesta hasta que tu equipo vuelva a su escritorio.',
+      prob4Title: 'Los leads sin calificar le hacen perder tiempo a tu equipo', prob4Body: 'Sin calificación previa, tu equipo pasa horas en conversaciones que nunca iban a cerrar.',
+      howHeadline: 'Cómo funciona LeadFlow', howSub: 'Un flujo continuo, desde el primer mensaje hasta la cita agendada.',
+      flowCapture: 'Captura', flowCaptureBody: 'Cada mensaje entrante se registra como lead en el momento en que llega.',
+      flowAnalyze: 'Analiza', flowAnalyzeBody: 'La IA lee el mensaje para identificar intención, urgencia y servicio solicitado.',
+      flowQualify: 'Califica', flowQualifyBody: 'Los leads se puntúan según tu zona de servicio y tus criterios.',
+      flowRespond: 'Responde', flowRespondBody: 'Se envía una respuesta a la medida automáticamente, 24/7.',
+      flowSchedule: 'Agenda', flowScheduleBody: 'Los leads calificados reciben un link para agendar su cita.',
+      flowHandoff: 'Transferencia Humana', flowHandoffBody: 'Todo lo sensible o incierto se escala a tu equipo.',
+      demoTag: 'Ejemplo en Vivo', demoHeadline: 'Mira una respuesta calificada en acción',
+      demoCompany: '<strong>ABC Roofing</strong> — Miami, FL. Una empresa de reparación de techos por daños de tormenta que usa LeadFlow para manejar sus leads de WhatsApp.',
+      demoDesc: 'Un lead nuevo escribe describiendo su problema. LeadFlow lee la solicitud, la verifica contra la zona de servicio y las reglas de ABC Roofing, y responde — todo antes de que una persona lo vea.',
+      demoLeadLabel: 'Mensaje entrante del lead', demoLeadMsg: '"Se me está filtrando el techo después de la tormenta, necesito a alguien esta semana."',
+      demoSystemLabel: 'Respuesta automática de LeadFlow',
+      demoSystemMsg: '"Lamento lo de la filtración — sí manejamos reparación por daños de tormenta aquí en el área de Miami. ¿La filtración está goteando activamente adentro en este momento? Puedo agendarte un estimado gratis en sitio esta semana — ¿qué días te funcionan mejor?"',
+      demoDisclaimer: 'Conversación de ejemplo mostrada con fines demostrativos.',
+      tryTag: 'Pruébalo en Vivo', tryHeadline: 'Mira cómo LeadFlow responde a tu mensaje',
+      tryDesc: 'Envía esto como si fueras un lead real de ABC Roofing (Miami, FL) y mira a LeadFlow analizar, calificar y responder — en vivo, en tiempo real.',
+      formNameLabel: 'Nombre Completo', formEmailLabel: 'Correo', formPhoneLabel: 'Teléfono',
+      formServiceLabel: 'Servicio Solicitado', formMessageLabel: 'Tu Mensaje',
+      formSubmit: 'Ver Mi Respuesta', formSubmitting: 'Enviando…',
+      formDisclaimer: 'Esta demo se envía a una cuenta de prueba real de ABC Roofing (Miami, FL), con fines demostrativos únicamente — no es una solicitud de servicio real.',
+      formIdle: 'Tu respuesta aparecerá aquí.', formLoading: 'Analizando tu mensaje…',
+      formResultIntro: '¡Gracias! Así es como responderíamos:',
+      formErrorRequired: 'Por favor ingresa tu nombre y un mensaje.',
+      formErrorContact: 'Por favor ingresa un correo o un teléfono para poder contactarte.',
+      formErrorThrottle: 'Ya enviaste varias veces — espera un minuto e intenta de nuevo.',
+      formErrorGeneric: 'Algo salió mal al enviar tu mensaje. Por favor intenta de nuevo.',
+      formNoReply: 'Gracias — recibimos tu mensaje y un miembro del equipo hará seguimiento personalmente.',
+      qualLabelQualified: 'Calificado', qualLabelNeedsInfo: 'Falta Información', qualLabelUnqualified: 'No Calificado',
+      urgLabelHigh: 'Urgencia Alta', urgLabelMedium: 'Urgencia Media', urgLabelLow: 'Urgencia Baja',
+      featHeadline: 'Todo lo que necesitas para convertir más leads', featSub: 'Diseñado para equipos que no pueden darse el lujo de perder un lead.',
+      feat1Title: 'Análisis de IA', feat1Body: 'Cada mensaje se lee para identificar intención, urgencia y el servicio solicitado.',
+      feat2Title: 'Calificación', feat2Body: 'Los leads se puntúan según tu zona de servicio y criterios, para que los mejores destaquen.',
+      feat3Title: 'Respuesta Automática', feat3Body: 'Respuestas a la medida se envían al instante, de día o de noche, con el tono de tu negocio.',
+      feat4Title: 'Transferencia Humana', feat4Body: 'Las conversaciones sensibles, de alto valor o inciertas se escalan a tu equipo.',
+      feat5Title: 'Pipeline / CRM', feat5Body: 'Cada lead avanza por un pipeline visual que tu equipo puede seguir y administrar.',
+      feat6Title: 'Agendamiento', feat6Body: 'Los leads calificados reciben un link para que la cita se agende sola.',
+      feat7Title: 'Multi-empresa', feat7Body: 'Administra varias sedes o marcas desde una sola cuenta organizada.',
+      feat8Title: 'Bilingüe', feat8Body: 'Llega a tus leads en inglés o español, automáticamente, sin configuración extra.',
+      priceHeadline: 'Planes simples y transparentes', priceSub: 'El precio se ajusta a tu equipo y volumen de leads. Habla con nosotros y te recomendamos el plan indicado.',
+      priceStarterName: 'Starter', priceStarterSub: 'Para una sola sede que está empezando',
+      priceGrowthName: 'Growth', priceGrowthSub: 'Para equipos listos para automatizar el agendamiento',
+      priceEnterpriseName: 'Enterprise', priceEnterpriseSub: 'Para equipos con varias sedes o marcas',
+      priceContact1: 'Contáctanos para precios', priceContact2: 'Contáctanos para precios', priceContact3: 'Contáctanos para precios',
+      priceMostPopular: 'Más Popular', priceCta: 'Contáctanos',
+      priceStarter1: 'Análisis de IA y respuesta automática', priceStarter2: 'Calificación de leads', priceStarter3: 'Vista de pipeline / CRM', priceStarter4: 'Una sola sede',
+      priceGrowth1: 'Todo lo de Starter', priceGrowth2: 'Agendamiento automático', priceGrowth3: 'Cola de transferencia humana', priceGrowth4: 'Soporte bilingüe (EN/ES)',
+      priceEnterprise1: 'Todo lo de Growth', priceEnterprise2: 'Multi-empresa / multi-sede', priceEnterprise3: 'Soporte prioritario', priceEnterprise4: 'Onboarding personalizado',
+      faqHeadline: 'Preguntas frecuentes',
+      faq1Q: '¿LeadFlow funciona con nuestro número existente de WhatsApp Business?',
+      faq1A: 'Sí. LeadFlow se conecta a tu número existente a través de la API oficial de WhatsApp Business — no necesitas cambiar de número.',
+      faq2Q: '¿Cómo decide LeadFlow qué leads están calificados?',
+      faq2A: 'Cada lead se puntúa según criterios que tú defines — zona de servicio, tipo de servicio, urgencia y qué tan completa está la solicitud — para que tu equipo se enfoque en los leads que valen la pena.',
+      faq3Q: '¿Puede una persona real tomar el control de una conversación?',
+      faq3A: 'Sí. Cuando una conversación es sensible, de alto valor, o la IA no tiene suficiente confianza, se transfiere a tu equipo en la cola de revisión.',
+      faq4Q: '¿Cuánto tarda la implementación?',
+      faq4A: 'La mayoría de las implementaciones quedan listas en pocos días hábiles, dependiendo de los detalles que compartas sobre tu negocio y servicios.',
+      ctaHeadline: '¿Listo para dejar de perder leads por responder tarde?',
+      ctaSub: 'Cuéntanos sobre tu negocio y te mostramos LeadFlow funcionando con un escenario parecido al tuyo.',
+      ctaButton: 'Solicitar una Demo',
+      footerContact: 'Contacto', footerCopy: 'VeloiApp — LeadFlow. Todos los derechos reservados.',
+    },
+  };
+
+  let currentLang = 'en';
+
+  function t(key) { return I18N[currentLang][key]; }
+
+  const RICH_KEYS = new Set(['demoCompany']);
+
+  function applyI18n() {
+    document.documentElement.lang = currentLang;
+    document.getElementById('langBtnEn').classList.toggle('active', currentLang === 'en');
+    document.getElementById('langBtnEs').classList.toggle('active', currentLang === 'es');
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      const key = el.getAttribute('data-i18n');
+      const value = t(key);
+      if (value === undefined) return;
+      if (RICH_KEYS.has(key)) el.innerHTML = value;
+      else el.textContent = value;
+    });
+  }
+
+  window.setLang = (lang) => {
+    if (lang !== 'en' && lang !== 'es') return;
+    currentLang = lang;
+    try { sessionStorage.setItem('leadflow_landing_lang', lang); } catch {}
+    applyI18n();
+  };
+
+  (function initLang() {
+    let stored = null;
+    try { stored = sessionStorage.getItem('leadflow_landing_lang'); } catch {}
+    if (stored === 'en' || stored === 'es') currentLang = stored;
+  })();
+
+  document.getElementById('footerYear').textContent = new Date().getFullYear();
+  applyI18n();
+
+  // ===== Try-it-yourself lead capture form =====
+  // Calls the live leadflowCaptureLead Cloud Function directly (CORS: origin
+  // true) against the ABC Roofing demo tenant, and renders the real AI reply
+  // it returns. No email notification wired up yet — that's a follow-up.
+  const CAPTURE_URL = 'https://us-central1-gen-lang-client-0598503352.cloudfunctions.net/leadflowCaptureLead';
+  const DEMO_COMPANY_ID = 'abc-roofing';
+
+  const QUAL_LABEL_KEYS = { qualified: 'qualLabelQualified', needs_more_info: 'qualLabelNeedsInfo', unqualified: 'qualLabelUnqualified' };
+  const URG_LABEL_KEYS = { high: 'urgLabelHigh', medium: 'urgLabelMedium', low: 'urgLabelLow' };
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+  }
+
+  function showFormPanel(name) {
+    document.getElementById('formIdlePanel').style.display = name === 'idle' ? 'block' : 'none';
+    document.getElementById('formLoadingPanel').style.display = name === 'loading' ? 'block' : 'none';
+    document.getElementById('formResultPanel').style.display = name === 'result' ? 'block' : 'none';
+  }
+
+  document.getElementById('leadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('fName').value.trim();
+    const email = document.getElementById('fEmail').value.trim();
+    const phone = document.getElementById('fPhone').value.trim();
+    const service = document.getElementById('fService').value.trim();
+    const message = document.getElementById('fMessage').value.trim();
+
+    const errorEl = document.getElementById('formError');
+    errorEl.style.display = 'none';
+
+    if (!name || !message) {
+      errorEl.textContent = t('formErrorRequired');
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (!email && !phone) {
+      errorEl.textContent = t('formErrorContact');
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const submitBtn = document.getElementById('formSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = t('formSubmitting');
+    showFormPanel('loading');
+
+    try {
+      const resp = await fetch(CAPTURE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId: DEMO_COMPANY_ID,
+          contact: { name, email: email || null, phone: phone || null },
+          serviceRequested: service || null,
+          message,
+          source: 'landing_demo_form',
+        }),
+      });
+
+      let data = null;
+      try { data = await resp.json(); } catch {}
+
+      if (!resp.ok) {
+        errorEl.textContent = resp.status === 429 ? t('formErrorThrottle') : t('formErrorGeneric');
+        errorEl.style.display = 'block';
+        showFormPanel('idle');
+        return;
+      }
+
+      document.getElementById('formResultLeadMsg').textContent = message;
+      document.getElementById('formResultReply').textContent = (data && data.autoReply && data.autoReply.text) || t('formNoReply');
+
+      const badgesEl = document.getElementById('formResultBadges');
+      badgesEl.innerHTML = '';
+      if (data && data.analysis) {
+        const qualKey = QUAL_LABEL_KEYS[data.analysis.qualification];
+        const urgKey = URG_LABEL_KEYS[data.analysis.urgency];
+        if (qualKey) badgesEl.innerHTML += `<span class="badge badge-score-high">${escapeHtml(t(qualKey))}</span> `;
+        if (urgKey) badgesEl.innerHTML += `<span class="badge badge-score-mid">${escapeHtml(t(urgKey))}</span>`;
+      }
+
+      showFormPanel('result');
+      document.getElementById('leadForm').reset();
+    } catch (err) {
+      console.error('LeadFlow demo form error:', err);
+      errorEl.textContent = t('formErrorGeneric');
+      errorEl.style.display = 'block';
+      showFormPanel('idle');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = t('formSubmit');
+    }
+  });
+</script>
+</body>
+</html>
