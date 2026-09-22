@@ -6,11 +6,12 @@
     "node": "20"
   },
   "dependencies": {
-    "firebase-functions": "^7.3.2",
-    "firebase-admin": "^14.4.0",
     "@google-cloud/firestore": "^9.1.0",
     "@google/genai": "^2.22.0",
-    "cors": "^2.8.6"
+    "cors": "^2.8.6",
+    "firebase-admin": "^14.4.0",
+    "firebase-functions": "^7.3.2",
+    "resend": "^6.28.1"
   },
   "private": true
 }

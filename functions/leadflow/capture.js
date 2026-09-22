@@ -3,7 +3,7 @@ const cors = require("cors")({ origin: true });
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
 const { COLLECTIONS, LEAD_STATUS, EVENT_TYPE, HANDOFF_TRIGGER } = require("./constants");
-const { GEMINI_API_KEY } = require("./secrets");
+const { GEMINI_API_KEY, RESEND_API_KEY } = require("./secrets");
 const { buildDedupeKey } = require("./dedupe");
 const { analyzeLead } = require("./analyzeLead");
 const { validateAnalysis } = require("./geminiSchemas");
@@ -12,6 +12,7 @@ const { decideRoute, statusForRoute, logEvent } = require("./pipeline");
 const { generateReply } = require("./generateReply");
 const { createHandoff } = require("./handoff");
 const { detectMessageLanguage } = require("./detectLanguage");
+const { sendLeadEmail } = require("./sendEmail");
 
 const THROTTLE_WINDOW_MS = 60 * 1000;
 const THROTTLE_MAX = 5;
@@ -41,7 +42,17 @@ function buildBookingLink(company, leadId, name) {
   return url.toString();
 }
 
-exports.leadflowCaptureLead = onRequest({ secrets: [GEMINI_API_KEY] }, (req, res) => {
+// Envía el autoReply por email si el lead dejó uno. Leads que solo dejaron
+// teléfono se quedan con sentAt: null (todavía no hay canal SMS/WhatsApp
+// para leads de formulario). Una falla de envío no rompe la captura — se
+// registra y el lead queda con sentAt: null + sendError para verlo en el
+// dashboard.
+async function sendAutoReplyEmail(contact, company, language, text, leadId) {
+  if (!contact?.email) return { sentAt: null, emailId: null, error: null };
+  return sendLeadEmail({ to: contact.email, company, language, text, logContext: `autoReply lead ${leadId}` });
+}
+
+exports.leadflowCaptureLead = onRequest({ secrets: [GEMINI_API_KEY, RESEND_API_KEY] }, (req, res) => {
   cors(req, res, async () => {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method not allowed" });
@@ -189,8 +200,13 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
     replyText = `${replyText}\n\n${bookingLinkSent}`;
   }
 
+  const emailResult = await sendAutoReplyEmail(contact, company, replyResult.language, replyText, leadId);
+
   await leadRef.update({
-    autoReply: { text: replyText, language: replyResult.language, generatedAt: FieldValue.serverTimestamp(), sentAt: null },
+    autoReply: {
+      text: replyText, language: replyResult.language, generatedAt: FieldValue.serverTimestamp(),
+      sentAt: emailResult.sentAt, emailId: emailResult.emailId, sendError: emailResult.error,
+    },
     bookingLinkSent,
     status: nextStatus,
     aiUsage: FieldValue.arrayUnion(replyResult.usage),
@@ -273,8 +289,13 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
     : existingLead.status === LEAD_STATUS.APPOINTMENT_BOOKED ? existingLead.status
     : statusForRoute(route);
 
+  const emailResult = await sendAutoReplyEmail(existingLead.contact, company, replyResult.language, replyText, leadId);
+
   await leadRef.update({
-    autoReply: { text: replyText, language: replyResult.language, generatedAt: FieldValue.serverTimestamp(), sentAt: null },
+    autoReply: {
+      text: replyText, language: replyResult.language, generatedAt: FieldValue.serverTimestamp(),
+      sentAt: emailResult.sentAt, emailId: emailResult.emailId, sendError: emailResult.error,
+    },
     detectedLanguage,
     bookingLinkSent,
     status: nextStatus,

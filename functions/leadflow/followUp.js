@@ -2,9 +2,10 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
 const { COLLECTIONS, LEAD_STATUS, EVENT_TYPE } = require("./constants");
-const { GEMINI_API_KEY } = require("./secrets");
+const { GEMINI_API_KEY, RESEND_API_KEY } = require("./secrets");
 const { generateReply } = require("./generateReply");
 const { logEvent } = require("./pipeline");
+const { sendLeadEmail } = require("./sendEmail");
 
 const MS_PER_HOUR = 60 * 60 * 1000;
 
@@ -58,7 +59,7 @@ async function stopFollowUp(db, lead, reason) {
 // aparecer en este query y el scheduler lo ignora automáticamente sin
 // ninguna lógica extra para eso.
 exports.leadflowFollowUpScheduler = onSchedule(
-  { schedule: "every 30 minutes", secrets: [GEMINI_API_KEY] },
+  { schedule: "every 30 minutes", secrets: [GEMINI_API_KEY, RESEND_API_KEY] },
   async () => {
     const db = getFirestore();
 
@@ -124,7 +125,11 @@ exports.leadflowFollowUpScheduler = onSchedule(
           location: lead.location,
           message: lead.message,
         };
-        const replyResult = await generateReply(leadForAI, evalResult.route, company);
+        // Mismo criterio que capture.js: el idioma real del lead (el último
+        // detectado), no el default de la empresa. Si no hay ninguno
+        // guardado, generateReply cae a company.language.
+        const detectedLanguage = lead.detectedLanguage ?? lead.analysis?.detected_language ?? null;
+        const replyResult = await generateReply(leadForAI, evalResult.route, company, detectedLanguage);
 
         let finalText = replyResult.text;
         if (lead.bookingLinkSent) {
@@ -132,21 +137,14 @@ exports.leadflowFollowUpScheduler = onSchedule(
         }
 
         const newAttempts = attempts + 1;
-        await db.collection(COLLECTIONS.LEADS).doc(lead.id).update({
+        const leadRef = db.collection(COLLECTIONS.LEADS).doc(lead.id);
+        // El intento se registra ANTES de enviar el email: si el envío sale
+        // pero una escritura posterior falla, el catch de abajo no vuelve a
+        // intentar en 30 min, así que el lead nunca recibe el mismo
+        // recordatorio dos veces.
+        await leadRef.update({
           "followUp.attempts": newAttempts,
           "followUp.lastSentAt": FieldValue.serverTimestamp(),
-          // Mismo patrón que leadflow_leads.autoReply: se genera y se
-          // guarda, pero sentAt queda en null.
-          //
-          // TODO BLOQUEANTE antes de conectar un cliente real (igual criterio
-          // que notificationSent en handoff.js): todavía no existe ningún
-          // canal de salida real para leads capturados por formulario web
-          // (a diferencia de whatsappWebhook, que sí puede responder por
-          // WhatsApp). Este mensaje de seguimiento se genera y se registra
-          // aquí y en leadflow_lead_events para que quede visible en el
-          // dashboard, pero NO se envía a ningún lado — ni email, ni SMS, ni
-          // WhatsApp. Cuando exista un canal real conectado a este producto,
-          // reemplazar sentAt: null por el envío real y su timestamp.
           "followUp.lastMessage": {
             text: finalText,
             stage: evalResult.stage,
@@ -156,6 +154,25 @@ exports.leadflowFollowUpScheduler = onSchedule(
           updatedAt: FieldValue.serverTimestamp(),
           aiUsage: FieldValue.arrayUnion(replyResult.usage),
         });
+
+        // Solo hay canal de salida por email — un lead que solo dejó
+        // teléfono se queda con sentAt: null (sin SMS/WhatsApp todavía para
+        // leads de formulario). Una falla de envío no reintenta ni detiene
+        // el follow-up: queda en sendError para verlo en el dashboard.
+        if (lead.contact?.email) {
+          const emailResult = await sendLeadEmail({
+            to: lead.contact.email,
+            company,
+            language: replyResult.language,
+            text: finalText,
+            logContext: `follow-up ${evalResult.stage} lead ${lead.id}`,
+          });
+          await leadRef.update({
+            "followUp.lastMessage.sentAt": emailResult.sentAt,
+            "followUp.lastMessage.emailId": emailResult.emailId,
+            "followUp.lastMessage.sendError": emailResult.error,
+          });
+        }
 
         await logEvent(db, {
           leadId: lead.id,
