@@ -5,50 +5,89 @@
   "functions": {
     "source": "functions"
   },
-  "hosting": {
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      ".firebaserc",
-      "README.md",
-      "prompts.md",
-      "**/.*",
-      ".git/**",
-      "**/node_modules/**",
-      "functions/**",
-      "src/**",
-      "package.json",
-      "package-lock.json",
-      "*.md",
-      "*.docx",
-      "*.txt",
-      "*.rules"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "**/*.html",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "**/*.@(js|css)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "max-age=31536000"
-          }
-        ]
-      }
-    ]
-  }
+  "hosting": [
+    {
+      "target": "veloiapp",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        ".firebaserc",
+        "README.md",
+        "prompts.md",
+        "**/.*",
+        ".git/**",
+        "**/node_modules/**",
+        "functions/**",
+        "src/**",
+        "package.json",
+        "package-lock.json",
+        "*.md",
+        "*.docx",
+        "*.txt",
+        "*.rules"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(js|css)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "max-age=31536000"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "leadflow",
+      "public": "dashboard",
+      "ignore": [
+        "firebase.json",
+        ".firebaserc",
+        "**/.*",
+        "config.js.example"
+      ],
+      "rewrites": [
+        {
+          "source": "/",
+          "destination": "/leadflow.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(js|css)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "max-age=31536000"
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

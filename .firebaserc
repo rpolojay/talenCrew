@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "gen-lang-client-0598503352"
+  },
+  "targets": {
+    "gen-lang-client-0598503352": {
+      "hosting": {
+        "veloiapp": [
+          "gen-lang-client-0598503352"
+        ],
+        "leadflow": [
+          "veloiapp-leadflow"
+        ]
+      }
+    }
   }
 }
