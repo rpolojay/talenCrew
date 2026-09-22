@@ -15,14 +15,23 @@ function buildReplyInstruction(route, company) {
       return "Key information is missing (the service needed or their location). Ask ONE warm, brief clarifying question to get it. Do NOT invite them to book yet.";
     case "LOW_INTENT":
       return "This lead shows low urgency or intent. Give a warm, low-pressure, informative response without pushing them to book immediately.";
+    case "FOLLOW_UP_FIRST":
+      return "This lead was sent a booking link a while ago and hasn't scheduled yet. Send a warm, brief check-in reminding them that a link to book is available, and invite them to reach out if they have questions. Do NOT write out any URL yourself — it will be added separately, after your reply.";
+    case "FOLLOW_UP_SECOND":
+      return "This is a final, low-pressure follow-up — the lead was already reminded once and still hasn't scheduled. Keep it brief, mention this is your last check-in about it, and that you're happy to help whenever they're ready. Do NOT write out any URL yourself — it will be added separately, after your reply.";
     case "QUALIFIED":
     default:
       return "This lead is qualified. Give a warm, helpful response and let them know you're sending them a link to book a consultation. Do NOT write out any URL yourself — it will be added separately, after your reply.";
   }
 }
 
-async function generateReply(lead, route, company) {
-  const languageName = company.language === "es" ? "Spanish" : "English";
+async function generateReply(lead, route, company, detectedLanguage) {
+  // Responde en el idioma real del mensaje del lead (detectado por
+  // analyzeLead.js), no en el idioma por defecto de la empresa — ese
+  // default solo sirve de respaldo cuando la detección vino ambigua o no
+  // vino (ver validateAnalysis() en geminiSchemas.js).
+  const effectiveLanguage = detectedLanguage === "en" || detectedLanguage === "es" ? detectedLanguage : company.language;
+  const languageName = effectiveLanguage === "es" ? "Spanish" : "English";
   const instruction = buildReplyInstruction(route, company);
 
   const prompt = `You are the customer-facing assistant for "${company.name}", a ${company.industry} business.
@@ -47,6 +56,7 @@ Write only the reply text (no preamble, no signature), under 4 sentences.`;
   const usage = response.usageMetadata || {};
   return {
     text: (response.text || "").trim(),
+    language: effectiveLanguage,
     usage: {
       step: "reply",
       model: "gemini-2.5-flash",

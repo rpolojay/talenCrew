@@ -25,6 +25,7 @@ Analyze this lead and return structured JSON only, following these rules:
 - "needs_human" = true if the message involves a sensitive topic (legal, injury, insurance dispute), a price negotiation, or an explicit request to talk to a person.
 - lead_score is 0-100, reflecting the overall quality/value of this lead for the business.
 - confidence is 0-1, your confidence in this analysis.
+- "detected_language" = the language the LEAD'S MESSAGE above is written in — "es" for Spanish, "en" for English. Base this only on the lead's message text itself, never on the business's own default language.
 - Never invent facts about the business beyond what's listed above.`;
 }
 

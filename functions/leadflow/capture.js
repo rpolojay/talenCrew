@@ -120,6 +120,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
     updatedAt: FieldValue.serverTimestamp(),
     status: LEAD_STATUS.NEW,
     analysis: null,
+    detectedLanguage: null,
     score: null,
     autoReply: null,
     bookingLinkSent: null,
@@ -165,6 +166,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
 
   await leadRef.update({
     analysis: analysisResult.analysis,
+    detectedLanguage: analysisResult.analysis.detected_language,
     aiUsage: FieldValue.arrayUnion(analysisResult.usage),
     updatedAt: FieldValue.serverTimestamp(),
   });
@@ -178,7 +180,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
 
   await leadRef.update({ score, updatedAt: FieldValue.serverTimestamp() });
 
-  const replyResult = await generateReply(leadForAI, route, company);
+  const replyResult = await generateReply(leadForAI, route, company, analysisResult.analysis.detected_language);
   let replyText = replyResult.text;
   let bookingLinkSent = null;
   if (route === "QUALIFIED") {
@@ -187,7 +189,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
   }
 
   await leadRef.update({
-    autoReply: { text: replyText, language: company.language, generatedAt: FieldValue.serverTimestamp(), sentAt: null },
+    autoReply: { text: replyText, language: replyResult.language, generatedAt: FieldValue.serverTimestamp(), sentAt: null },
     bookingLinkSent,
     status: nextStatus,
     aiUsage: FieldValue.arrayUnion(replyResult.usage),
@@ -216,7 +218,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
   return res.status(201).json({
     leadId, status: nextStatus, merged: false, handoffId,
     analysis: analysisResult.analysis,
-    autoReply: { text: replyText, language: company.language },
+    autoReply: { text: replyText, language: replyResult.language },
   });
 }
 
@@ -242,7 +244,7 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
   const score = existingLead.score;
   const route = analysis ? decideRoute({ analysis, score, company }) : "NEEDS_INFO";
 
-  const replyResult = await generateReply(leadForAI, route, company);
+  const replyResult = await generateReply(leadForAI, route, company, existingLead.detectedLanguage ?? existingLead.analysis?.detected_language);
   let replyText = replyResult.text;
   let bookingLinkSent = existingLead.bookingLinkSent;
   if (route === "QUALIFIED") {
@@ -256,7 +258,7 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
     : statusForRoute(route);
 
   await leadRef.update({
-    autoReply: { text: replyText, language: company.language, generatedAt: FieldValue.serverTimestamp(), sentAt: null },
+    autoReply: { text: replyText, language: replyResult.language, generatedAt: FieldValue.serverTimestamp(), sentAt: null },
     bookingLinkSent,
     status: nextStatus,
     aiUsage: FieldValue.arrayUnion(replyResult.usage),
@@ -266,6 +268,6 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
 
   return res.status(201).json({
     leadId, status: nextStatus, merged: true, handoffId: null,
-    analysis, autoReply: { text: replyText, language: company.language },
+    analysis, autoReply: { text: replyText, language: replyResult.language },
   });
 }
