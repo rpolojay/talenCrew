@@ -11,6 +11,7 @@ const { scoreLead } = require("./scoring");
 const { decideRoute, statusForRoute, logEvent } = require("./pipeline");
 const { generateReply } = require("./generateReply");
 const { createHandoff } = require("./handoff");
+const { detectMessageLanguage } = require("./detectLanguage");
 
 const THROTTLE_WINDOW_MS = 60 * 1000;
 const THROTTLE_MAX = 5;
@@ -244,7 +245,22 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
   const score = existingLead.score;
   const route = analysis ? decideRoute({ analysis, score, company }) : "NEEDS_INFO";
 
-  const replyResult = await generateReply(leadForAI, route, company, existingLead.detectedLanguage ?? existingLead.analysis?.detected_language);
+  // El idioma se re-detecta en CADA mensaje nuevo, no se arrastra el del
+  // primer mensaje — un lead puede empezar en inglés y seguir en español
+  // (o al revés). Si la detección falla, cae de vuelta al idioma ya
+  // guardado en el lead (y de ahí, generateReply cae a company.language).
+  const previousDetectedLanguage = existingLead.detectedLanguage ?? existingLead.analysis?.detected_language ?? null;
+  let detectedLanguage = previousDetectedLanguage;
+  let langUsage = null;
+  try {
+    const langResult = await detectMessageLanguage(body.message);
+    langUsage = langResult.usage;
+    if (langResult.detectedLanguage) detectedLanguage = langResult.detectedLanguage;
+  } catch (err) {
+    console.error(`No se pudo detectar el idioma del mensaje adicional para lead ${leadId}:`, err);
+  }
+
+  const replyResult = await generateReply(leadForAI, route, company, detectedLanguage);
   let replyText = replyResult.text;
   let bookingLinkSent = existingLead.bookingLinkSent;
   if (route === "QUALIFIED") {
@@ -259,12 +275,19 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
 
   await leadRef.update({
     autoReply: { text: replyText, language: replyResult.language, generatedAt: FieldValue.serverTimestamp(), sentAt: null },
+    detectedLanguage,
     bookingLinkSent,
     status: nextStatus,
-    aiUsage: FieldValue.arrayUnion(replyResult.usage),
+    aiUsage: langUsage ? FieldValue.arrayUnion(replyResult.usage, langUsage) : FieldValue.arrayUnion(replyResult.usage),
     updatedAt: FieldValue.serverTimestamp(),
   });
   await logEvent(db, { leadId, companyId, type: EVENT_TYPE.AI_REPLY_GENERATED, actor: "system:reply", detail: { route, merged: true } });
+  if (detectedLanguage !== previousDetectedLanguage) {
+    await logEvent(db, {
+      leadId, companyId, type: EVENT_TYPE.AI_ANALYSIS, actor: "system:language_detect",
+      detail: { note: "detected_language changed", from: previousDetectedLanguage, to: detectedLanguage },
+    });
+  }
 
   return res.status(201).json({
     leadId, status: nextStatus, merged: true, handoffId: null,
