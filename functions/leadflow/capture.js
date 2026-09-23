@@ -195,12 +195,15 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
       leadId, companyId, type: EVENT_TYPE.STATUS_CHANGE,
       fromStatus: LEAD_STATUS.ANALYZING, toStatus: LEAD_STATUS.HUMAN_REVIEW, actor: "system:analysis_failure",
     });
-    const { handoffId } = await createHandoff(db, {
+    const { handoffId, created } = await createHandoff(db, {
       leadId, companyId, company, lead: baseLead, analysis: null, score: null,
       triggeredBy: HANDOFF_TRIGGER.AI_LOW_CONFIDENCE,
       reason: `AI analysis failed or returned invalid output: ${err.message}`,
       recommendedNextAction: "Review this lead manually — the automated analysis could not be completed.",
     });
+    if (created) {
+      await logEvent(db, { leadId, companyId, type: EVENT_TYPE.HANDOFF_CREATED, actor: "system:analysis_failure", detail: { handoffId } });
+    }
     return res.status(201).json({
       leadId, status: LEAD_STATUS.HUMAN_REVIEW, merged: false, handoffId, analysis: null, autoReply: null,
     });
