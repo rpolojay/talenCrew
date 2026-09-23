@@ -5,7 +5,7 @@ const { COLLECTIONS, LEAD_STATUS, EVENT_TYPE } = require("./constants");
 const { GEMINI_API_KEY, RESEND_API_KEY } = require("./secrets");
 const { generateReply } = require("./generateReply");
 const { logEvent } = require("./pipeline");
-const { sendLeadEmail } = require("./sendEmail");
+const { sendLeadEmailWithQuota } = require("./quota");
 
 const MS_PER_HOUR = 60 * 60 * 1000;
 
@@ -91,6 +91,13 @@ exports.leadflowFollowUpScheduler = onSchedule(
         await stopFollowUp(db, lead, "company_not_found");
         continue;
       }
+      // Empresa desactivada (ej. trial vencido, ver ./expireTrials.js):
+      // capture.js ya no le acepta leads, y tampoco se le mandan
+      // recordatorios a los que ya tenía.
+      if (company.isActive === false) {
+        await stopFollowUp(db, lead, "company_inactive");
+        continue;
+      }
       if (!company.followUpConfig) {
         await stopFollowUp(db, lead, "no_follow_up_config");
         continue;
@@ -159,8 +166,11 @@ exports.leadflowFollowUpScheduler = onSchedule(
         // teléfono se queda con sentAt: null (sin SMS/WhatsApp todavía para
         // leads de formulario). Una falla de envío no reintenta ni detiene
         // el follow-up: queda en sendError para verlo en el dashboard.
+        // Empresas en trial: sujeto al tope diario de ./quota.js.
         if (lead.contact?.email) {
-          const emailResult = await sendLeadEmail({
+          const emailResult = await sendLeadEmailWithQuota({
+            db,
+            companyId: lead.companyId,
             to: lead.contact.email,
             company,
             language: replyResult.language,

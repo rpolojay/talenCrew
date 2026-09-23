@@ -67,6 +67,29 @@
     .btn-google:hover { background: #F3F0E8; }
     .login-error { margin-top: 14px; font-size: 13px; color: var(--danger); display: none; }
 
+    .login-signup { margin-top: 22px; font-size: 13px; color: var(--muted); }
+    .login-signup a { color: var(--pine); font-weight: 600; }
+
+    /* TRIAL BANNER */
+    .trial-banner { background: rgba(200,155,60,0.14); border: 1px solid rgba(200,155,60,0.4); color: #6E5420; border-radius: 12px; padding: 12px 16px; font-size: 13px; margin-bottom: 18px; }
+    .trial-banner.is-expired { background: rgba(179,66,58,0.08); border-color: rgba(179,66,58,0.3); color: var(--danger); }
+    .trial-banner a { color: inherit; font-weight: 700; }
+
+    /* INSTALL */
+    .install-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .install-box summary { cursor: pointer; list-style: none; }
+    .install-box summary::-webkit-details-marker { display: none; }
+    .install-box summary .section-title { display: block; }
+    .install-box summary .section-sub { display: block; margin-bottom: 0; }
+    .install-box summary::after { content: "▾"; float: right; margin-top: -30px; color: var(--muted); }
+    .install-box[open] summary::after { content: "▴"; }
+    .install-body { margin-top: 16px; }
+    .install-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .install-code { background: var(--sage); color: var(--pine-dark); padding: 6px 10px; border-radius: 7px; font-size: 13px; word-break: break-all; }
+    .install-snippet { background: #0F1A15; color: #DCE9DE; border-radius: 10px; padding: 14px; font-size: 11.5px; line-height: 1.5; overflow-x: auto; margin-bottom: 12px; max-height: 320px; }
+    .install-foot { justify-content: space-between; margin-bottom: 0; }
+    .install-foot .section-sub { margin-bottom: 0; flex: 1; min-width: 200px; }
+
     /* HIDDEN */
     .hidden { display: none !important; }
 
@@ -165,6 +188,7 @@
       <span id="lblGoogleBtn">Continuar con Google</span>
     </button>
     <div class="login-error" id="loginError">No tienes acceso a ninguna empresa de LeadFlow. Contacta a VeloiApp.</div>
+    <div class="login-signup"><span id="lblNoAccount">¿Aún no tienes cuenta?</span> <a href="/signup.html" id="lblSignupLink">Empieza una prueba gratis</a></div>
   </div>
 </div>
 
@@ -186,6 +210,8 @@
   </div>
 
   <div class="main">
+
+    <div class="trial-banner hidden" id="trialBanner"></div>
 
     <div class="stats-grid">
       <div class="stat-card">
@@ -209,6 +235,28 @@
         <div class="stat-sub" id="lblStatHandoffsSub">Esperando revisión humana</div>
       </div>
     </div>
+
+    <!-- Conectar el formulario: companyId + snippet. Abierto por defecto
+         mientras la empresa no tenga leads. -->
+    <details class="section install-box" id="installBox">
+      <summary>
+        <span class="section-title" id="lblInstallTitle">Conecta tu formulario</span>
+        <span class="section-sub" id="lblInstallSub">Pega este código en tu sitio web para que LeadFlow reciba y responda tus leads.</span>
+      </summary>
+      <div class="install-body">
+        <div class="detail-label" id="lblInstallCompanyId">ID de tu empresa</div>
+        <div class="install-row">
+          <code class="install-code" id="installCompanyId"></code>
+          <button class="btn-small" onclick="copyInstall('installCompanyId', this)" id="lblCopyId">Copiar</button>
+        </div>
+        <div class="detail-label" id="lblInstallSnippet">Formulario listo para pegar (HTML)</div>
+        <pre class="install-snippet" id="installSnippet"></pre>
+        <div class="install-row install-foot">
+          <span class="section-sub" id="lblInstallNote">Si ya tienes un formulario, envía un POST con companyId, contact y message a la URL de este código.</span>
+          <button class="btn-small primary" onclick="copyInstall('installSnippet', this)" id="lblCopySnippet">Copiar código</button>
+        </div>
+      </div>
+    </details>
 
     <div class="section">
       <div class="section-title" id="lblPipelineTitle">Pipeline</div>
@@ -351,6 +399,18 @@
         MANUAL_EDIT: 'Edición manual',
       },
       handoffStatus: { OPEN: 'Abierto', ACKNOWLEDGED: 'Reconocido', RESOLVED: 'Resuelto' },
+      noAccount: '¿Aún no tienes cuenta?',
+      signupLink: 'Empieza una prueba gratis',
+      trialDaysLeft: (n) => n === 1 ? 'Tu prueba gratis termina hoy.' : `Te quedan ${n} días de prueba gratis.`,
+      trialExpired: 'Tu prueba gratis terminó: LeadFlow ya no está respondiendo leads nuevos.',
+      trialUpgrade: 'Escríbenos para continuar',
+      installTitle: 'Conecta tu formulario',
+      installSub: 'Pega este código en tu sitio web para que LeadFlow reciba y responda tus leads.',
+      installCompanyId: 'ID de tu empresa',
+      installSnippet: 'Formulario listo para pegar (HTML)',
+      installNote: 'Si ya tienes un formulario, envía un POST con companyId, contact y message a la URL de este código.',
+      copy: 'Copiar', copySnippet: 'Copiar código', copied: '¡Copiado!',
+      snippet: { name: 'Nombre', email: 'Email', phone: 'Teléfono', message: '¿En qué te podemos ayudar?', send: 'Enviar', needContact: 'Déjanos un email o un teléfono.', thanks: '¡Gracias! Te responderemos en breve.', error: 'Algo salió mal, intenta de nuevo.' },
     },
     en: {
       loginSub: 'LeadFlow · Sign in with your account',
@@ -406,6 +466,18 @@
         MANUAL_EDIT: 'Manual edit',
       },
       handoffStatus: { OPEN: 'Open', ACKNOWLEDGED: 'Acknowledged', RESOLVED: 'Resolved' },
+      noAccount: "Don't have an account yet?",
+      signupLink: 'Start a free trial',
+      trialDaysLeft: (n) => n === 1 ? 'Your free trial ends today.' : `${n} days left in your free trial.`,
+      trialExpired: 'Your free trial has ended: LeadFlow is no longer replying to new leads.',
+      trialUpgrade: 'Contact us to continue',
+      installTitle: 'Connect your form',
+      installSub: 'Paste this code on your website so LeadFlow receives and replies to your leads.',
+      installCompanyId: 'Your company ID',
+      installSnippet: 'Ready-to-paste form (HTML)',
+      installNote: 'Already have a form? Send a POST with companyId, contact and message to the URL in this code.',
+      copy: 'Copy', copySnippet: 'Copy code', copied: 'Copied!',
+      snippet: { name: 'Name', email: 'Email', phone: 'Phone', message: 'How can we help?', send: 'Send', needContact: 'Please leave an email or a phone number.', thanks: "Thanks! We'll get back to you shortly.", error: 'Something went wrong, please try again.' },
     },
   };
 
@@ -471,10 +543,21 @@
     document.getElementById('lblModalScore').textContent = t('modalScore');
     document.getElementById('lblModalReply').textContent = t('modalReply');
     document.getElementById('lblModalHistory').textContent = t('modalHistory');
+    document.getElementById('lblNoAccount').textContent = t('noAccount');
+    document.getElementById('lblSignupLink').textContent = t('signupLink');
+    document.getElementById('lblInstallTitle').textContent = t('installTitle');
+    document.getElementById('lblInstallSub').textContent = t('installSub');
+    document.getElementById('lblInstallCompanyId').textContent = t('installCompanyId');
+    document.getElementById('lblInstallSnippet').textContent = t('installSnippet');
+    document.getElementById('lblInstallNote').textContent = t('installNote');
+    document.getElementById('lblCopyId').textContent = t('copy');
+    document.getElementById('lblCopySnippet').textContent = t('copySnippet');
   }
 
   function renderAll() {
     applyStaticI18n();
+    renderTrialBanner();
+    renderInstall();
     renderStats();
     renderKanban();
     renderHandoffs();
@@ -561,6 +644,7 @@
 
   window.switchCompany = async (companyId) => {
     currentCompanyId = companyId;
+    installAutoOpened = false;
     applyCompanyDefaultLang(allCompanies.find((c) => c.id === companyId));
     applyStaticI18n();
     await loadCompanyData(companyId);
@@ -583,10 +667,92 @@
       currentHandoffs = [];
     }
 
+    renderTrialBanner();
+    renderInstall();
     renderStats();
     renderKanban();
     renderHandoffs();
   }
+
+  // ===== Trial y "Conecta tu formulario" =====
+  const CAPTURE_URL = 'https://us-central1-gen-lang-client-0598503352.cloudfunctions.net/leadflowCaptureLead';
+
+  function currentCompany() {
+    return allCompanies.find((c) => c.id === currentCompanyId) || null;
+  }
+
+  function renderTrialBanner() {
+    const el = document.getElementById('trialBanner');
+    const company = currentCompany();
+    if (!company?.isTrial) { el.classList.add('hidden'); return; }
+    const endsAt = tsToDate(company.trialEndsAt);
+    const expired = company.isActive === false || (endsAt && endsAt.getTime() <= Date.now());
+    el.classList.toggle('is-expired', expired);
+    el.textContent = expired
+      ? t('trialExpired')
+      : t('trialDaysLeft')(Math.max(1, Math.ceil(((endsAt?.getTime() || Date.now()) - Date.now()) / 86400000)));
+    const link = document.createElement('a');
+    link.href = 'mailto:hola@veloiapp.com?subject=LeadFlow';
+    link.textContent = t('trialUpgrade');
+    el.append(' ', link);
+    el.classList.remove('hidden');
+  }
+
+  // El snippet se arma con el companyId y textos fijos (nunca con datos
+  // escritos por un lead) y se muestra con textContent.
+  function buildSnippet(companyId) {
+    const s = t('snippet');
+    const js = (v) => JSON.stringify(v);
+    return `<form id="leadflow-form">
+  <input name="name" placeholder=${js(s.name)} required>
+  <input name="email" type="email" placeholder=${js(s.email)}>
+  <input name="phone" type="tel" placeholder=${js(s.phone)}>
+  <textarea name="message" placeholder=${js(s.message)} required></textarea>
+  <button type="submit">${escapeHtml(s.send)}</button>
+  <p id="leadflow-status"></p>
+</form>
+<script>
+document.getElementById("leadflow-form").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  var f = e.target.elements, status = document.getElementById("leadflow-status");
+  var contact = { name: f.name.value, email: f.email.value || null, phone: f.phone.value || null };
+  if (!contact.email && !contact.phone) { status.textContent = ${js(s.needContact)}; return; }
+  try {
+    var r = await fetch(${js(CAPTURE_URL)}, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ companyId: ${js(companyId)}, contact: contact, message: f.message.value, source: "website_form" })
+    });
+    status.textContent = r.ok ? ${js(s.thanks)} : ${js(s.error)};
+    if (r.ok) e.target.reset();
+  } catch (err) { status.textContent = ${js(s.error)}; }
+});
+</` + `script>`;
+  }
+
+  let installAutoOpened = false;
+  function renderInstall() {
+    const box = document.getElementById('installBox');
+    if (!currentCompanyId) { box.classList.add('hidden'); return; }
+    box.classList.remove('hidden');
+    document.getElementById('installCompanyId').textContent = currentCompanyId;
+    document.getElementById('installSnippet').textContent = buildSnippet(currentCompanyId);
+    // Abierto de entrada solo si todavía no llegó ningún lead.
+    if (!installAutoOpened) { box.open = currentLeads.length === 0; installAutoOpened = true; }
+  }
+
+  window.copyInstall = async (elementId, button) => {
+    const text = document.getElementById(elementId).textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      const label = button.textContent;
+      button.textContent = t('copied');
+      setTimeout(() => { button.textContent = label; }, 1500);
+    } catch (err) {
+      console.error('No se pudo copiar:', err);
+    }
+  };
+  // ===== fin trial / install =====
 
   function renderStats() {
     const closed = currentLeads.filter((l) => l.status === 'CLOSED').length;

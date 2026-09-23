@@ -12,7 +12,7 @@ const { decideRoute, statusForRoute, logEvent } = require("./pipeline");
 const { generateReply } = require("./generateReply");
 const { createHandoff } = require("./handoff");
 const { detectMessageLanguage } = require("./detectLanguage");
-const { sendLeadEmail } = require("./sendEmail");
+const { sendLeadEmailWithQuota } = require("./quota");
 
 const THROTTLE_WINDOW_MS = 60 * 1000;
 const THROTTLE_MAX = 5;
@@ -46,10 +46,12 @@ function buildBookingLink(company, leadId, name) {
 // teléfono se quedan con sentAt: null (todavía no hay canal SMS/WhatsApp
 // para leads de formulario). Una falla de envío no rompe la captura — se
 // registra y el lead queda con sentAt: null + sendError para verlo en el
-// dashboard.
-async function sendAutoReplyEmail(contact, company, language, text, leadId) {
+// dashboard. Empresas en trial: sujeto al tope diario de ./quota.js.
+async function sendAutoReplyEmail(db, companyId, contact, company, language, text, leadId) {
   if (!contact?.email) return { sentAt: null, emailId: null, error: null };
-  return sendLeadEmail({ to: contact.email, company, language, text, logContext: `autoReply lead ${leadId}` });
+  return sendLeadEmailWithQuota({
+    db, companyId, company, to: contact.email, language, text, logContext: `autoReply lead ${leadId}`,
+  });
 }
 
 exports.leadflowCaptureLead = onRequest({ secrets: [GEMINI_API_KEY, RESEND_API_KEY] }, (req, res) => {
@@ -200,7 +202,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
     replyText = `${replyText}\n\n${bookingLinkSent}`;
   }
 
-  const emailResult = await sendAutoReplyEmail(contact, company, replyResult.language, replyText, leadId);
+  const emailResult = await sendAutoReplyEmail(db, companyId, contact, company, replyResult.language, replyText, leadId);
 
   await leadRef.update({
     autoReply: {
@@ -289,7 +291,7 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
     : existingLead.status === LEAD_STATUS.APPOINTMENT_BOOKED ? existingLead.status
     : statusForRoute(route);
 
-  const emailResult = await sendAutoReplyEmail(existingLead.contact, company, replyResult.language, replyText, leadId);
+  const emailResult = await sendAutoReplyEmail(db, companyId, existingLead.contact, company, replyResult.language, replyText, leadId);
 
   await leadRef.update({
     autoReply: {

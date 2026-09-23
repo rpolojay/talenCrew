@@ -10,12 +10,18 @@ function decideRoute({ analysis, score, company }) {
   if (analysis.qualification === "unqualified") return "LOW_INTENT";
 
   const minScore = company.scoringRules?.minScoreToQualify ?? 60;
-  if (score.adjusted >= minScore) return "QUALIFIED";
+  if (score.adjusted >= minScore) {
+    // Empresas sin bookingLink (el link es opcional en signup.html): el lead
+    // califica igual, pero la respuesta promete contacto del equipo en vez
+    // de un link, y no entra al flujo de follow-ups de BOOKING_SENT.
+    return company.bookingLink ? "QUALIFIED" : "QUALIFIED_NO_BOOKING";
+  }
   return "NEEDS_INFO"; // fallback conservador: nunca empuja booking si el score no alcanza
 }
 
 const ROUTE_STATUS = {
   QUALIFIED: LEAD_STATUS.BOOKING_SENT,
+  QUALIFIED_NO_BOOKING: LEAD_STATUS.CONTACTED,
   NEEDS_INFO: LEAD_STATUS.CONTACTED,
   OUT_OF_AREA: LEAD_STATUS.CONTACTED,
   LOW_INTENT: LEAD_STATUS.CONTACTED,

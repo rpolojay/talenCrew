@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Start your free trial — LeadFlow by VeloiApp</title>
+<meta name="description" content="Try LeadFlow free for 7 days: AI that captures, qualifies and replies to your leads 24/7." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --pine: #0F3D2E;
+    --pine-dark: #0A2B20;
+    --gold: #C89B3C;
+    --sage: #DCE9DE;
+    --paper: #FAF6EF;
+    --card: #FFFFFF;
+    --border: rgba(15,61,46,0.14);
+    --text: #1B1F1C;
+    --muted: #4A524C;
+    --danger: #B3423A;
+  }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--paper); color: var(--text); line-height: 1.5; }
+  a { color: var(--pine); }
+  h1 { font-family: 'Fraunces', serif; color: var(--pine-dark); font-weight: 500; letter-spacing: -0.01em; font-size: 28px; line-height: 1.2; margin-bottom: 8px; }
+  .hidden { display: none !important; }
+
+  .top { display: flex; align-items: center; justify-content: space-between; max-width: 560px; margin: 0 auto; padding: 18px 16px; }
+  .logo { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; color: var(--pine-dark); text-decoration: none; }
+  .logo span { color: var(--gold); }
+  .logo small { display: block; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+  .lang-toggle { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .lang-btn { font-family: inherit; font-size: 11px; font-weight: 700; padding: 7px 11px; border: none; background: #fff; color: var(--muted); cursor: pointer; }
+  .lang-btn.active { background: var(--pine); color: #fff; }
+
+  .wrap { max-width: 560px; margin: 0 auto; padding: 8px 16px 48px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; }
+  .eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--gold); margin-bottom: 8px; }
+  .sub { font-size: 14.5px; color: var(--muted); margin-bottom: 22px; }
+  .perks { list-style: none; margin-bottom: 24px; display: grid; gap: 8px; }
+  .perks li { font-size: 13.5px; color: var(--text); padding-left: 24px; position: relative; }
+  .perks li::before { content: "✓"; position: absolute; left: 0; color: var(--pine); font-weight: 700; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; font-family: inherit; font-size: 14.5px; font-weight: 700; padding: 13px 20px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; text-decoration: none; }
+  .btn-primary { background: var(--pine); color: #fff; }
+  .btn-primary:hover { background: var(--pine-dark); }
+  .btn-primary:disabled { opacity: 0.6; cursor: wait; }
+  .btn-google { background: #fff; color: var(--text); border-color: var(--border); }
+  .btn-google:hover { background: #F3F0E8; }
+
+  .signed-in { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: var(--sage); border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 20px; }
+  .signed-in strong { word-break: break-all; }
+  .link-btn { background: none; border: none; color: var(--pine); font: inherit; font-size: 12.5px; font-weight: 600; text-decoration: underline; cursor: pointer; }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 700; color: var(--pine-dark); margin-bottom: 6px; }
+  .field .hint { font-weight: 400; color: var(--muted); }
+  .field input, .field select { width: 100%; font-family: inherit; font-size: 16px; padding: 11px 12px; border: 1px solid var(--border); border-radius: 9px; background: #fff; color: var(--text); }
+  .field input:focus, .field select:focus { outline: 2px solid rgba(15,61,46,0.25); border-color: var(--pine); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 480px) { .row { grid-template-columns: 1fr; } }
+
+  .msg { font-size: 13.5px; border-radius: 10px; padding: 12px 14px; margin-top: 14px; }
+  .msg-error { background: rgba(179,66,58,0.08); color: var(--danger); }
+  .fineprint { font-size: 12px; color: var(--muted); text-align: center; margin-top: 16px; }
+
+  .success-icon { font-size: 34px; margin-bottom: 8px; }
+  .success-id { font-size: 12.5px; color: var(--muted); margin: 14px 0 20px; }
+  .success-id code { background: var(--sage); padding: 2px 6px; border-radius: 5px; color: var(--pine-dark); word-break: break-all; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="logo" href="/">Lead<span>Flow</span><small>by VeloiApp</small></a>
+  <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+    <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" id="langBtnEs" onclick="setLang('es')">ES</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="card">
+
+    <!-- Paso 1: Google Sign-In -->
+    <section id="stepAuth">
+      <div class="eyebrow" data-i18n="eyebrow">7-day free trial</div>
+      <h1 data-i18n="title">Start using LeadFlow today</h1>
+      <p class="sub" data-i18n="sub">Connect your lead form and let the AI reply, qualify and follow up with every lead in minutes.</p>
+      <ul class="perks">
+        <li data-i18n="perk1">AI replies to every lead in seconds, 24/7</li>
+        <li data-i18n="perk2">Automatic qualification and follow-ups</li>
+        <li data-i18n="perk3">Instant email alerts when a lead needs a person</li>
+      </ul>
+      <button class="btn btn-google" id="googleBtn" onclick="signInWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        <span data-i18n="googleBtn">Continue with Google</span>
+      </button>
+      <p class="fineprint" data-i18n="authNote">You'll use this same Google account to sign in to your dashboard. No credit card required.</p>
+      <div class="msg msg-error hidden" id="authError"></div>
+    </section>
+
+    <!-- Paso 2: datos del negocio -->
+    <section id="stepForm" class="hidden">
+      <h1 data-i18n="formTitle">Tell us about your business</h1>
+      <p class="sub" data-i18n="formSub">The AI uses this to qualify leads and reply on your behalf. You can adjust it later.</p>
+      <div class="signed-in">
+        <span><span data-i18n="signedInAs">Signed in as</span> <strong id="userEmail"></strong></span>
+        <button class="link-btn" onclick="switchAccount()" data-i18n="switchAccount">Use another account</button>
+      </div>
+      <form id="signupForm" novalidate>
+        <div class="field">
+          <label for="bizName" data-i18n="bizName">Business name</label>
+          <input id="bizName" maxlength="120" autocomplete="organization" required />
+        </div>
+        <div class="field">
+          <label for="industry" data-i18n="industry">Industry</label>
+          <input id="industry" maxlength="80" data-i18n-placeholder="industryPh" placeholder="e.g. Roofing, HVAC, Plumbing" required />
+        </div>
+        <div class="field">
+          <label for="services"><span data-i18n="services">Services you offer</span> <span class="hint" data-i18n="servicesHint">(separated by commas)</span></label>
+          <input id="services" maxlength="500" data-i18n-placeholder="servicesPh" placeholder="e.g. roof repair, roof replacement, inspections" required />
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="city" data-i18n="city">City</label>
+            <input id="city" maxlength="80" autocomplete="address-level2" required />
+          </div>
+          <div class="field">
+            <label for="state" data-i18n="state">State / Region</label>
+            <input id="state" maxlength="80" autocomplete="address-level1" required />
+          </div>
+        </div>
+        <div class="field">
+          <label for="language" data-i18n="language">Main language of your customers</label>
+          <select id="language">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="bookingLink"><span data-i18n="bookingLink">Online booking link</span> <span class="hint" data-i18n="optional">(optional)</span></label>
+          <input id="bookingLink" type="url" maxlength="500" placeholder="https://cal.com/your-business" />
+        </div>
+        <button class="btn btn-primary" type="submit" id="submitBtn" data-i18n="submit">Start my free trial</button>
+        <div class="msg msg-error hidden" id="formError"></div>
+      </form>
+    </section>
+
+    <!-- Paso 3: listo -->
+    <section id="stepDone" class="hidden">
+      <div class="success-icon">🎉</div>
+      <h1 id="doneTitle" data-i18n="doneTitle">Your trial is ready</h1>
+      <p class="sub" id="doneSub" data-i18n="doneSub">Open your dashboard and follow the "Connect your form" steps to start receiving leads. Your trial lasts 7 days.</p>
+      <p class="success-id hidden" id="doneIdWrap"><span data-i18n="companyIdLabel">Your company ID:</span> <code id="doneCompanyId"></code></p>
+      <a class="btn btn-primary" href="/leadflow.html" data-i18n="openDashboard">Open my dashboard</a>
+    </section>
+
+  </div>
+</main>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+  // La empresa se crea server-side (createLeadflowTrialSignup, Admin SDK). El
+  // email de la empresa es el de la cuenta de Google verificada — el mismo con
+  // el que se entra a leadflow.html —, nunca uno escrito a mano.
+  const SIGNUP_URL = 'https://us-central1-gen-lang-client-0598503352.cloudfunctions.net/createLeadflowTrialSignup';
+
+  const app = initializeApp({
+    apiKey: "AIzaSyCLvjCxWXivE-THeoPw56rPDo9PXavsIHQ",
+    authDomain: "gen-lang-client-0598503352.firebaseapp.com",
+    projectId: "gen-lang-client-0598503352",
+    storageBucket: "gen-lang-client-0598503352.firebasestorage.app",
+    messagingSenderId: "869550093470",
+    appId: "1:869550093470:web:7bb6989d149af7038db78f"
+  });
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+
+  const I18N = {
+    en: {
+      eyebrow: '7-day free trial',
+      title: 'Start using LeadFlow today',
+      sub: 'Connect your lead form and let the AI reply, qualify and follow up with every lead in minutes.',
+      perk1: 'AI replies to every lead in seconds, 24/7',
+      perk2: 'Automatic qualification and follow-ups',
+      perk3: 'Instant email alerts when a lead needs a person',
+      googleBtn: 'Continue with Google',
+      authNote: "You'll use this same Google account to sign in to your dashboard. No credit card required.",
+      authError: "We couldn't sign you in with Google. Please try again.",
+      formTitle: 'Tell us about your business',
+      formSub: 'The AI uses this to qualify leads and reply on your behalf. You can adjust it later.',
+      signedInAs: 'Signed in as',
+      switchAccount: 'Use another account',
+      bizName: 'Business name',
+      industry: 'Industry', industryPh: 'e.g. Roofing, HVAC, Plumbing',
+      services: 'Services you offer', servicesHint: '(separated by commas)', servicesPh: 'e.g. roof repair, roof replacement, inspections',
+      city: 'City', state: 'State / Region',
+      language: 'Main language of your customers',
+      bookingLink: 'Online booking link', optional: '(optional)',
+      submit: 'Start my free trial', submitting: 'Creating your trial...',
+      errRequired: 'Please fill in all the required fields.',
+      errBookingLink: 'The booking link must be a full https:// address, or leave it empty.',
+      errGeneric: "We couldn't create your trial. Please try again in a moment.",
+      errSession: 'Your session expired. Please sign in with Google again.',
+      doneTitle: 'Your trial is ready',
+      doneSub: 'Open your dashboard and follow the "Connect your form" steps to start receiving leads. Your trial lasts 7 days.',
+      existsTitle: 'You already have a LeadFlow account',
+      existsSub: 'This Google account already has access to a LeadFlow company. Open your dashboard to continue.',
+      companyIdLabel: 'Your company ID:',
+      openDashboard: 'Open my dashboard',
+    },
+    es: {
+      eyebrow: 'Prueba gratis de 7 días',
+      title: 'Empieza a usar LeadFlow hoy',
+      sub: 'Conecta el formulario de tu sitio y deja que la IA responda, califique y haga seguimiento a cada lead en minutos.',
+      perk1: 'La IA responde a cada lead en segundos, 24/7',
+      perk2: 'Calificación y seguimientos automáticos',
+      perk3: 'Alertas por email cuando un lead necesita a una persona',
+      googleBtn: 'Continuar con Google',
+      authNote: 'Usarás esta misma cuenta de Google para entrar a tu dashboard. No pedimos tarjeta de crédito.',
+      authError: 'No pudimos iniciar sesión con Google. Intenta de nuevo.',
+      formTitle: 'Cuéntanos sobre tu negocio',
+      formSub: 'La IA usa estos datos para calificar leads y responder en tu nombre. Puedes ajustarlos después.',
+      signedInAs: 'Sesión iniciada como',
+      switchAccount: 'Usar otra cuenta',
+      bizName: 'Nombre del negocio',
+      industry: 'Industria', industryPh: 'ej. Techos, Aire acondicionado, Plomería',
+      services: 'Servicios que ofreces', servicesHint: '(separados por comas)', servicesPh: 'ej. reparación de techos, cambio de techo, inspecciones',
+      city: 'Ciudad', state: 'Estado / Región',
+      language: 'Idioma principal de tus clientes',
+      bookingLink: 'Link de reservas en línea', optional: '(opcional)',
+      submit: 'Empezar mi prueba gratis', submitting: 'Creando tu prueba...',
+      errRequired: 'Completa todos los campos obligatorios.',
+      errBookingLink: 'El link de reservas debe ser una dirección https:// completa, o déjalo vacío.',
+      errGeneric: 'No pudimos crear tu prueba. Intenta de nuevo en un momento.',
+      errSession: 'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
+      doneTitle: 'Tu prueba está lista',
+      doneSub: 'Abre tu dashboard y sigue los pasos de "Conecta tu formulario" para empezar a recibir leads. Tu prueba dura 7 días.',
+      existsTitle: 'Ya tienes una cuenta de LeadFlow',
+      existsSub: 'Esta cuenta de Google ya tiene acceso a una empresa de LeadFlow. Abre tu dashboard para continuar.',
+      companyIdLabel: 'ID de tu empresa:',
+      openDashboard: 'Abrir mi dashboard',
+    },
+  };
+
+  // Mismo almacenamiento que landing.html, así el idioma elegido allá se mantiene.
+  let currentLang = 'en';
+  try {
+    const stored = sessionStorage.getItem('leadflow_landing_lang');
+    if (stored === 'en' || stored === 'es') currentLang = stored;
+    else if ((navigator.language || '').toLowerCase().startsWith('es')) currentLang = 'es';
+  } catch {}
+  let languageTouched = false;
+  let doneState = null; // 'created' | 'exists'
+
+  const t = (key) => I18N[currentLang][key];
+  const $ = (id) => document.getElementById(id);
+
+  function applyI18n() {
+    document.documentElement.lang = currentLang;
+    $('langBtnEn').classList.toggle('active', currentLang === 'en');
+    $('langBtnEs').classList.toggle('active', currentLang === 'es');
+    document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.getAttribute('data-i18n')); });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
+    if (!languageTouched) $('language').value = currentLang;
+    if (doneState === 'exists') { $('doneTitle').textContent = t('existsTitle'); $('doneSub').textContent = t('existsSub'); }
+  }
+
+  window.setLang = (lang) => {
+    if (lang !== 'en' && lang !== 'es') return;
+    currentLang = lang;
+    try { sessionStorage.setItem('leadflow_landing_lang', lang); } catch {}
+    applyI18n();
+  };
+  $('language').addEventListener('change', () => { languageTouched = true; });
+
+  function show(step) {
+    for (const id of ['stepAuth', 'stepForm', 'stepDone']) $(id).classList.toggle('hidden', id !== step);
+  }
+  function showError(id, message) {
+    $(id).textContent = message;
+    $(id).classList.remove('hidden');
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (doneState) return;
+    if (user && user.email) {
+      $('userEmail').textContent = user.email;
+      show('stepForm');
+    } else {
+      show('stepAuth');
+    }
+  });
+
+  window.signInWithGoogle = async () => {
+    $('authError').classList.add('hidden');
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+        console.error(err);
+        showError('authError', t('authError'));
+      }
+    }
+  };
+
+  window.switchAccount = async () => {
+    await signOut(auth);
+    await window.signInWithGoogle();
+  };
+
+  function showDone(state, companyId) {
+    doneState = state;
+    if (companyId) {
+      $('doneCompanyId').textContent = companyId;
+      $('doneIdWrap').classList.remove('hidden');
+    }
+    applyI18n();
+    show('stepDone');
+  }
+
+  $('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('formError').classList.add('hidden');
+
+    const payload = {
+      bizName: $('bizName').value.trim(),
+      industry: $('industry').value.trim(),
+      services: $('services').value.trim(),
+      city: $('city').value.trim(),
+      state: $('state').value.trim(),
+      language: $('language').value,
+      bookingLink: $('bookingLink').value.trim(),
+    };
+    if (!payload.bizName || !payload.industry || !payload.services || !payload.city || !payload.state) {
+      return showError('formError', t('errRequired'));
+    }
+    if (payload.bookingLink && !/^https:\/\/\S+$/i.test(payload.bookingLink)) {
+      return showError('formError', t('errBookingLink'));
+    }
+
+    const user = auth.currentUser;
+    if (!user) { show('stepAuth'); return showError('authError', t('errSession')); }
+
+    const btn = $('submitBtn');
+    btn.disabled = true;
+    btn.textContent = t('submitting');
+    try {
+      const token = await user.getIdToken();
+      const resp = await fetch(SIGNUP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      const body = await resp.json().catch(() => ({}));
+      if (resp.status === 201) return showDone('created', body.companyId);
+      if (resp.status === 409) return showDone('exists');
+      if (resp.status === 401 || resp.status === 403) { show('stepAuth'); return showError('authError', t('errSession')); }
+      if (resp.status === 400 && body.error === 'Invalid bookingLink') return showError('formError', t('errBookingLink'));
+      showError('formError', t('errGeneric'));
+    } catch (err) {
+      console.error(err);
+      showError('formError', t('errGeneric'));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = t('submit');
+    }
+  });
+
+  applyI18n();
+</script>
+</body>
+</html>

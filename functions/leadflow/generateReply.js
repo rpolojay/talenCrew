@@ -19,6 +19,8 @@ function buildReplyInstruction(route, company) {
       return "This lead was sent a booking link a while ago and hasn't scheduled yet. Send a warm, brief check-in reminding them that a link to book is available, and invite them to reach out if they have questions. Do NOT write out any URL yourself — it will be added separately, after your reply.";
     case "FOLLOW_UP_SECOND":
       return "This is a final, low-pressure follow-up — the lead was already reminded once and still hasn't scheduled. Keep it brief, mention this is your last check-in about it, and that you're happy to help whenever they're ready. Do NOT write out any URL yourself — it will be added separately, after your reply.";
+    case "QUALIFIED_NO_BOOKING":
+      return "This lead is qualified, but there is no online booking link. Give a warm, helpful response and let them know a team member will contact them shortly to schedule a consultation. Do NOT mention or promise any link, and do NOT write out any URL.";
     case "QUALIFIED":
     default:
       return "This lead is qualified. Give a warm, helpful response and let them know you're sending them a link to book a consultation. Do NOT write out any URL yourself — it will be added separately, after your reply.";

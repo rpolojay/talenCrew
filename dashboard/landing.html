@@ -49,7 +49,7 @@
   .lang-btn { font-family: inherit; font-size: 11px; font-weight: 700; padding: 7px 11px; border: none; background: #fff; color: var(--muted); cursor: pointer; }
   .lang-btn.active { background: var(--pine); color: #fff; }
   .lang-btn:not(.active):hover { background: #F3F0E8; }
-  @media (max-width: 780px) { .nav-links { display: none; } }
+  @media (max-width: 780px) { .nav-links { display: none; } .nav-demo { display: none; } }
 
   /* HERO */
   .hero { padding: 72px 0 56px; }
@@ -163,6 +163,9 @@
   .cta-band p { color: rgba(255,255,255,0.78); margin-bottom: 26px; max-width: 480px; margin-left: auto; margin-right: auto; font-size: 15px; }
   .cta-band .btn-primary { background: var(--gold); }
   .cta-band .btn-primary:hover { background: #B08A34; }
+  .cta-band .cta-demo { color: #fff; border-color: rgba(255,255,255,0.35); margin-left: 8px; }
+  .cta-band .cta-demo:hover { background: rgba(255,255,255,0.1); }
+  @media (max-width: 480px) { .cta-band .cta-demo { margin-left: 0; margin-top: 10px; } }
 
   /* FOOTER */
   footer { padding: 40px 0; border-top: 1px solid var(--border); }
@@ -188,7 +191,8 @@
         <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
         <button class="lang-btn" id="langBtnEs" onclick="setLang('es')">ES</button>
       </div>
-      <a class="btn btn-primary btn-small" href="mailto:hola@veloiapp.com?subject=LeadFlow%20Demo%20Request" data-i18n="navDemo">Request Demo</a>
+      <a class="btn btn-secondary btn-small nav-demo" href="mailto:hola@veloiapp.com?subject=LeadFlow%20Demo%20Request" data-i18n="navDemo">Request Demo</a>
+      <a class="btn btn-primary btn-small" href="/signup.html" data-i18n="navTrial">Start Free Trial</a>
     </div>
   </div>
 </nav>
@@ -200,7 +204,8 @@
       <h1 data-i18n="heroHeadline">Never lose another lead to a slow response</h1>
       <p class="sub" data-i18n="heroSub">LeadFlow automatically captures, qualifies, responds to, and schedules appointments with your leads — 24/7, with a human always one step away.</p>
       <div class="hero-ctas">
-        <a class="btn btn-primary" href="mailto:hola@veloiapp.com?subject=LeadFlow%20Demo%20Request" data-i18n="heroCtaPrimary">Request a Demo</a>
+        <a class="btn btn-primary" href="/signup.html" data-i18n="heroCtaTrial">Start Free Trial</a>
+        <a class="btn btn-secondary" href="mailto:hola@veloiapp.com?subject=LeadFlow%20Demo%20Request" data-i18n="heroCtaPrimary">Request a Demo</a>
         <a class="btn btn-secondary" href="#how-it-works" data-i18n="heroCtaSecondary">See How It Works</a>
       </div>
     </div>
@@ -444,7 +449,8 @@
   <div class="wrap">
     <h2 data-i18n="ctaHeadline">Ready to stop losing leads to slow responses?</h2>
     <p data-i18n="ctaSub">Tell us about your business and we'll show you LeadFlow working with a scenario close to yours.</p>
-    <a class="btn btn-primary" href="mailto:hola@veloiapp.com?subject=LeadFlow%20Demo%20Request" data-i18n="ctaButton">Request a Demo</a>
+    <a class="btn btn-primary" href="/signup.html" data-i18n="ctaTrial">Start Free Trial</a>
+    <a class="btn btn-secondary cta-demo" href="mailto:hola@veloiapp.com?subject=LeadFlow%20Demo%20Request" data-i18n="ctaButton">Request a Demo</a>
   </div>
 </div>
 
@@ -464,11 +470,11 @@
 <script>
   const I18N = {
     en: {
-      navFeatures: 'Features', navHow: 'How it Works', navPricing: 'Pricing', navDemo: 'Request Demo',
+      navFeatures: 'Features', navHow: 'How it Works', navPricing: 'Pricing', navDemo: 'Request Demo', navTrial: 'Start Free Trial',
       heroEyebrow: 'AI Lead Response for Home Service & Local Businesses',
       heroHeadline: 'Never lose another lead to a slow response',
       heroSub: 'LeadFlow automatically captures, qualifies, responds to, and schedules appointments with your leads — 24/7, with a human always one step away.',
-      heroCtaPrimary: 'Request a Demo', heroCtaSecondary: 'See How It Works',
+      heroCtaTrial: 'Start Free Trial', heroCtaPrimary: 'Request a Demo', heroCtaSecondary: 'See How It Works',
       heroMockupTitle: 'Pipeline', heroMockupCaption: 'Sample pipeline — illustrative data.',
       colNew: 'New', colQualified: 'Qualified', colBooking: 'Booking Sent', colBooked: 'Booked',
       cardRoofLeak: 'Roof leak — storm', cardInspection: 'Inspection request', cardReplacement: 'Roof replacement',
@@ -537,15 +543,15 @@
       faq4A: 'Most implementations are live within a few business days, depending on the details you share about your business and services.',
       ctaHeadline: 'Ready to stop losing leads to slow responses?',
       ctaSub: "Tell us about your business and we'll show you LeadFlow working with a scenario close to yours.",
-      ctaButton: 'Request a Demo',
+      ctaButton: 'Request a Demo', ctaTrial: 'Start Free Trial',
       footerContact: 'Contact', footerCopy: 'VeloiApp — LeadFlow. All rights reserved.',
     },
     es: {
-      navFeatures: 'Funciones', navHow: 'Cómo Funciona', navPricing: 'Precios', navDemo: 'Solicitar Demo',
+      navFeatures: 'Funciones', navHow: 'Cómo Funciona', navPricing: 'Precios', navDemo: 'Solicitar Demo', navTrial: 'Prueba Gratis',
       heroEyebrow: 'Respuesta de Leads con IA para Negocios de Servicios y Locales',
       heroHeadline: 'No vuelvas a perder un lead por responder tarde',
       heroSub: 'LeadFlow captura, califica, responde y agenda citas con tus leads automáticamente — 24/7, con una persona siempre a un paso de distancia.',
-      heroCtaPrimary: 'Solicitar una Demo', heroCtaSecondary: 'Ver Cómo Funciona',
+      heroCtaTrial: 'Empezar Prueba Gratis', heroCtaPrimary: 'Solicitar una Demo', heroCtaSecondary: 'Ver Cómo Funciona',
       heroMockupTitle: 'Pipeline', heroMockupCaption: 'Pipeline de ejemplo — datos ilustrativos.',
       colNew: 'Nuevo', colQualified: 'Calificado', colBooking: 'Link Enviado', colBooked: 'Agendado',
       cardRoofLeak: 'Fuga — tormenta', cardInspection: 'Solicitud de inspección', cardReplacement: 'Reemplazo de techo',
@@ -614,7 +620,7 @@
       faq4A: 'La mayoría de las implementaciones quedan listas en pocos días hábiles, dependiendo de los detalles que compartas sobre tu negocio y servicios.',
       ctaHeadline: '¿Listo para dejar de perder leads por responder tarde?',
       ctaSub: 'Cuéntanos sobre tu negocio y te mostramos LeadFlow funcionando con un escenario parecido al tuyo.',
-      ctaButton: 'Solicitar una Demo',
+      ctaButton: 'Solicitar una Demo', ctaTrial: 'Empezar Prueba Gratis',
       footerContact: 'Contacto', footerCopy: 'VeloiApp — LeadFlow. Todos los derechos reservados.',
     },
   };
@@ -657,7 +663,8 @@
   // ===== Try-it-yourself lead capture form =====
   // Calls the live leadflowCaptureLead Cloud Function directly (CORS: origin
   // true) against the ABC Roofing demo tenant, and renders the real AI reply
-  // it returns. No email notification wired up yet — that's a follow-up.
+  // it returns. The same reply is also emailed to the lead via Resend when
+  // they leave an email (see functions/leadflow/capture.js).
   const CAPTURE_URL = 'https://us-central1-gen-lang-client-0598503352.cloudfunctions.net/leadflowCaptureLead';
   const DEMO_COMPANY_ID = 'abc-roofing';
 

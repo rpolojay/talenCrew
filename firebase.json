@@ -34,7 +34,8 @@
         "*.docx",
         "*.txt",
         "*.rules",
-        "veloi-redesign-mockup.html"
+        "veloi-redesign-mockup.html",
+        "dashboard/signup.html"
       ],
       "rewrites": [
         {

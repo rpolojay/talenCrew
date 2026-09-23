@@ -3,6 +3,10 @@ const COLLECTIONS = {
   LEADS: "leadflow_leads",
   EVENTS: "leadflow_lead_events",
   HANDOFFS: "leadflow_handoffs",
+  // Solo Cloud Functions (Admin SDK) — firestore.rules las deniega al
+  // navegador vía la regla catch-all.
+  EMAIL_QUOTA: "leadflow_email_quota",
+  TRIAL_SIGNUPS: "leadflow_trial_signups",
 };
 
 const LEAD_STATUS = {
