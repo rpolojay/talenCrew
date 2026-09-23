@@ -113,8 +113,14 @@ service cloud.firestore {
     // leadflow_companies — configuración del tenant (idioma, reglas de
     // negocio, scoring, booking). Solo admin escribe hoy (se siembra a mano
     // o vía script); los usuarios del negocio solo leen su propia empresa.
+    // La lectura compara contra resource.data.allowedUsers (el propio doc)
+    // y no vía isLeadflowCompanyMember(): leadflow.html lista sus empresas
+    // con where('allowedUsers', 'array-contains', email), y Firestore solo
+    // autoriza una consulta si puede probar la regla con los filtros de la
+    // consulta — un get() por el ID de cada resultado no se puede probar así.
     match /leadflow_companies/{companyId} {
-      allow read: if isAdmin() || isLeadflowCompanyMember(companyId);
+      allow read: if isAdmin() ||
+        (isVerifiedUser() && request.auth.token.email in resource.data.allowedUsers);
       allow write: if isAdmin();
     }
 

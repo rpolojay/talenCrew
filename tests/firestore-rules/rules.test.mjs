@@ -193,3 +193,46 @@ describe("regresión: otras colecciones sin cambios", () => {
     await assertFails(getDoc(doc(admin(), "otra_coleccion/x")));
   });
 });
+
+// Las mismas consultas que hace dashboard/leadflow.html al iniciar sesión.
+// La primera (array-contains) fallaba con la regla anterior, que autorizaba
+// vía get() por el ID del documento — el test por getDoc de arriba no lo
+// detectaba.
+describe("LeadFlow: consultas exactas de leadflow.html", () => {
+  const qMyCompanies = (db, email) => query(collection(db, "leadflow_companies"), where("allowedUsers", "array-contains", email));
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "leadflow_companies/otra"), { name: "Otra", allowedUsers: ["owner@b.com"] });
+      await setDoc(doc(db, "leadflow_leads/lf1"), { companyId: "acme", status: "NEW" });
+      await setDoc(doc(db, "leadflow_handoffs/hf1"), { companyId: "acme", status: "OPEN" });
+    });
+  });
+
+  test("miembro (no admin): lista sus empresas con array-contains y recibe solo la suya", async () => {
+    const snap = await assertSucceeds(getDocs(qMyCompanies(ownerA(), "owner@a.com")));
+    if (snap.size !== 1 || snap.docs[0].id !== "acme") throw new Error(`esperaba solo acme, llegó ${snap.docs.map((d) => d.id)}`);
+  });
+  test("miembro: luego carga leads y handoffs de su empresa por companyId", async () => {
+    await assertSucceeds(getDocs(query(collection(ownerA(), "leadflow_leads"), where("companyId", "==", "acme"))));
+    await assertSucceeds(getDocs(query(collection(ownerA(), "leadflow_handoffs"), where("companyId", "==", "acme"))));
+  });
+  test("admin: getDocs de toda la colección", async () => {
+    const snap = await assertSucceeds(getDocs(collection(admin(), "leadflow_companies")));
+    if (snap.size !== 2) throw new Error(`esperaba 2 empresas, llegaron ${snap.size}`);
+  });
+  test("aislamiento: array-contains con email ajeno, colección completa y leads ajenos, denegados", async () => {
+    await assertFails(getDocs(qMyCompanies(ownerA(), "owner@b.com")));
+    await assertFails(getDocs(collection(ownerA(), "leadflow_companies")));
+    await assertFails(getDoc(doc(ownerA(), "leadflow_companies/otra")));
+    await assertFails(getDocs(query(collection(ownerB(), "leadflow_leads"), where("companyId", "==", "acme"))));
+  });
+  test("email sin verificar o sin sesión: denegado", async () => {
+    await assertFails(getDocs(qMyCompanies(user("owner@a.com", false), "owner@a.com")));
+    await assertFails(getDocs(qMyCompanies(anon(), "owner@a.com")));
+  });
+  test("nadie escribe leadflow_companies desde el navegador salvo admin", async () => {
+    await assertFails(setDoc(doc(ownerA(), "leadflow_companies/acme"), { name: "Hack", allowedUsers: ["owner@a.com", "x@x.com"] }));
+    await assertFails(setDoc(doc(ownerA(), "leadflow_companies/nueva"), { name: "Nueva", allowedUsers: ["owner@a.com"] }));
+  });
+});
