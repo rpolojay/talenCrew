@@ -140,4 +140,4 @@ function validateCapturePayload(body, rawBody) {
   }
 }
 
-module.exports = { validateCapturePayload, MAX_BODY_BYTES, LIMITS };
+module.exports = { validateCapturePayload, MAX_BODY_BYTES, LIMITS, EMAIL_RE };

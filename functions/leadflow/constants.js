@@ -8,6 +8,9 @@ const COLLECTIONS = {
   EMAIL_QUOTA: "leadflow_email_quota",
   TRIAL_SIGNUPS: "leadflow_trial_signups",
   RATE_LIMITS: "leadflow_rate_limits",
+  // Una por reserva de Cal.com (id = booking uid): idempotencia del webhook
+  // e historial de reservas por lead.
+  BOOKINGS: "leadflow_bookings",
 };
 
 const LEAD_STATUS = {

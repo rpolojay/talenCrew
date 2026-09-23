@@ -62,8 +62,10 @@ function statusForRoute(route) {
   return ROUTE_STATUS[route] || LEAD_STATUS.CONTACTED;
 }
 
-async function logEvent(db, { leadId, companyId, type, fromStatus = null, toStatus = null, actor, detail = null }) {
-  await db.collection(COLLECTIONS.EVENTS).add({
+// Esquema único de leadflow_lead_events. buildEventDoc se usa también dentro
+// de transacciones (booking.js), donde no se puede llamar a logEvent.
+function buildEventDoc({ leadId, companyId, type, fromStatus = null, toStatus = null, actor, detail = null }) {
+  return {
     leadId,
     companyId,
     type,
@@ -72,7 +74,11 @@ async function logEvent(db, { leadId, companyId, type, fromStatus = null, toStat
     actor,
     detail,
     timestamp: FieldValue.serverTimestamp(),
-  });
+  };
 }
 
-module.exports = { decideRoute, humanReviewDecision, triggerForReason, statusForRoute, logEvent, ROUTE_STATUS };
+async function logEvent(db, event) {
+  await db.collection(COLLECTIONS.EVENTS).add(buildEventDoc(event));
+}
+
+module.exports = { decideRoute, humanReviewDecision, triggerForReason, statusForRoute, logEvent, buildEventDoc, ROUTE_STATUS };

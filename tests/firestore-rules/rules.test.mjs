@@ -332,6 +332,15 @@ describe("LeadFlow B3: aislamiento de escritura y lectura entre empresas", () =>
     await assertFails(updateDoc(doc(unverifiedA, "leadflow_leads/lfA"), { status: "CLOSED", updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(doc(unverifiedA, "leadflow_handoffs/hfA"), { status: "ACKNOWLEDGED" }));
   });
+  test("B4: leadflow_bookings (idempotencia del webhook de Cal.com) es solo del backend", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "leadflow_bookings/bkg1"), { leadId: "lfA", companyId: "acme", outcome: "applied" });
+    });
+    await assertFails(getDoc(doc(ownerA(), "leadflow_bookings/bkg1")));
+    await assertFails(getDocs(query(collection(ownerA(), "leadflow_bookings"), where("companyId", "==", "acme"))));
+    await assertFails(setDoc(doc(ownerA(), "leadflow_bookings/bkg2"), { leadId: "lfA", companyId: "acme" }));
+    await assertFails(setDoc(doc(anon(), "leadflow_bookings/bkg3"), { leadId: "lfA", companyId: "acme" }));
+  });
   test("admin conserva sus operaciones del dashboard", async () => {
     await assertSucceeds(getDocs(qEvents(admin(), "lfB", "otra")));
     await assertSucceeds(updateDoc(doc(admin(), "leadflow_leads/lfB"), { status: "CLOSED", updatedAt: serverTimestamp() }));

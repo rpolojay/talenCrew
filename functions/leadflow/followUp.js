@@ -2,8 +2,9 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
 const { COLLECTIONS, LEAD_STATUS, EVENT_TYPE } = require("./constants");
-const { GEMINI_API_KEY, RESEND_API_KEY } = require("./secrets");
+const { GEMINI_API_KEY, RESEND_API_KEY, BOOKING_TOKEN_SECRET } = require("./secrets");
 const { generateReply } = require("./generateReply");
+const { buildBookingLink } = require("./bookingToken");
 const { logEvent } = require("./pipeline");
 const { sendLeadEmailWithQuota } = require("./quota");
 
@@ -59,7 +60,7 @@ async function stopFollowUp(db, lead, reason) {
 // aparecer en este query y el scheduler lo ignora automáticamente sin
 // ninguna lógica extra para eso.
 exports.leadflowFollowUpScheduler = onSchedule(
-  { schedule: "every 30 minutes", secrets: [GEMINI_API_KEY, RESEND_API_KEY] },
+  { schedule: "every 30 minutes", secrets: [GEMINI_API_KEY, RESEND_API_KEY, BOOKING_TOKEN_SECRET] },
   async () => {
     const db = getFirestore();
 
@@ -145,9 +146,14 @@ exports.leadflowFollowUpScheduler = onSchedule(
         const detectedLanguage = lead.detectedLanguage ?? lead.analysis?.detected_language ?? null;
         const replyResult = await generateReply(leadForAI, evalResult.route, company, detectedLanguage);
 
+        // Link firmado regenerado (determinístico): los leads de antes de B4
+        // tienen guardado un link sin token que el webhook ya no acepta.
+        const bookingLink = company.bookingLink
+          ? buildBookingLink(company, lead.companyId, lead.id, lead.contact?.name)
+          : null;
         let finalText = replyResult.text;
-        if (lead.bookingLinkSent) {
-          finalText = `${finalText}\n\n${lead.bookingLinkSent}`;
+        if (bookingLink) {
+          finalText = `${finalText}\n\n${bookingLink}`;
         }
 
         const newAttempts = attempts + 1;
@@ -156,18 +162,36 @@ exports.leadflowFollowUpScheduler = onSchedule(
         // pero una escritura posterior falla, el catch de abajo no vuelve a
         // intentar en 30 min, así que el lead nunca recibe el mismo
         // recordatorio dos veces.
-        await leadRef.update({
-          "followUp.attempts": newAttempts,
-          "followUp.lastSentAt": FieldValue.serverTimestamp(),
-          "followUp.lastMessage": {
-            text: finalText,
-            stage: evalResult.stage,
-            generatedAt: FieldValue.serverTimestamp(),
-            sentAt: null,
-          },
-          updatedAt: FieldValue.serverTimestamp(),
-          aiUsage: FieldValue.arrayUnion(replyResult.usage),
+        //
+        // Y se registra en una transacción que vuelve a leer el lead: `lead`
+        // viene de la consulta del inicio de la corrida, y entre tanto pudo
+        // llegar una reserva (webhook de Cal.com → APPOINTMENT_BOOKED +
+        // followUp.stopped), una respuesta del lead, u otra corrida. En ese
+        // caso no se envía nada. Queda una ventana mínima entre este commit y
+        // el envío del email.
+        const reserved = await db.runTransaction(async (tx) => {
+          const fresh = await tx.get(leadRef);
+          const current = fresh.exists ? fresh.data() : null;
+          if (!current || current.status !== LEAD_STATUS.BOOKING_SENT || current.followUp?.stopped ||
+            (current.followUp?.attempts ?? 0) !== attempts) {
+            return false;
+          }
+          tx.update(leadRef, {
+            "followUp.attempts": newAttempts,
+            "followUp.lastSentAt": FieldValue.serverTimestamp(),
+            "followUp.lastMessage": {
+              text: finalText,
+              stage: evalResult.stage,
+              generatedAt: FieldValue.serverTimestamp(),
+              sentAt: null,
+            },
+            ...(bookingLink ? { bookingLinkSent: bookingLink } : {}),
+            updatedAt: FieldValue.serverTimestamp(),
+            aiUsage: FieldValue.arrayUnion(replyResult.usage),
+          });
+          return true;
         });
+        if (!reserved) continue;
 
         // Solo hay canal de salida por email — un lead que solo dejó
         // teléfono se queda con sentAt: null (sin SMS/WhatsApp todavía para

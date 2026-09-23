@@ -147,6 +147,7 @@ let resendCalls;
 let replyCalls;
 let analysisResult;
 let replyError;      // si no es null, generateReply lanza este error
+let replyHook;       // si no es null, se ejecuta dentro de generateReply (simula carreras)
 let classification;  // resultado de classifyAdditionalMessage (o un Error para que lance)
 class FakeResend {
   constructor() { this.emails = { send: async (p) => { resendCalls.push(p); return { data: { id: `email_${resendCalls.length}` }, error: null }; } }; }
@@ -172,6 +173,7 @@ const localMocks = {
   [path.join(LF, "generateReply.js")]: {
     generateReply: async (_l, route, company, lang) => {
       replyCalls.push({ route, lang });
+      if (replyHook) await replyHook();
       if (replyError) throw replyError;
       return { text: `Respuesta IA (${route})`, language: lang || company.language, usage: { step: "reply" } };
     },
@@ -208,6 +210,8 @@ const { buildAnalysisPrompt } = require(path.join(LF, "analyzeLead.js"));
 const { buildClassificationPrompt } = require(path.join(LF, "detectLanguage.js"));
 const { buildReplyPrompt } = require(path.join(LF, "generateReply.js"));
 const { TRIAL_CAPTURES_PER_HOUR, hourKey } = require(path.join(LF, "rateLimit.js"));
+const { leadflowCalBookingWebhook } = require(path.join(LF, "booking.js"));
+const { computeBookingToken, verifyBookingMetadata } = require(path.join(LF, "bookingToken.js"));
 
 // ---------- helpers ----------
 function call(handler, { method = "POST", body = {}, token, rawBody } = {}) {
@@ -239,6 +243,7 @@ beforeEach(() => {
   resendCalls = [];
   replyCalls = [];
   replyError = null;
+  replyHook = null;
   classification = { detectedLanguage: "es", needsHuman: false, reason: "routine follow-up question" };
   analysisResult = { detected_language: "es", qualification: "qualified", needs_human: false, reason: "ok", confidence: 0.9 };
   store.leadflow_companies = {
@@ -1018,5 +1023,316 @@ describe("B2 — datos del lead como DATA en los prompts", () => {
     const prompt = buildReplyPrompt(lead, "QUALIFIED", company, "English");
     assertDataBlock(prompt);
     assert.ok(prompt.includes("Never repeat any URL, email address or phone number"));
+  });
+});
+
+// ---------- B4: webhook de Cal.com ----------
+const nodeCrypto = require("crypto");
+const CAL_SECRET = "fake-CAL_WEBHOOK_SECRET"; // valor del mock de defineSecret
+
+// Llama al webhook como lo haría Cal.com: body crudo firmado con HMAC-SHA256 hex.
+function calWebhook(body, { rawBody, signature, method = "POST" } = {}) {
+  const raw = rawBody ?? Buffer.from(JSON.stringify(body));
+  const sig = signature ?? nodeCrypto.createHmac("sha256", CAL_SECRET).update(raw).digest("hex");
+  const headers = { "x-cal-signature-256": sig };
+  return new Promise((done) => {
+    const req = { method, body, rawBody: raw, get: (h) => headers[h.toLowerCase()] };
+    const res = {
+      code: 0,
+      status(c) { this.code = c; return this; },
+      json(b) { done({ code: this.code, body: b }); },
+      send(b) { done({ code: this.code, body: b }); },
+    };
+    leadflowCalBookingWebhook(req, res);
+  });
+}
+const linkMeta = (companyId, leadId) => ({ leadId, companyId, bookingToken: computeBookingToken(companyId, leadId) });
+const bookingCreated = (metadata, patch = {}) => ({
+  triggerEvent: "BOOKING_CREATED",
+  payload: {
+    uid: "bkg_1", startTime: "2026-10-01T15:00:00.000Z", endTime: "2026-10-01T15:15:00.000Z",
+    attendees: [{ name: "Ana", email: "ana@example.com" }], location: "integrations:daily", metadata, ...patch,
+  },
+});
+const eventsOf = (leadId, type) => Object.values(store.leadflow_lead_events || {}).filter((e) => e.leadId === leadId && (!type || e.type === type));
+const snapshotOf = (col) => JSON.stringify(store[col] || {});
+
+describe("B4 — webhook de Cal.com", () => {
+  beforeEach(() => {
+    store.leadflow_companies.B = { ...baseCompany, name: "Empresa B", bookingLink: "https://cal.com/b/15min", allowedUsers: ["owner@b.com"] };
+    store.leadflow_leads = {
+      leadA: { companyId: "abc-roofing", status: "BOOKING_SENT", contact: { email: "ana@example.com" }, followUp: { attempts: 1, stopped: false, stopReason: null } },
+      leadB: { companyId: "B", status: "BOOKING_SENT", contact: { email: "ana@example.com" }, followUp: { attempts: 0, stopped: false, stopReason: null } },
+    };
+  });
+
+  test("firma válida + BOOKING_CREATED con token válido → APPOINTMENT_BOOKED, cita, eventos, follow-up detenido", async () => {
+    const r = await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA")));
+    assert.strictEqual(r.code, 200);
+    assert.strictEqual(r.body.result, "applied");
+    const lead = store.leadflow_leads.leadA;
+    assert.strictEqual(lead.status, "APPOINTMENT_BOOKED");
+    assert.strictEqual(lead.appointment.calBookingUid, "bkg_1");
+    assert.strictEqual(lead.appointment.startTime, "2026-10-01T15:00:00.000Z");
+    assert.ok(lead.appointment.confirmedAt instanceof Ts);
+    assert.strictEqual(lead.followUp.stopped, true);
+    assert.strictEqual(lead.followUp.stopReason, "appointment_booked");
+    assert.strictEqual(lead.followUp.attempts, 1, "el resto de followUp se conserva");
+    assert.strictEqual(eventsOf("leadA", "BOOKING_CONFIRMED").length, 1);
+    const change = eventsOf("leadA", "STATUS_CHANGE")[0];
+    assert.deepStrictEqual([change.fromStatus, change.toStatus, change.companyId], ["BOOKING_SENT", "APPOINTMENT_BOOKED", "abc-roofing"]);
+    assert.strictEqual(store.leadflow_bookings.bkg_1.outcome, "applied");
+    assert.strictEqual(store.leadflow_leads.leadB.status, "BOOKING_SENT", "leadB intacto");
+  });
+
+  test("firma inválida → 401, nada cambia", async () => {
+    const before = snapshotOf("leadflow_leads");
+    const r = await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA")), { signature: "00".repeat(32) });
+    assert.strictEqual(r.code, 401);
+    assert.strictEqual(snapshotOf("leadflow_leads"), before);
+  });
+  test("sin firma o firma no hexadecimal → 401", async () => {
+    assert.strictEqual((await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA")), { signature: "" })).code, 401);
+    assert.strictEqual((await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA")), { signature: "zz-not-hex" })).code, 401);
+  });
+  test("body alterado después de firmar → 401", async () => {
+    const original = bookingCreated(linkMeta("abc-roofing", "leadA"));
+    const sig = nodeCrypto.createHmac("sha256", CAL_SECRET).update(Buffer.from(JSON.stringify(original))).digest("hex");
+    const tampered = bookingCreated(linkMeta("abc-roofing", "leadA"), { startTime: "2030-01-01T00:00:00.000Z" });
+    const r = await calWebhook(tampered, { signature: sig });
+    assert.strictEqual(r.code, 401);
+    assert.strictEqual(store.leadflow_leads.leadA.status, "BOOKING_SENT");
+  });
+  test("método distinto de POST → 405", async () => {
+    assert.strictEqual((await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA")), { method: "GET" })).code, 405);
+  });
+
+  test("lead inexistente (token válido para ese id) → 200 ignored_lead_not_found, sin escrituras", async () => {
+    const r = await calWebhook(bookingCreated(linkMeta("abc-roofing", "noExiste")));
+    assert.strictEqual(r.body.result, "ignored_lead_not_found");
+    assert.ok(!store.leadflow_bookings?.bkg_1);
+    assert.ok(!store.leadflow_leads.noExiste);
+  });
+
+  test("token inválido / ausente / mal formado → no se toca ningún lead", async () => {
+    const before = snapshotOf("leadflow_leads");
+    const metas = [
+      { leadId: "leadA", companyId: "abc-roofing", bookingToken: "A".repeat(22) },
+      { leadId: "leadA", companyId: "abc-roofing" },
+      { leadId: "leadA" }, // formato anterior a B4
+      { leadId: "leadA", companyId: "abc-roofing", bookingToken: `${computeBookingToken("abc-roofing", "leadA")}x` },
+      { leadId: "leadA", companyId: "abc/roofing", bookingToken: computeBookingToken("abc-roofing", "leadA") },
+      undefined, "leadA", ["leadA"],
+    ];
+    for (const [i, m] of metas.entries()) {
+      const r = await calWebhook(bookingCreated(m, { uid: `bkg_bad_${i}` }));
+      assert.strictEqual(r.code, 200);
+      assert.strictEqual(r.body.result, "ignored_unlinked_booking", JSON.stringify(m));
+    }
+    assert.strictEqual(snapshotOf("leadflow_leads"), before);
+    assert.strictEqual(Object.keys(store.leadflow_bookings || {}).length, 0);
+    assert.strictEqual(eventsOf("leadA").length, 0);
+  });
+
+  test("token de otra empresa (token de B/leadB con metadata de A/leadA) → rechazado", async () => {
+    const r = await calWebhook(bookingCreated({ leadId: "leadA", companyId: "abc-roofing", bookingToken: computeBookingToken("B", "leadB") }));
+    assert.strictEqual(r.body.result, "ignored_unlinked_booking");
+    assert.strictEqual(store.leadflow_leads.leadA.status, "BOOKING_SENT");
+  });
+
+  test("CROSS-TENANT: reserva de A intentando usar leadB → FALLA; la reserva válida de A modifica SOLO leadA", async () => {
+    // 1) companyId A + leadB con el token de A (no se puede fabricar sin el
+    //    secreto; aquí se usa igual para probar la segunda barrera).
+    const forged = await calWebhook(bookingCreated({ leadId: "leadB", companyId: "abc-roofing", bookingToken: computeBookingToken("abc-roofing", "leadB") }, { uid: "bkg_x1" }));
+    assert.strictEqual(forged.body.result, "rejected_tenant_mismatch");
+    // 2) metadata de B con token de A → token inválido.
+    const mixed = await calWebhook(bookingCreated({ leadId: "leadB", companyId: "B", bookingToken: computeBookingToken("abc-roofing", "leadA") }, { uid: "bkg_x2" }));
+    assert.strictEqual(mixed.body.result, "ignored_unlinked_booking");
+    // 3) sin metadata, con el email del lead de B como asistente (el antiguo fallback global).
+    const byEmail = await calWebhook(bookingCreated(undefined, { uid: "bkg_x3", attendees: [{ name: "X", email: "ana@example.com" }] }));
+    assert.strictEqual(byEmail.body.result, "ignored_unlinked_booking");
+    assert.strictEqual(store.leadflow_leads.leadB.status, "BOOKING_SENT");
+    assert.strictEqual(store.leadflow_leads.leadB.appointment, undefined);
+    assert.strictEqual(eventsOf("leadB").length, 0, "ningún evento en la empresa B");
+    assert.strictEqual(store.leadflow_leads.leadA.status, "BOOKING_SENT", "tampoco se tocó leadA");
+
+    // Reserva válida de A → solo leadA.
+    const ok = await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA"), { uid: "bkg_ok" }));
+    assert.strictEqual(ok.body.result, "applied");
+    assert.strictEqual(store.leadflow_leads.leadA.status, "APPOINTMENT_BOOKED");
+    assert.strictEqual(store.leadflow_leads.leadB.status, "BOOKING_SENT");
+    assert.ok(Object.values(store.leadflow_lead_events || {}).every((e) => e.companyId === "abc-roofing"));
+  });
+
+  for (const status of ["CLOSED", "HUMAN_REVIEW", "NEW", "ANALYZING"]) {
+    test(`${status} no pasa a APPOINTMENT_BOOKED (reserva registrada, lead intacto)`, async () => {
+      store.leadflow_leads.leadA.status = status;
+      store.leadflow_handoffs = { h1: { leadId: "leadA", companyId: "abc-roofing", status: "OPEN" } };
+      const r = await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA")));
+      assert.strictEqual(r.body.result, "not_applied_status");
+      const lead = store.leadflow_leads.leadA;
+      assert.strictEqual(lead.status, status);
+      assert.strictEqual(lead.appointment, undefined);
+      assert.strictEqual(lead.followUp.stopped, false);
+      assert.strictEqual(eventsOf("leadA").length, 0);
+      assert.strictEqual(store.leadflow_handoffs.h1.status, "OPEN", "el handoff no se toca");
+      assert.strictEqual(store.leadflow_bookings.bkg_1.outcome, "not_applied");
+      assert.strictEqual(store.leadflow_bookings.bkg_1.leadStatusAtBooking, status);
+    });
+  }
+  for (const status of ["CONTACTED", "QUALIFIED", "NURTURE"]) {
+    test(`${status} sí admite la reserva`, async () => {
+      store.leadflow_leads.leadA.status = status;
+      const r = await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA")));
+      assert.strictEqual(r.body.result, "applied");
+      assert.strictEqual(store.leadflow_leads.leadA.status, "APPOINTMENT_BOOKED");
+    });
+  }
+
+  test("booking duplicado (mismo uid) → sin eventos nuevos, confirmedAt intacto, sin escrituras", async () => {
+    const payload = bookingCreated(linkMeta("abc-roofing", "leadA"));
+    await calWebhook(payload);
+    const confirmedAt = store.leadflow_leads.leadA.appointment.confirmedAt;
+    const before = snapshotOf("leadflow_leads") + snapshotOf("leadflow_lead_events") + snapshotOf("leadflow_bookings");
+    const again = await calWebhook(payload);
+    assert.strictEqual(again.code, 200);
+    assert.strictEqual(again.body.result, "duplicate");
+    assert.strictEqual(snapshotOf("leadflow_leads") + snapshotOf("leadflow_lead_events") + snapshotOf("leadflow_bookings"), before);
+    assert.strictEqual(store.leadflow_leads.leadA.appointment.confirmedAt, confirmedAt);
+    assert.strictEqual(eventsOf("leadA", "BOOKING_CONFIRMED").length, 1);
+    assert.strictEqual(eventsOf("leadA", "STATUS_CHANGE").length, 1);
+  });
+  test("duplicado de una reserva no aplicada (lead en revisión) también es no-op", async () => {
+    store.leadflow_leads.leadA.status = "HUMAN_REVIEW";
+    const payload = bookingCreated(linkMeta("abc-roofing", "leadA"));
+    await calWebhook(payload);
+    assert.strictEqual((await calWebhook(payload)).body.result, "duplicate");
+  });
+  test("dos reservas distintas del mismo lead → la cita se actualiza, historial de ambas, un solo STATUS_CHANGE", async () => {
+    await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA"), { uid: "bkg_1" }));
+    const r = await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA"), { uid: "bkg_2", startTime: "2026-10-02T15:00:00.000Z" }));
+    assert.strictEqual(r.body.result, "applied_additional_booking");
+    assert.strictEqual(store.leadflow_leads.leadA.appointment.calBookingUid, "bkg_2");
+    assert.strictEqual(store.leadflow_leads.leadA.appointment.startTime, "2026-10-02T15:00:00.000Z");
+    assert.deepStrictEqual(Object.keys(store.leadflow_bookings).sort(), ["bkg_1", "bkg_2"]);
+    assert.strictEqual(eventsOf("leadA", "BOOKING_CONFIRMED").length, 2);
+    assert.strictEqual(eventsOf("leadA", "STATUS_CHANGE").length, 1);
+  });
+
+  test("email del asistente: se normaliza a minúsculas; uno inválido se guarda como null; nunca identifica el lead", async () => {
+    await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA"), { attendees: [{ name: "  Ana  ", email: "  Ana.Lopez@Example.COM " }] }));
+    assert.strictEqual(store.leadflow_leads.leadA.appointment.attendeeEmail, "ana.lopez@example.com");
+    assert.strictEqual(store.leadflow_leads.leadA.appointment.attendeeName, "Ana");
+    await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA"), { uid: "bkg_2", attendees: [{ email: ["a@b.com"] }], location: { type: "x" } }));
+    assert.strictEqual(store.leadflow_leads.leadA.appointment.attendeeEmail, null);
+    assert.strictEqual(store.leadflow_leads.leadA.appointment.location, null, "no se guardan estructuras arbitrarias");
+  });
+
+  test("payload inválido → 400 sin cambios", async () => {
+    const before = snapshotOf("leadflow_leads");
+    const bad = [
+      ["body no es objeto", ["x"]],
+      ["sin triggerEvent", { payload: {} }],
+      ["triggerEvent no string", { triggerEvent: 5 }],
+      ["BOOKING_CREATED sin payload", { triggerEvent: "BOOKING_CREATED" }],
+      ["uid ausente", bookingCreated(linkMeta("abc-roofing", "leadA"), { uid: undefined })],
+      ["uid con /", bookingCreated(linkMeta("abc-roofing", "leadA"), { uid: "a/b" })],
+      ["uid objeto", bookingCreated(linkMeta("abc-roofing", "leadA"), { uid: { a: 1 } })],
+      ["fecha inválida", bookingCreated(linkMeta("abc-roofing", "leadA"), { startTime: "mañana" })],
+      ["fecha no string", bookingCreated(linkMeta("abc-roofing", "leadA"), { endTime: 12345 })],
+    ];
+    for (const [name, body] of bad) {
+      const r = await calWebhook(body);
+      assert.strictEqual(r.code, 400, name);
+    }
+    assert.strictEqual(snapshotOf("leadflow_leads"), before);
+  });
+
+  test("error de Firestore → 500 (Cal.com puede reintentar) y el reintento posterior se aplica una sola vez", async () => {
+    const original = db.runTransaction;
+    db.runTransaction = async () => { throw new Error("UNAVAILABLE: firestore down"); };
+    let r;
+    try {
+      r = await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA")));
+    } finally {
+      db.runTransaction = original;
+    }
+    assert.strictEqual(r.code, 500);
+    assert.ok(!JSON.stringify(r.body).includes("firestore down"), "no expone el error");
+    assert.strictEqual(store.leadflow_leads.leadA.status, "BOOKING_SENT");
+    const retry = await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA")));
+    assert.strictEqual(retry.body.result, "applied");
+    assert.strictEqual(eventsOf("leadA", "BOOKING_CONFIRMED").length, 1);
+  });
+
+  test("triggerEvent no soportado (PING, BOOKING_CANCELLED, BOOKING_RESCHEDULED) → 200 sin cambios", async () => {
+    await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA")));
+    const before = snapshotOf("leadflow_leads") + snapshotOf("leadflow_lead_events");
+    for (const triggerEvent of ["PING", "BOOKING_CANCELLED", "BOOKING_RESCHEDULED", "MEETING_ENDED"]) {
+      const r = await calWebhook({ ...bookingCreated(linkMeta("abc-roofing", "leadA")), triggerEvent });
+      assert.strictEqual(r.code, 200);
+      assert.strictEqual(r.body.result, "ignored_unsupported_event");
+    }
+    assert.strictEqual(snapshotOf("leadflow_leads") + snapshotOf("leadflow_lead_events"), before, "TODO B4: cancelación/reprogramación no alteran nada");
+  });
+});
+
+describe("B4 — link firmado de extremo a extremo", () => {
+  const fromLink = (link) => {
+    const u = new URL(link);
+    return { leadId: u.searchParams.get("metadata[leadId]"), companyId: u.searchParams.get("metadata[companyId]"), bookingToken: u.searchParams.get("metadata[bookingToken]") };
+  };
+  test("capture emite un link con leadId + companyId + token válido, y ese link confirma la reserva", async () => {
+    const r = await capture({ companyId: "abc-roofing", message: "Need a roof repair in Miami", contact: { name: "Ana", email: "ana@example.com" } });
+    assert.strictEqual(r.body.status, "BOOKING_SENT");
+    const lead = store.leadflow_leads[r.body.leadId];
+    const meta = fromLink(lead.bookingLinkSent);
+    assert.deepStrictEqual([meta.leadId, meta.companyId], [r.body.leadId, "abc-roofing"]);
+    assert.ok(/^[A-Za-z0-9_-]{22}$/.test(meta.bookingToken));
+    assert.ok(verifyBookingMetadata(meta).ok);
+    assert.ok(resendCalls[0].text.includes(lead.bookingLinkSent), "el email lleva el link firmado");
+    const booked = await calWebhook(bookingCreated(meta, { uid: "bkg_e2e" }));
+    assert.strictEqual(booked.body.result, "applied");
+    assert.strictEqual(store.leadflow_leads[r.body.leadId].status, "APPOINTMENT_BOOKED");
+  });
+  test("el token no es predecible ni reutilizable: cambia con la empresa y con el lead", () => {
+    const t = computeBookingToken("A", "lead1");
+    assert.notStrictEqual(t, computeBookingToken("B", "lead1"));
+    assert.notStrictEqual(t, computeBookingToken("A", "lead2"));
+    assert.ok(!t.includes("lead1") && !t.includes("A".repeat(5)));
+    assert.strictEqual(t, computeBookingToken("A", "lead1"), "determinístico para el mismo par");
+  });
+  test("follow-up: usa el link firmado aunque el lead tenga guardado uno anterior a B4", async () => {
+    store.leadflow_leads = {
+      old: {
+        companyId: "abc-roofing", status: "BOOKING_SENT", contact: { name: "Ana", email: "old@example.com" }, message: "techo",
+        bookingLinkSent: "https://cal.com/abc/15min?metadata%5BleadId%5D=old", autoReply: { generatedAt: new Ts(Date.now() - 25 * 3600e3) },
+        followUp: { attempts: 0, stopped: false }, aiUsage: [],
+      },
+    };
+    await leadflowFollowUpScheduler();
+    const meta = fromLink(store.leadflow_leads.old.bookingLinkSent);
+    assert.ok(verifyBookingMetadata(meta).ok, "el link guardado ahora está firmado");
+    assert.ok(resendCalls[0].text.includes("metadata%5BbookingToken%5D="));
+  });
+  test("follow-up: si la reserva llega mientras corre el scheduler, NO se envía el recordatorio", async () => {
+    store.leadflow_leads = {
+      race: {
+        companyId: "abc-roofing", status: "BOOKING_SENT", contact: { email: "race@example.com" }, message: "techo",
+        autoReply: { generatedAt: new Ts(Date.now() - 25 * 3600e3) }, followUp: { attempts: 0, stopped: false }, aiUsage: [],
+      },
+    };
+    // El webhook confirma la reserva justo cuando el scheduler está generando el texto.
+    replyHook = async () => {
+      replyHook = null;
+      const r = await calWebhook(bookingCreated(linkMeta("abc-roofing", "race"), { uid: "bkg_race" }));
+      assert.strictEqual(r.body.result, "applied");
+    };
+    await leadflowFollowUpScheduler();
+    assert.strictEqual(resendCalls.length, 0, "no salió ningún follow-up");
+    const lead = store.leadflow_leads.race;
+    assert.strictEqual(lead.status, "APPOINTMENT_BOOKED");
+    assert.strictEqual(lead.followUp.attempts, 0);
+    assert.strictEqual(lead.followUp.stopReason, "appointment_booked");
   });
 });

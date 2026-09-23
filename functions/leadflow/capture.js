@@ -3,7 +3,11 @@ const cors = require("cors")({ origin: true });
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
 const { COLLECTIONS, LEAD_STATUS, EVENT_TYPE, HANDOFF_TRIGGER } = require("./constants");
-const { GEMINI_API_KEY, RESEND_API_KEY } = require("./secrets");
+const { GEMINI_API_KEY, RESEND_API_KEY, BOOKING_TOKEN_SECRET } = require("./secrets");
+// Link de reserva firmado (leadId + companyId + token) — ver ./bookingToken.js
+// y leadflowCalBookingWebhook en ./booking.js, que solo acepta reservas con
+// ese token.
+const { buildBookingLink } = require("./bookingToken");
 const { buildDedupeKey } = require("./dedupe");
 const { analyzeLead } = require("./analyzeLead");
 const { validateAnalysis } = require("./geminiSchemas");
@@ -52,18 +56,6 @@ function toMillis(ts) {
   return ts && typeof ts.toMillis === "function" ? ts.toMillis() : 0;
 }
 
-function buildBookingLink(company, leadId, name) {
-  const url = new URL(company.bookingLink);
-  // Cal.com solo guarda un query param en booking.metadata (y por lo tanto
-  // en el payload del webhook BOOKING_CREATED) si usa la sintaxis con
-  // corchetes `metadata[key]=value` — un `?leadId=xxx` plano se ignora.
-  // Ver leadflowCalBookingWebhook en ./booking.js, que depende de esto
-  // para encontrar el lead correspondiente a la cita agendada.
-  url.searchParams.set("metadata[leadId]", leadId);
-  if (name) url.searchParams.set("name", name);
-  return url.toString();
-}
-
 // Envía el autoReply por email si el lead dejó uno. Leads que solo dejaron
 // teléfono se quedan con sentAt: null (todavía no hay canal SMS/WhatsApp
 // para leads de formulario). Una falla de envío no rompe la captura — se
@@ -81,7 +73,7 @@ async function sendAutoReplyEmail(db, companyId, contact, company, language, tex
   });
 }
 
-exports.leadflowCaptureLead = onRequest({ secrets: [GEMINI_API_KEY, RESEND_API_KEY] }, (req, res) => {
+exports.leadflowCaptureLead = onRequest({ secrets: [GEMINI_API_KEY, RESEND_API_KEY, BOOKING_TOKEN_SECRET] }, (req, res) => {
   cors(req, res, async () => {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method not allowed" });
@@ -251,7 +243,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
   let replyText = replyResult.text;
   let bookingLinkSent = null;
   if (route === "QUALIFIED") {
-    bookingLinkSent = buildBookingLink(company, leadId, contact.name);
+    bookingLinkSent = buildBookingLink(company, companyId, leadId, contact.name);
     replyText = `${replyText}\n\n${bookingLinkSent}`;
   }
 
@@ -361,7 +353,9 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
   let replyText = replyResult.text;
   let bookingLinkSent = existingLead.bookingLinkSent;
   if (route === "QUALIFIED") {
-    if (!bookingLinkSent) bookingLinkSent = buildBookingLink(company, leadId, existingLead.contact.name);
+    // Siempre se regenera (es determinístico): un link guardado antes de B4
+    // no tiene token y el webhook ya no lo aceptaría.
+    bookingLinkSent = buildBookingLink(company, companyId, leadId, existingLead.contact.name);
     replyText = `${replyText}\n\n${bookingLinkSent}`;
   }
 
