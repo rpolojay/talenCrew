@@ -98,6 +98,13 @@ exports.leadflowFollowUpScheduler = onSchedule(
         await stopFollowUp(db, lead, "company_inactive");
         continue;
       }
+      // Empresa demo (landing pública): nunca se envían emails a sus leads
+      // (ver capture.js), así que tampoco recordatorios — se detiene antes
+      // de gastar una llamada de IA.
+      if (company.demoMode === true) {
+        await stopFollowUp(db, lead, "demo_company");
+        continue;
+      }
       if (!company.followUpConfig) {
         await stopFollowUp(db, lead, "no_follow_up_config");
         continue;

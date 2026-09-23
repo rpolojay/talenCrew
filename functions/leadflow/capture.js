@@ -13,9 +13,12 @@ const { generateReply } = require("./generateReply");
 const { createHandoff } = require("./handoff");
 const { classifyAdditionalMessage } = require("./detectLanguage");
 const { sendLeadEmailWithQuota } = require("./quota");
+const { validateCapturePayload } = require("./captureValidation");
+const { reserveCompanyCapture } = require("./rateLimit");
 
 const THROTTLE_WINDOW_MS = 60 * 1000;
 const THROTTLE_MAX = 5;
+const DEMO_MODE_NO_EMAIL = "demo_mode_no_email";
 
 const REPLY_FAILURE_REASON = "The automatic reply could not be generated, so the lead has not received a response yet.";
 const REPLY_FAILURE_ACTION = "Reply to this lead personally — the automatic reply could not be generated.";
@@ -45,15 +48,6 @@ async function escalateReplyFailure(db, { leadRef, leadId, companyId, company, l
   return handoffId;
 }
 
-function isValidPayload(body) {
-  if (!body || typeof body !== "object") return false;
-  if (!body.companyId || typeof body.companyId !== "string") return false;
-  if (!body.message || typeof body.message !== "string" || body.message.length > 4000) return false;
-  const contact = body.contact || {};
-  if (!contact.email && !contact.phone) return false;
-  return true;
-}
-
 function toMillis(ts) {
   return ts && typeof ts.toMillis === "function" ? ts.toMillis() : 0;
 }
@@ -75,8 +69,13 @@ function buildBookingLink(company, leadId, name) {
 // para leads de formulario). Una falla de envío no rompe la captura — se
 // registra y el lead queda con sentAt: null + sendError para verlo en el
 // dashboard. Empresas en trial: sujeto al tope diario de ./quota.js.
+// Empresas demo (company.demoMode, p. ej. la de la landing pública): la IA
+// responde igual — la landing muestra el texto en pantalla — pero nunca se
+// envía el email, así nadie puede usar la demo para mandar correos a
+// direcciones arbitrarias.
 async function sendAutoReplyEmail(db, companyId, contact, company, language, text, leadId) {
   if (!contact?.email) return { sentAt: null, emailId: null, error: null };
+  if (company?.demoMode === true) return { sentAt: null, emailId: null, error: DEMO_MODE_NO_EMAIL };
   return sendLeadEmailWithQuota({
     db, companyId, company, to: contact.email, language, text, logContext: `autoReply lead ${leadId}`,
   });
@@ -88,12 +87,13 @@ exports.leadflowCaptureLead = onRequest({ secrets: [GEMINI_API_KEY, RESEND_API_K
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    const body = req.body;
-    if (!isValidPayload(body)) {
-      return res.status(400).json({
-        error: "Invalid payload: companyId, message and contact.email/phone are required",
-      });
+    // A partir de aquí solo se usa el payload normalizado (ver
+    // ./captureValidation.js), nunca req.body directamente.
+    const validation = validateCapturePayload(req.body, req.rawBody);
+    if (validation.error) {
+      return res.status(validation.status).json({ error: validation.error });
     }
+    const body = validation.data;
 
     const db = getFirestore();
     const companyId = body.companyId;
@@ -110,11 +110,20 @@ exports.leadflowCaptureLead = onRequest({ secrets: [GEMINI_API_KEY, RESEND_API_K
       return res.status(500).json({ error: "Internal error" });
     }
 
-    const contact = {
-      name: body.contact.name || null,
-      email: body.contact.email || null,
-      phone: body.contact.phone || null,
-    };
+    // Tope por empresa antes de tocar leads o Gemini (ver ./rateLimit.js).
+    // Si la reserva falla se trata como "no permitido": mejor rechazar que
+    // procesar sin control.
+    try {
+      const { allowed } = await reserveCompanyCapture(db, companyId, company);
+      if (!allowed) {
+        return res.status(429).json({ error: "Too many requests for this company, try again later" });
+      }
+    } catch (err) {
+      console.error(`No se pudo reservar el cupo de captura de ${companyId}:`, err);
+      return res.status(503).json({ error: "Service temporarily unavailable" });
+    }
+
+    const contact = body.contact;
     const dedupeKey = buildDedupeKey(companyId, contact);
 
     try {

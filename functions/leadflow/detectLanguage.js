@@ -2,6 +2,7 @@ const { GoogleGenAI, Type } = require("@google/genai");
 const { GEMINI_API_KEY } = require("./secrets");
 const { DETECTED_LANGUAGE_VALUES } = require("./geminiSchemas");
 const { resolveHandoffRules, buildNeedsHumanCriterion } = require("./handoffRules");
+const { untrustedBlock, UNTRUSTED_NOTICE } = require("./promptData");
 
 // Llamada de IA separada de analyzeLead() — se usa en handleAdditionalMessage
 // (capture.js), donde el analisis completo (intent/qualification/score) NO
@@ -27,7 +28,9 @@ const MAX_REASON_LENGTH = 500;
 function buildClassificationPrompt(message, company) {
   return `You are screening a new message from an existing lead of "${company.name}", a ${company.industry} business.
 
-Message: "${message}"
+MESSAGE:
+${untrustedBlock({ message })}
+${UNTRUSTED_NOTICE}
 
 Return structured JSON only, following these rules:
 - "detected_language" = the language the message above is written in — "es" for Spanish, "en" for English.

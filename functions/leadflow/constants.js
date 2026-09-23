@@ -7,6 +7,7 @@ const COLLECTIONS = {
   // navegador vía la regla catch-all.
   EMAIL_QUOTA: "leadflow_email_quota",
   TRIAL_SIGNUPS: "leadflow_trial_signups",
+  RATE_LIMITS: "leadflow_rate_limits",
 };
 
 const LEAD_STATUS = {

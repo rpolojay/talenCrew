@@ -1005,7 +1005,13 @@ document.getElementById("leadflow-form").addEventListener("submit", async functi
     document.getElementById('leadModal').style.display = 'block';
 
     try {
-      const eventsSnap = await getDocs(query(collection(db, 'leadflow_lead_events'), where('leadId', '==', leadId)));
+      // El filtro por companyId es obligatorio: firestore.rules solo puede
+      // autorizar la consulta si ve a qué empresa pertenecen los eventos.
+      const eventsSnap = await getDocs(query(
+        collection(db, 'leadflow_lead_events'),
+        where('leadId', '==', leadId),
+        where('companyId', '==', lead.companyId),
+      ));
       const events = [];
       eventsSnap.forEach((d) => events.push({ id: d.id, ...d.data() }));
       events.sort((a, b) => (tsToDate(a.timestamp)?.getTime() || 0) - (tsToDate(b.timestamp)?.getTime() || 0));

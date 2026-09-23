@@ -2,6 +2,7 @@ const { GoogleGenAI } = require("@google/genai");
 const { GEMINI_API_KEY } = require("./secrets");
 const { LEAD_ANALYSIS_SCHEMA } = require("./geminiSchemas");
 const { resolveHandoffRules, buildNeedsHumanCriterion } = require("./handoffRules");
+const { untrustedBlock, UNTRUSTED_NOTICE } = require("./promptData");
 
 // Llamada #1 de IA (Fase 2.2 / Step 6.1 paso 2). Salida SOLO estructurada
 // (responseSchema) — nada de texto libre, porque esta salida alimenta
@@ -15,10 +16,13 @@ BUSINESS FACTS (the only facts you may treat as true about this business):
 - Hours: ${company.businessFacts.hours}
 
 LEAD:
-- Name: ${lead.contact.name || "unknown"}
-- Service requested: ${lead.serviceRequested || "unspecified"}
-- Location: ${lead.location || "unspecified"}
-- Message: "${lead.message}"
+${untrustedBlock({
+    name: lead.contact.name || "unknown",
+    serviceRequested: lead.serviceRequested || "unspecified",
+    location: lead.location || "unspecified",
+    message: lead.message,
+  })}
+${UNTRUSTED_NOTICE}
 
 Analyze this lead and return structured JSON only, following these rules:
 - "qualification" = "unqualified" if the location is clearly outside the service area, or overall intent is clearly low.

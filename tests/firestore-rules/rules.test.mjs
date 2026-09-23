@@ -11,7 +11,7 @@ import {
   initializeTestEnvironment, assertSucceeds, assertFails,
 } from "@firebase/rules-unit-testing";
 import {
-  doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, collection, query, where,
+  doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, collection, query, where, serverTimestamp,
 } from "firebase/firestore";
 
 const RULES = readFileSync(process.env.RULES_PATH || path.join(path.dirname(fileURLToPath(import.meta.url)), "../../firestore.rules"), "utf8");
@@ -234,5 +234,107 @@ describe("LeadFlow: consultas exactas de leadflow.html", () => {
   test("nadie escribe leadflow_companies desde el navegador salvo admin", async () => {
     await assertFails(setDoc(doc(ownerA(), "leadflow_companies/acme"), { name: "Hack", allowedUsers: ["owner@a.com", "x@x.com"] }));
     await assertFails(setDoc(doc(ownerA(), "leadflow_companies/nueva"), { name: "Nueva", allowedUsers: ["owner@a.com"] }));
+  });
+});
+
+// B3 (Production Readiness Audit): un miembro de A podía mover sus leads y
+// handoffs a B (inyectando datos en el dashboard de B) y reescribir
+// cualquier campo de sus leads. Ahora companyId es inmutable y solo se
+// permiten las escrituras exactas que hace leadflow.html.
+describe("LeadFlow B3: aislamiento de escritura y lectura entre empresas", () => {
+  const qEvents = (db, leadId, companyId) => query(collection(db, "leadflow_lead_events"),
+    where("leadId", "==", leadId), where("companyId", "==", companyId));
+
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "leadflow_companies/otra"), { name: "Otra", allowedUsers: ["owner@b.com"] });
+      await setDoc(doc(db, "leadflow_leads/lfA"), {
+        companyId: "acme", status: "BOOKING_SENT", contact: { email: "lead@x.com" }, message: "hola",
+        analysis: { qualification: "qualified" }, score: { adjusted: 80 }, autoReply: { text: "hi" },
+        bookingLinkSent: "https://cal.example/x", followUp: { attempts: 0, stopped: false }, lastHandoffId: null,
+      });
+      await setDoc(doc(db, "leadflow_leads/lfB"), { companyId: "otra", status: "NEW", contact: { email: "b@x.com" } });
+      await setDoc(doc(db, "leadflow_handoffs/hfA"), {
+        companyId: "acme", leadId: "lfA", status: "OPEN", reason: "r", triggeredBy: "AI_LOW_CONFIDENCE",
+        snapshot: { message: "hola" }, resolvedBy: null, resolvedAt: null,
+      });
+      await setDoc(doc(db, "leadflow_handoffs/hfB"), { companyId: "otra", leadId: "lfB", status: "OPEN" });
+      await setDoc(doc(db, "leadflow_lead_events/evA"), { companyId: "acme", leadId: "lfA", type: "STATUS_CHANGE" });
+      await setDoc(doc(db, "leadflow_lead_events/evB"), { companyId: "otra", leadId: "lfB", type: "STATUS_CHANGE" });
+    });
+  });
+
+  test("A no puede cambiar el companyId de su lead a B (ni sola ni junto a status)", async () => {
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_leads/lfA"), { companyId: "otra" }));
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_leads/lfA"), { companyId: "otra", status: "NEW", updatedAt: serverTimestamp() }));
+  });
+  test("A no puede cambiar el companyId de su handoff a B", async () => {
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_handoffs/hfA"), { companyId: "otra" }));
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_handoffs/hfA"), { companyId: "otra", status: "ACKNOWLEDGED" }));
+  });
+  test("ni el admin mueve docs de empresa desde el navegador", async () => {
+    await assertFails(updateDoc(doc(admin(), "leadflow_leads/lfA"), { companyId: "otra" }));
+    await assertFails(updateDoc(doc(admin(), "leadflow_handoffs/hfA"), { companyId: "otra" }));
+  });
+  test("A no puede alterar campos internos protegidos del lead", async () => {
+    const protectedUpdates = [
+      { "contact.email": "attacker@evil.test" }, { contact: { email: "attacker@evil.test" } },
+      { analysis: { qualification: "unqualified" } }, { score: { adjusted: 1 } },
+      { autoReply: { text: "<b>x</b>" } }, { bookingLinkSent: "https://evil.test" },
+      { "followUp.attempts": 5 }, { "followUp.stopped": true }, { lastHandoffId: "x" }, { message: "otro" }, { dedupeKey: "x" },
+      { status: "NEW", updatedAt: serverTimestamp(), "contact.email": "attacker@evil.test" },
+    ];
+    for (const data of protectedUpdates) {
+      await assertFails(updateDoc(doc(ownerA(), "leadflow_leads/lfA"), data));
+    }
+  });
+  test("A no puede alterar campos protegidos del handoff", async () => {
+    for (const data of [{ reason: "x" }, { triggeredBy: "x" }, { snapshot: {} }, { leadId: "lfB" }, { status: "OPEN" }, { status: "HACKED" }]) {
+      await assertFails(updateDoc(doc(ownerA(), "leadflow_handoffs/hfA"), data));
+    }
+    // resolvedBy tiene que ser su propio email; resolvedAt, la hora del servidor.
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_handoffs/hfA"), { status: "RESOLVED", resolvedBy: "otro@x.com", resolvedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_handoffs/hfA"), { status: "RESOLVED", resolvedBy: "owner@a.com", resolvedAt: new Date(0) }));
+  });
+  test("A puede hacer las escrituras legítimas de leadflow.html", async () => {
+    // Mover la tarjeta del embudo.
+    await assertSucceeds(updateDoc(doc(ownerA(), "leadflow_leads/lfA"), { status: "CLOSED", updatedAt: serverTimestamp() }));
+    // Reconocer y luego resolver el handoff.
+    await assertSucceeds(updateDoc(doc(ownerA(), "leadflow_handoffs/hfA"), { status: "ACKNOWLEDGED" }));
+    await assertSucceeds(updateDoc(doc(ownerA(), "leadflow_handoffs/hfA"), { status: "RESOLVED", resolvedBy: "owner@a.com", resolvedAt: serverTimestamp() }));
+  });
+  test("status fuera de los valores del embudo o updatedAt manipulado: denegado", async () => {
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_leads/lfA"), { status: "HACKED", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_leads/lfA"), { status: "CLOSED", updatedAt: new Date(0) }));
+  });
+  test("A no puede escribir leads ni handoffs de B", async () => {
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_leads/lfB"), { status: "CLOSED", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_handoffs/hfB"), { status: "ACKNOWLEDGED" }));
+  });
+  test("A lee los eventos de sus leads con la consulta de leadflow.html (leadId + companyId)", async () => {
+    const snap = await assertSucceeds(getDocs(qEvents(ownerA(), "lfA", "acme")));
+    if (snap.size !== 1 || snap.docs[0].id !== "evA") throw new Error(`esperaba solo evA, llegó ${snap.docs.map((d) => d.id)}`);
+  });
+  test("A no puede leer eventos de B", async () => {
+    await assertFails(getDocs(qEvents(ownerA(), "lfB", "otra")));
+    await assertFails(getDocs(query(collection(ownerA(), "leadflow_lead_events"), where("companyId", "==", "otra"))));
+    await assertFails(getDoc(doc(ownerA(), "leadflow_lead_events/evB")));
+    // Sin filtro de empresa la consulta no se puede probar: se deniega.
+    await assertFails(getDocs(query(collection(ownerA(), "leadflow_lead_events"), where("leadId", "==", "lfB"))));
+  });
+  test("email no verificado no obtiene membership (leads, handoffs, eventos, escrituras)", async () => {
+    const unverifiedA = user("owner@a.com", false);
+    await assertFails(getDoc(doc(unverifiedA, "leadflow_leads/lfA")));
+    await assertFails(getDocs(query(collection(unverifiedA, "leadflow_leads"), where("companyId", "==", "acme"))));
+    await assertFails(getDocs(query(collection(unverifiedA, "leadflow_handoffs"), where("companyId", "==", "acme"))));
+    await assertFails(getDocs(qEvents(unverifiedA, "lfA", "acme")));
+    await assertFails(updateDoc(doc(unverifiedA, "leadflow_leads/lfA"), { status: "CLOSED", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(unverifiedA, "leadflow_handoffs/hfA"), { status: "ACKNOWLEDGED" }));
+  });
+  test("admin conserva sus operaciones del dashboard", async () => {
+    await assertSucceeds(getDocs(qEvents(admin(), "lfB", "otra")));
+    await assertSucceeds(updateDoc(doc(admin(), "leadflow_leads/lfB"), { status: "CLOSED", updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(admin(), "leadflow_handoffs/hfB"), { status: "RESOLVED", resolvedBy: "hola@veloiapp.com", resolvedAt: serverTimestamp() }));
   });
 });

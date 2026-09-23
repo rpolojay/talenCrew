@@ -104,10 +104,49 @@ service cloud.firestore {
     // Cloud Functions con el Admin SDK, que no pasa por estas reglas.
     // ==========================================================================
 
+    // Mismo criterio de identidad que el resto del archivo: el email del
+    // token solo cuenta si está verificado (un token sin verificar con el
+    // email de un miembro no obtiene acceso).
     function isLeadflowCompanyMember(companyId) {
-      return request.auth != null &&
+      return isVerifiedUser() &&
         request.auth.token.email in
           get(/databases/$(database)/documents/leadflow_companies/$(companyId)).data.allowedUsers;
+    }
+
+    // Un update desde el navegador nunca mueve un doc de empresa — ni siquiera
+    // el admin: companyId solo lo escribe el backend al crear.
+    function leadflowCompanyIdUnchanged() {
+      return request.resource.data.companyId == resource.data.companyId;
+    }
+
+    function leadflowChangedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // Mismos valores que LEAD_STATUS (functions/leadflow/constants.js) — todas
+    // las columnas del kanban de leadflow.html.
+    function isLeadflowLeadStatus(status) {
+      return status in ['NEW', 'ANALYZING', 'QUALIFIED', 'CONTACTED', 'BOOKING_SENT',
+        'APPOINTMENT_BOOKED', 'HUMAN_REVIEW', 'NURTURE', 'CLOSED'];
+    }
+
+    // Lo único que leadflow.html cambia en un lead: mover la tarjeta del
+    // embudo → { status, updatedAt: serverTimestamp() }. Contacto, análisis,
+    // respuesta, routing, follow-up, etc. son del backend.
+    function isLeadflowLeadStatusUpdate() {
+      return leadflowChangedKeys().hasOnly(['status', 'updatedAt']) &&
+        isLeadflowLeadStatus(request.resource.data.status) &&
+        (!('updatedAt' in leadflowChangedKeys()) || request.resource.data.updatedAt == request.time);
+    }
+
+    // Lo único que leadflow.html cambia en un handoff: reconocerlo
+    // ({ status: ACKNOWLEDGED }) o resolverlo ({ status: RESOLVED, resolvedBy:
+    // su propio email, resolvedAt: serverTimestamp() }).
+    function isLeadflowHandoffUpdate() {
+      return leadflowChangedKeys().hasOnly(['status', 'resolvedBy', 'resolvedAt']) &&
+        request.resource.data.status in ['ACKNOWLEDGED', 'RESOLVED'] &&
+        (!('resolvedBy' in leadflowChangedKeys()) || request.resource.data.resolvedBy == request.auth.token.email) &&
+        (!('resolvedAt' in leadflowChangedKeys()) || request.resource.data.resolvedAt == request.time);
     }
 
     // leadflow_companies — configuración del tenant (idioma, reglas de
@@ -125,25 +164,33 @@ service cloud.firestore {
     }
 
     // leadflow_leads — creados/analizados solo por las Cloud Functions
-    // (Admin SDK). El dashboard puede actualizar (ej. mover de etapa a
-    // mano) si el usuario pertenece a la empresa dueña del lead.
+    // (Admin SDK). Un miembro de la empresa dueña solo puede mover la tarjeta
+    // del embudo (isLeadflowLeadStatusUpdate); companyId es inmutable.
     match /leadflow_leads/{leadId} {
-      allow read, update: if isAdmin() || isLeadflowCompanyMember(resource.data.companyId);
+      allow read: if isAdmin() || isLeadflowCompanyMember(resource.data.companyId);
+      allow update: if leadflowCompanyIdUnchanged() &&
+        (isAdmin() || (isLeadflowCompanyMember(resource.data.companyId) && isLeadflowLeadStatusUpdate()));
       allow create, delete: if isAdmin();
     }
 
     // leadflow_lead_events — historial append-only. Nunca se edita ni se
     // borra desde el cliente; solo lectura para auditoría en el dashboard.
+    // Firestore solo autoriza una consulta si puede probar la regla con sus
+    // filtros: el dashboard consulta por leadId Y companyId (un filtro solo
+    // por leadId no se puede probar contra la empresa y se deniega).
     match /leadflow_lead_events/{eventId} {
       allow read: if isAdmin() || isLeadflowCompanyMember(resource.data.companyId);
       allow create, update, delete: if isAdmin();
     }
 
-    // leadflow_handoffs — cola de casos escalados a humano. El dashboard
-    // necesita poder marcarlos como ACKNOWLEDGED/RESOLVED, por eso update
-    // está abierto a miembros de la empresa; create solo vía Cloud Function.
+    // leadflow_handoffs — cola de casos escalados a humano. Un miembro de la
+    // empresa dueña solo puede reconocerlo o resolverlo
+    // (isLeadflowHandoffUpdate); companyId es inmutable; create solo vía
+    // Cloud Function.
     match /leadflow_handoffs/{handoffId} {
-      allow read, update: if isAdmin() || isLeadflowCompanyMember(resource.data.companyId);
+      allow read: if isAdmin() || isLeadflowCompanyMember(resource.data.companyId);
+      allow update: if leadflowCompanyIdUnchanged() &&
+        (isAdmin() || (isLeadflowCompanyMember(resource.data.companyId) && isLeadflowHandoffUpdate()));
       allow create, delete: if isAdmin();
     }
 
