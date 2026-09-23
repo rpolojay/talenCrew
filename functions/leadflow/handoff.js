@@ -23,7 +23,13 @@ const ACTION_LABELS = {
     "Revisa la conversación y haz el seguimiento personalmente.",
   "Review this lead manually — the automated analysis could not be completed.":
     "Revisa este lead manualmente — el análisis automático no se pudo completar.",
+  "Reply to this lead personally — the automatic reply could not be generated.":
+    "Responde a este lead personalmente — no se pudo generar la respuesta automática.",
 };
+
+// Un handoff en cualquiera de estos estados sigue "abierto": alguien del
+// equipo todavía tiene que atenderlo (o ya lo está atendiendo).
+const OPEN_HANDOFF_STATUSES = ["OPEN", "ACKNOWLEDGED"];
 
 // Los datos del lead vienen de un formulario público: sin saltos de línea
 // en el asunto y con largo acotado.
@@ -70,32 +76,64 @@ function buildNotification({ lead, triggeredBy, reason, recommendedNextAction })
 // se envía después: si Resend falla o la empresa no tiene allowedUsers, el
 // handoff igual queda visible en el dashboard y el motivo queda en
 // notificationError.
+//
+// Idempotente: como máximo un handoff abierto por lead. Si el lead ya tiene
+// uno OPEN/ACKNOWLEDGED (reintento de la misma captura, o el lead volvió a
+// escribir antes de que alguien lo atendiera) se devuelve ese, sin crear otro
+// ni volver a notificar. Uno ya RESOLVED no cuenta: si el lead vuelve a
+// necesitar a alguien, se abre uno nuevo.
+//
+// Concurrencia: la búsqueda y la creación van en una transacción que además
+// lee y escribe el doc del lead (lastHandoffId). Dos capturas simultáneas del
+// mismo lead escriben ese mismo doc, así que Firestore las serializa: la
+// segunda se reintenta y ya ve el handoff de la primera. No depende de que el
+// query sobre leadflow_handoffs bloquee docs que todavía no existen.
+//
+// Devuelve { handoffId, created }.
 async function createHandoff(db, { leadId, companyId, company, lead, analysis, score, triggeredBy, reason, recommendedNextAction }) {
-  const ref = await db.collection(COLLECTIONS.HANDOFFS).add({
-    leadId,
-    companyId,
-    createdAt: FieldValue.serverTimestamp(),
-    triggeredBy,
-    reason,
-    recommendedNextAction,
-    snapshot: {
-      contact: lead.contact,
-      message: lead.message,
-      analysis: analysis || null,
-      score: score || null,
-    },
-    status: "OPEN",
-    resolvedBy: null,
-    resolvedAt: null,
-    notificationSent: false,
+  const handoffs = db.collection(COLLECTIONS.HANDOFFS);
+  const leadRef = db.collection(COLLECTIONS.LEADS).doc(leadId);
+  const { handoffId, created } = await db.runTransaction(async (tx) => {
+    await tx.get(leadRef);
+    const existing = await tx.get(handoffs.where("leadId", "==", leadId));
+    const open = existing.docs.find((d) =>
+      d.data().companyId === companyId && OPEN_HANDOFF_STATUSES.includes(d.data().status));
+    if (open) return { handoffId: open.id, created: false };
+
+    const newRef = handoffs.doc();
+    tx.set(newRef, {
+      leadId,
+      companyId,
+      createdAt: FieldValue.serverTimestamp(),
+      triggeredBy,
+      reason,
+      recommendedNextAction,
+      snapshot: {
+        contact: lead.contact,
+        message: lead.message,
+        analysis: analysis || null,
+        score: score || null,
+      },
+      status: "OPEN",
+      resolvedBy: null,
+      resolvedAt: null,
+      notificationSent: false,
+    });
+    tx.update(leadRef, { lastHandoffId: newRef.id });
+    return { handoffId: newRef.id, created: true };
   });
 
+  if (created) await notifyHandoff(handoffs.doc(handoffId), { leadId, companyId, company, lead, triggeredBy, reason, recommendedNextAction });
+  return { handoffId, created };
+}
+
+async function notifyHandoff(ref, { leadId, companyId, company, lead, triggeredBy, reason, recommendedNextAction }) {
   try {
     const recipients = notificationRecipients(company);
     if (recipients.length === 0) {
       console.error(`Handoff ${ref.id} (empresa ${companyId}) sin allowedUsers — no se envió notificación por email`);
       await ref.update({ notificationError: "no_allowed_users" });
-      return ref.id;
+      return;
     }
 
     const { subject, text } = buildNotification({ lead, triggeredBy, reason, recommendedNextAction });
@@ -119,7 +157,6 @@ async function createHandoff(db, { leadId, companyId, company, lead, analysis, s
     // existe, así que no se rompe la captura.
     console.error(`Error registrando la notificación del handoff ${ref.id}:`, err);
   }
-  return ref.id;
 }
 
-module.exports = { createHandoff, buildNotification };
+module.exports = { createHandoff, buildNotification, OPEN_HANDOFF_STATUSES };

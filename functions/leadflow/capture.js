@@ -8,14 +8,42 @@ const { buildDedupeKey } = require("./dedupe");
 const { analyzeLead } = require("./analyzeLead");
 const { validateAnalysis } = require("./geminiSchemas");
 const { scoreLead } = require("./scoring");
-const { decideRoute, statusForRoute, logEvent } = require("./pipeline");
+const { decideRoute, humanReviewDecision, triggerForReason, statusForRoute, logEvent } = require("./pipeline");
 const { generateReply } = require("./generateReply");
 const { createHandoff } = require("./handoff");
-const { detectMessageLanguage } = require("./detectLanguage");
+const { classifyAdditionalMessage } = require("./detectLanguage");
 const { sendLeadEmailWithQuota } = require("./quota");
 
 const THROTTLE_WINDOW_MS = 60 * 1000;
 const THROTTLE_MAX = 5;
+
+const REPLY_FAILURE_REASON = "The automatic reply could not be generated, so the lead has not received a response yet.";
+const REPLY_FAILURE_ACTION = "Reply to this lead personally — the automatic reply could not be generated.";
+const HUMAN_REVIEW_ACTION = "Review the conversation and follow up personally.";
+
+// generateReply falló (Gemini caído, timeout, cuota...). El lead no puede
+// quedar atascado ni sin que nadie se entere: pasa a HUMAN_REVIEW, queda el
+// evento y se abre (o se reutiliza, ver createHandoff) un handoff. Al lead no
+// se le envía nada — no hay texto que enviar — y el error solo va a los logs:
+// ni la respuesta HTTP ni Firestore guardan su mensaje.
+async function escalateReplyFailure(db, { leadRef, leadId, companyId, company, lead, analysis, score, fromStatus, route, humanDecision, extraUpdate = {} }) {
+  await leadRef.update({ ...extraUpdate, status: LEAD_STATUS.HUMAN_REVIEW, updatedAt: FieldValue.serverTimestamp() });
+  await logEvent(db, {
+    leadId, companyId, type: EVENT_TYPE.STATUS_CHANGE,
+    fromStatus, toStatus: LEAD_STATUS.HUMAN_REVIEW, actor: "system:reply_failure",
+    detail: { note: "reply_generation_failed", route },
+  });
+  const { handoffId, created } = await createHandoff(db, {
+    leadId, companyId, company, lead, analysis, score,
+    triggeredBy: humanDecision?.triggeredBy || HANDOFF_TRIGGER.AI_LOW_CONFIDENCE,
+    reason: humanDecision?.reason ? `${REPLY_FAILURE_REASON} ${humanDecision.reason}` : REPLY_FAILURE_REASON,
+    recommendedNextAction: REPLY_FAILURE_ACTION,
+  });
+  if (created) {
+    await logEvent(db, { leadId, companyId, type: EVENT_TYPE.HANDOFF_CREATED, actor: "system:reply_failure", detail: { handoffId } });
+  }
+  return handoffId;
+}
 
 function isValidPayload(body) {
   if (!body || typeof body !== "object") return false;
@@ -167,7 +195,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
       leadId, companyId, type: EVENT_TYPE.STATUS_CHANGE,
       fromStatus: LEAD_STATUS.ANALYZING, toStatus: LEAD_STATUS.HUMAN_REVIEW, actor: "system:analysis_failure",
     });
-    const handoffId = await createHandoff(db, {
+    const { handoffId } = await createHandoff(db, {
       leadId, companyId, company, lead: baseLead, analysis: null, score: null,
       triggeredBy: HANDOFF_TRIGGER.AI_LOW_CONFIDENCE,
       reason: `AI analysis failed or returned invalid output: ${err.message}`,
@@ -189,12 +217,25 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
   });
 
   const score = scoreLead(leadForAI, analysisResult.analysis, company);
+  const humanDecision = humanReviewDecision(analysisResult.analysis, company);
   const route = decideRoute({ analysis: analysisResult.analysis, score, company });
   const nextStatus = statusForRoute(route);
 
   await leadRef.update({ score, updatedAt: FieldValue.serverTimestamp() });
 
-  const replyResult = await generateReply(leadForAI, route, company, analysisResult.analysis.detected_language);
+  let replyResult;
+  try {
+    replyResult = await generateReply(leadForAI, route, company, analysisResult.analysis.detected_language);
+  } catch (err) {
+    console.error(`Fallo generateReply para lead ${leadId}:`, err);
+    const handoffId = await escalateReplyFailure(db, {
+      leadRef, leadId, companyId, company, lead: baseLead, analysis: analysisResult.analysis, score,
+      fromStatus: LEAD_STATUS.ANALYZING, route, humanDecision,
+    });
+    return res.status(201).json({
+      leadId, status: LEAD_STATUS.HUMAN_REVIEW, merged: false, handoffId, analysis: analysisResult.analysis, autoReply: null,
+    });
+  }
   let replyText = replyResult.text;
   let bookingLinkSent = null;
   if (route === "QUALIFIED") {
@@ -222,16 +263,16 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
 
   let handoffId = null;
   if (route === "NEEDS_HUMAN") {
-    const reasonLower = (analysisResult.analysis.reason || "").toLowerCase();
-    handoffId = await createHandoff(db, {
+    const result = await createHandoff(db, {
       leadId, companyId, company, lead: baseLead, analysis: analysisResult.analysis, score,
-      triggeredBy: reasonLower.includes("price") || reasonLower.includes("negotiat")
-        ? HANDOFF_TRIGGER.PRICE_NEGOTIATION
-        : HANDOFF_TRIGGER.AI_LOW_CONFIDENCE,
-      reason: analysisResult.analysis.reason,
-      recommendedNextAction: "Review the conversation and follow up personally.",
+      triggeredBy: humanDecision.triggeredBy,
+      reason: humanDecision.reason,
+      recommendedNextAction: HUMAN_REVIEW_ACTION,
     });
-    await logEvent(db, { leadId, companyId, type: EVENT_TYPE.HANDOFF_CREATED, actor: "system:pipeline", detail: { handoffId } });
+    handoffId = result.handoffId;
+    if (result.created) {
+      await logEvent(db, { leadId, companyId, type: EVENT_TYPE.HANDOFF_CREATED, actor: "system:pipeline", detail: { handoffId } });
+    }
   }
 
   return res.status(201).json({
@@ -259,26 +300,52 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
   }
 
   const leadForAI = { contact: existingLead.contact, serviceRequested: existingLead.serviceRequested, location: existingLead.location, message: body.message };
+  // El handoff de un mensaje adicional muestra ESTE mensaje, no el primero.
+  const leadForHandoff = { contact: existingLead.contact, message: body.message };
   const analysis = existingLead.analysis;
   const score = existingLead.score;
-  const route = analysis ? decideRoute({ analysis, score, company }) : "NEEDS_INFO";
+  const fromStatus = existingLead.status;
 
   // El idioma se re-detecta en CADA mensaje nuevo, no se arrastra el del
   // primer mensaje — un lead puede empezar en inglés y seguir en español
   // (o al revés). Si la detección falla, cae de vuelta al idioma ya
   // guardado en el lead (y de ahí, generateReply cae a company.language).
+  // La misma llamada dice si ESTE mensaje necesita una persona (el análisis
+  // completo del primer mensaje no se vuelve a correr). Si falla, se sigue
+  // solo con el análisis guardado, como antes.
   const previousDetectedLanguage = existingLead.detectedLanguage ?? existingLead.analysis?.detected_language ?? null;
   let detectedLanguage = previousDetectedLanguage;
   let langUsage = null;
+  let messageDecision = null;
   try {
-    const langResult = await detectMessageLanguage(body.message);
-    langUsage = langResult.usage;
-    if (langResult.detectedLanguage) detectedLanguage = langResult.detectedLanguage;
+    const classification = await classifyAdditionalMessage(body.message, company);
+    langUsage = classification.usage;
+    if (classification.detectedLanguage) detectedLanguage = classification.detectedLanguage;
+    if (classification.needsHuman) {
+      messageDecision = { triggeredBy: triggerForReason(classification.reason), reason: classification.reason };
+    }
   } catch (err) {
-    console.error(`No se pudo detectar el idioma del mensaje adicional para lead ${leadId}:`, err);
+    console.error(`No se pudo clasificar el mensaje adicional para lead ${leadId}:`, err);
   }
 
-  const replyResult = await generateReply(leadForAI, route, company, detectedLanguage);
+  const humanDecision = messageDecision || (analysis ? humanReviewDecision(analysis, company) : null);
+  const route = humanDecision ? "NEEDS_HUMAN"
+    : analysis ? decideRoute({ analysis, score, company })
+    : "NEEDS_INFO";
+
+  let replyResult;
+  try {
+    replyResult = await generateReply(leadForAI, route, company, detectedLanguage);
+  } catch (err) {
+    console.error(`Fallo generateReply (mensaje adicional) para lead ${leadId}:`, err);
+    const handoffId = await escalateReplyFailure(db, {
+      leadRef, leadId, companyId, company, lead: leadForHandoff, analysis, score, fromStatus, route, humanDecision,
+      extraUpdate: { detectedLanguage, ...(langUsage ? { aiUsage: FieldValue.arrayUnion(langUsage) } : {}) },
+    });
+    return res.status(201).json({
+      leadId, status: LEAD_STATUS.HUMAN_REVIEW, merged: true, handoffId, analysis, autoReply: null,
+    });
+  }
   let replyText = replyResult.text;
   let bookingLinkSent = existingLead.bookingLinkSent;
   if (route === "QUALIFIED") {
@@ -305,6 +372,12 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
     updatedAt: FieldValue.serverTimestamp(),
   });
   await logEvent(db, { leadId, companyId, type: EVENT_TYPE.AI_REPLY_GENERATED, actor: "system:reply", detail: { route, merged: true } });
+  if (nextStatus !== fromStatus) {
+    await logEvent(db, {
+      leadId, companyId, type: EVENT_TYPE.STATUS_CHANGE,
+      fromStatus, toStatus: nextStatus, actor: "system:pipeline", detail: { merged: true },
+    });
+  }
   if (detectedLanguage !== previousDetectedLanguage) {
     await logEvent(db, {
       leadId, companyId, type: EVENT_TYPE.AI_ANALYSIS, actor: "system:language_detect",
@@ -312,8 +385,22 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
     });
   }
 
+  let handoffId = null;
+  if (route === "NEEDS_HUMAN") {
+    const result = await createHandoff(db, {
+      leadId, companyId, company, lead: leadForHandoff, analysis, score,
+      triggeredBy: humanDecision.triggeredBy,
+      reason: humanDecision.reason,
+      recommendedNextAction: HUMAN_REVIEW_ACTION,
+    });
+    handoffId = result.handoffId;
+    if (result.created) {
+      await logEvent(db, { leadId, companyId, type: EVENT_TYPE.HANDOFF_CREATED, actor: "system:pipeline", detail: { handoffId, merged: true } });
+    }
+  }
+
   return res.status(201).json({
-    leadId, status: nextStatus, merged: true, handoffId: null,
+    leadId, status: nextStatus, merged: true, handoffId,
     analysis, autoReply: { text: replyText, language: replyResult.language },
   });
 }

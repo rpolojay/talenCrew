@@ -1,10 +1,40 @@
 const { FieldValue } = require("firebase-admin/firestore");
-const { COLLECTIONS, LEAD_STATUS } = require("./constants");
+const { COLLECTIONS, LEAD_STATUS, HANDOFF_TRIGGER } = require("./constants");
+const { resolveHandoffRules, isBelowConfidenceThreshold } = require("./handoffRules");
+
+// El análisis de IA solo devuelve needs_human + un texto libre en `reason`,
+// sin categoría — el trigger del handoff se deduce del texto (mismo criterio
+// que capture.js tenía inline).
+function triggerForReason(reason) {
+  const r = (reason || "").toLowerCase();
+  return r.includes("price") || r.includes("negotiat")
+    ? HANDOFF_TRIGGER.PRICE_NEGOTIATION
+    : HANDOFF_TRIGGER.AI_LOW_CONFIDENCE;
+}
+
+// ¿Este análisis tiene que ir a una persona? null si no; si sí, el
+// { triggeredBy, reason } con el que se abre el handoff. Aplica
+// handoffRules.lowConfidenceThreshold de la empresa (ver ./handoffRules.js);
+// los demás campos de handoffRules actúan dentro del prompt, a través de
+// analysis.needs_human.
+function humanReviewDecision(analysis, company) {
+  if (analysis.needs_human) {
+    return { triggeredBy: triggerForReason(analysis.reason), reason: analysis.reason };
+  }
+  const rules = resolveHandoffRules(company);
+  if (isBelowConfidenceThreshold(analysis, rules)) {
+    return {
+      triggeredBy: HANDOFF_TRIGGER.AI_LOW_CONFIDENCE,
+      reason: `AI confidence ${analysis.confidence} is below this company's threshold (${rules.lowConfidenceThreshold}). ${analysis.reason || ""}`.trim(),
+    };
+  }
+  return null;
+}
 
 // Decisión de ruta en CÓDIGO, no en el prompt — auditable y no depende de
 // que la IA "decida bien" cada vez (Step 6.1 paso 4).
 function decideRoute({ analysis, score, company }) {
-  if (analysis.needs_human) return "NEEDS_HUMAN";
+  if (humanReviewDecision(analysis, company)) return "NEEDS_HUMAN";
   if (analysis.qualification === "unqualified" && !score.inServiceArea) return "OUT_OF_AREA";
   if (analysis.qualification === "needs_more_info") return "NEEDS_INFO";
   if (analysis.qualification === "unqualified") return "LOW_INTENT";
@@ -45,4 +75,4 @@ async function logEvent(db, { leadId, companyId, type, fromStatus = null, toStat
   });
 }
 
-module.exports = { decideRoute, statusForRoute, logEvent, ROUTE_STATUS };
+module.exports = { decideRoute, humanReviewDecision, triggerForReason, statusForRoute, logEvent, ROUTE_STATUS };
