@@ -1,5 +1,5 @@
 // Lectura validada de leadflow_companies.handoffRules — el formato que ya
-// escriben trialSignup.js (defaultCompanyConfig) y seed.js:
+// escribe trialSignup.js (defaultCompanyConfig):
 //   { lowConfidenceThreshold, sensitiveTopics, escalateOnPriceNegotiation,
 //     escalateOnExplicitHumanRequest }
 //

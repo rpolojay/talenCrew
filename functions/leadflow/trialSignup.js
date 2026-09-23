@@ -20,7 +20,7 @@ const MAX_SERVICES = 15;
 const MAX_BOOKING_LINK = 500;
 
 // Valores por defecto razonables para un negocio de servicios local — los
-// mismos criterios que el tenant de demo (seed.js). El cliente o el admin los
+// mismos criterios que el tenant de demo (abc-roofing). El cliente o el admin los
 // ajustan después en Firestore.
 function defaultCompanyConfig() {
   return {

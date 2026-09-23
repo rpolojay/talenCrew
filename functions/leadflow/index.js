@@ -6,7 +6,6 @@
 // Autoregistro: createLeadflowTrialSignup (dashboard/signup.html) y
 // leadflowExpireTrials (desactiva trials vencidos cada día).
 const { leadflowCaptureLead } = require("./capture");
-const { leadflowSeedDemoCompany } = require("./seed");
 const { leadflowCalBookingWebhook } = require("./booking");
 const { leadflowFollowUpScheduler } = require("./followUp");
 const { createLeadflowTrialSignup } = require("./trialSignup");
@@ -14,7 +13,6 @@ const { leadflowExpireTrials } = require("./expireTrials");
 
 module.exports = {
   leadflowCaptureLead,
-  leadflowSeedDemoCompany,
   leadflowCalBookingWebhook,
   leadflowFollowUpScheduler,
   createLeadflowTrialSignup,
