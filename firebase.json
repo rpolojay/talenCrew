@@ -5,6 +5,14 @@
   "functions": {
     "source": "functions"
   },
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": false
+    }
+  },
   "hosting": [
     {
       "target": "veloiapp",
@@ -18,13 +26,15 @@
         ".git/**",
         "**/node_modules/**",
         "functions/**",
+        "tests/**",
         "src/**",
         "package.json",
         "package-lock.json",
         "*.md",
         "*.docx",
         "*.txt",
-        "*.rules"
+        "*.rules",
+        "veloi-redesign-mockup.html"
       ],
       "rewrites": [
         {
@@ -60,12 +70,16 @@
         "firebase.json",
         ".firebaserc",
         "**/.*",
-        "config.js.example"
+        "config.js.example",
+        "client.html",
+        "admin.html",
+        "login.html",
+        "test.html"
       ],
       "rewrites": [
         {
           "source": "/",
-          "destination": "/leadflow.html"
+          "destination": "/landing.html"
         }
       ],
       "headers": [

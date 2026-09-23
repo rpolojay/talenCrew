@@ -182,10 +182,12 @@ exports.whatsappWebhook = onRequest({ secrets: [WHATSAPP_VERIFY_TOKEN, GEMINI_AP
         console.log(`Mensaje enviado a ${incomingMessage.from} vía bot "${bot.botName}".`);
       }
 
-      // Mismo esquema que ya usa dashboard/client.html para leer conversations
-      // (phoneId, userPhone, userName, userMessage, botReply, timestamp) —
-      // hasta ahora solo existían documentos de prueba creados a mano.
+      // Mismo esquema que talencrew-bot (phoneId, userPhone, userName,
+      // userMessage, botReply, timestamp). botId es obligatorio: firestore.rules
+      // decide quién puede leer la conversación a partir de
+      // bots/{botId}.allowedUsers, y client.html la consulta por botId.
       await db.collection("conversations").add({
+        botId: botsSnap.docs[0].id,
         phoneId: phoneNumberId,
         userPhone: incomingMessage.from,
         userName: value?.contacts?.[0]?.profile?.name || null,
@@ -226,6 +228,9 @@ exports.seedTestBot = onRequest({ secrets: [WHATSAPP_VERIFY_TOKEN] }, async (req
   });
   return res.status(200).json({ id: ref.id });
 });
+
+// Registro de trial server-side (reemplaza el addDoc directo de trial.html).
+Object.assign(exports, require("./trial"));
 
 // VeloiApp LeadFlow — producto nuevo y separado (colecciones leadflow_*),
 // implementado en ./leadflow/. No comparte código con liveDemoAgent,

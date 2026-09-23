@@ -300,16 +300,15 @@
 
     const clientData = clientSnap.docs[0].data();
 
-    // Find the bot that belongs to THIS client, matched by business name —
-    // antes tomaba "el primer bot que encontrara" en toda la colección,
-    // mostrando datos de un negocio equivocado.
+    // El bot de este cliente es el que lo lista en allowedUsers — mismo campo
+    // que usa firestore.rules para decidir quién lo puede leer (antes se
+    // emparejaba por botName == businessName, que las reglas no pueden
+    // verificar).
     let botData = null;
-    if (clientData.businessName) {
-      const botSnap = await getDocs(query(collection(db, 'bots'), where('botName', '==', clientData.businessName)));
-      botSnap.forEach(d => {
-        if (!botData) botData = { id: d.id, ...d.data() };
-      });
-    }
+    const botSnap = await getDocs(query(collection(db, 'bots'), where('allowedUsers', 'array-contains', user.email)));
+    botSnap.forEach(d => {
+      if (!botData) botData = { id: d.id, ...d.data() };
+    });
 
     currentBot = botData;
 
@@ -325,10 +324,10 @@
       badge.className = 'badge ' + (botData.isActive ? 'badge-active' : 'badge-inactive');
     } else {
       document.getElementById('botName').textContent = clientData.businessName || 'Sin bot asociado todavía';
-      document.getElementById('botPhone').textContent = 'No se encontró ningún bot con este nombre de negocio.';
+      document.getElementById('botPhone').textContent = 'Todavía no hay un bot asociado a tu cuenta.';
     }
 
-    loadData(botData?.whatsappPhoneId);
+    loadData(botData?.id);
 
     // Trial days calculation — usa trialEndsAt (fuente real, la misma que usa
     // deactivateExpiredTrials), en vez de recalcularlo desde createdAt.
@@ -354,17 +353,19 @@
     }
   });
 
-  async function loadData(phoneId) {
-    if (!phoneId) return;
+  async function loadData(botId) {
+    if (!botId) return;
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+    // Conversaciones y leads se consultan por botId: es el campo con el que
+    // firestore.rules verifica que el bot (y por tanto el dato) es tuyo.
     // Load conversations
     const convSnap = await getDocs(query(
       collection(db, 'conversations'),
-      where('phoneId', '==', phoneId)
+      where('botId', '==', botId)
     ));
 
     const convs = [];
@@ -424,7 +425,7 @@
     // Leads
     const leadsSnap = await getDocs(query(
       collection(db, 'leads'),
-      where('phoneId', '==', phoneId)
+      where('botId', '==', botId)
     ));
 
     const leads = [];

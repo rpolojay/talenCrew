@@ -632,6 +632,9 @@ REGLAS:
           trialEndsAt: plan === "trial" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null,
           botName: bizName, whatsappPhoneId: phoneId,
           systemPrompt: prompt, isActive: false,
+          // Quién ve este bot (y sus conversaciones/leads) en client.html —
+          // ver firestore.rules. Sin email, solo lo ve el admin.
+          allowedUsers: email ? [email.toLowerCase()] : [],
           createdAt: serverTimestamp()
         });
       }
