@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Start your free trial — LeadFlow by VeloiApp</title>
-<meta name="description" content="Try LeadFlow free for 7 days: AI that captures, qualifies and replies to your leads 24/7." />
+<meta name="description" content="Try LeadFlow free for 7 days: AI that captures, qualifies and drafts personalized email replies for your leads." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -64,6 +64,8 @@
   .msg { font-size: 13.5px; border-radius: 10px; padding: 12px 14px; margin-top: 14px; }
   .msg-error { background: rgba(179,66,58,0.08); color: var(--danger); }
   .fineprint { font-size: 12px; color: var(--muted); text-align: center; margin-top: 16px; }
+  .legal-links { font-size: 12.5px; color: var(--muted); text-align: center; margin-top: 16px; }
+  .legal-links a { color: var(--muted); }
 
   .success-icon { font-size: 34px; margin-bottom: 8px; }
   .success-id { font-size: 12.5px; color: var(--muted); margin: 14px 0 20px; }
@@ -73,7 +75,7 @@
 <body>
 
 <header class="top">
-  <a class="logo" href="/">Lead<span>Flow</span><small>by VeloiApp</small></a>
+  <a class="logo" href="landing.html">Lead<span>Flow</span><small>by VeloiApp</small></a>
   <div class="lang-toggle" role="group" aria-label="Language / Idioma">
     <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
     <button class="lang-btn" id="langBtnEs" onclick="setLang('es')">ES</button>
@@ -89,7 +91,7 @@
       <h1 data-i18n="title">Start using LeadFlow today</h1>
       <p class="sub" data-i18n="sub">Connect your lead form and let the AI reply, qualify and follow up with every lead in minutes.</p>
       <ul class="perks">
-        <li data-i18n="perk1">AI replies to every lead in seconds, 24/7</li>
+        <li data-i18n="perk1">AI analyzes every new lead and drafts a personalized reply</li>
         <li data-i18n="perk2">Automatic qualification and follow-ups</li>
         <li data-i18n="perk3">Instant email alerts when a lead needs a person</li>
       </ul>
@@ -159,10 +161,11 @@
       <h1 id="doneTitle" data-i18n="doneTitle">Your trial is ready</h1>
       <p class="sub" id="doneSub" data-i18n="doneSub">Open your dashboard and follow the "Connect your form" steps to start receiving leads. Your trial lasts 7 days.</p>
       <p class="success-id hidden" id="doneIdWrap"><span data-i18n="companyIdLabel">Your company ID:</span> <code id="doneCompanyId"></code></p>
-      <a class="btn btn-primary" href="/leadflow.html" data-i18n="openDashboard">Open my dashboard</a>
+      <a class="btn btn-primary" href="leadflow.html" data-i18n="openDashboard">Open my dashboard</a>
     </section>
 
   </div>
+  <p class="legal-links"><a href="terms.html" data-i18n="legalTerms">Terms of Service</a> · <a href="privacy.html" data-i18n="legalPrivacy">Privacy Policy</a></p>
 </main>
 
 <script type="module">
@@ -191,7 +194,7 @@
       eyebrow: '7-day free trial',
       title: 'Start using LeadFlow today',
       sub: 'Connect your lead form and let the AI reply, qualify and follow up with every lead in minutes.',
-      perk1: 'AI replies to every lead in seconds, 24/7',
+      perk1: 'AI analyzes every new lead and drafts a personalized reply',
       perk2: 'Automatic qualification and follow-ups',
       perk3: 'Instant email alerts when a lead needs a person',
       googleBtn: 'Continue with Google',
@@ -212,6 +215,7 @@
       errBookingLink: 'Booking link must use Cal.com or Calendly (for example https://cal.com/your-business or https://calendly.com/your-business), or leave it empty.',
       errGeneric: "We couldn't create your trial. Please try again in a moment.",
       errSession: 'Your session expired. Please sign in with Google again.',
+      legalTerms: 'Terms of Service', legalPrivacy: 'Privacy Policy',
       doneTitle: 'Your trial is ready',
       doneSub: 'Open your dashboard and follow the "Connect your form" steps to start receiving leads. Your trial lasts 7 days.',
       existsTitle: 'You already have a LeadFlow account',
@@ -223,7 +227,7 @@
       eyebrow: 'Prueba gratis de 7 días',
       title: 'Empieza a usar LeadFlow hoy',
       sub: 'Conecta el formulario de tu sitio y deja que la IA responda, califique y haga seguimiento a cada lead en minutos.',
-      perk1: 'La IA responde a cada lead en segundos, 24/7',
+      perk1: 'La IA analiza cada lead nuevo y redacta una respuesta personalizada',
       perk2: 'Calificación y seguimientos automáticos',
       perk3: 'Alertas por email cuando un lead necesita a una persona',
       googleBtn: 'Continuar con Google',
@@ -244,6 +248,7 @@
       errBookingLink: 'El link de reservas debe ser de Cal.com o Calendly (por ejemplo https://cal.com/tu-negocio o https://calendly.com/tu-negocio), o déjalo vacío.',
       errGeneric: 'No pudimos crear tu prueba. Intenta de nuevo en un momento.',
       errSession: 'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
+      legalTerms: 'Términos de servicio', legalPrivacy: 'Política de privacidad',
       doneTitle: 'Tu prueba está lista',
       doneSub: 'Abre tu dashboard y sigue los pasos de "Conecta tu formulario" para empezar a recibir leads. Tu prueba dura 7 días.',
       existsTitle: 'Ya tienes una cuenta de LeadFlow',
