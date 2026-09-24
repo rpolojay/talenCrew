@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>LeadFlow by VeloiApp — Never lose another lead to a slow response</title>
-<meta name="description" content="LeadFlow automatically captures, qualifies, responds to, and schedules appointments with your leads — 24/7, with a human always one step away." />
+<title>LeadFlow by VeloiApp — AI Lead Response, Qualification &amp; Email Follow-Up</title>
+<meta name="description" content="LeadFlow qualifies your website leads with AI, replies by email, sends follow-ups, and helps turn qualified prospects into booked appointments." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -258,6 +258,15 @@
     .lang-btn { min-width: 36px; padding: 8px 9px; }
     .nav .btn-small { font-size: 12px; padding: 9px 10px; }
   }
+  @media (max-width: 300px) {
+    /* Accessibility zoom on Android can bring the CSS width below 260px: the
+       nav row (logo + language toggle + trial button) did not fit and widened the page. */
+    .nav .nav-inner { gap: 6px; }
+    .nav-right { gap: 6px; }
+    .nav-logo { font-size: 15px; }
+    .lang-btn { min-width: 30px; padding: 8px 6px; }
+    .nav .btn-small { font-size: 11px; padding: 8px 7px; }
+  }
 </style>
 </head>
 <body>
@@ -286,7 +295,7 @@
     <div>
       <div class="eyebrow" data-i18n="heroEyebrow">AI Lead Response for Home Service &amp; Local Businesses</div>
       <h1 data-i18n="heroHeadline">Turn more leads into booked appointments — automatically.</h1>
-      <p class="sub" data-i18n="heroSub">LeadFlow captures every lead from your website form, qualifies the opportunity, replies by email within moments, and helps move qualified customers toward an appointment — 24/7.</p>
+      <p class="sub" data-i18n="heroSub">LeadFlow captures every lead from your website form, qualifies the opportunity, replies by email within moments, and helps move qualified customers toward an appointment.</p>
       <p style="font-weight:700; margin:-12px 0 24px;" data-i18n="heroEmphasis">Never leave a potential customer waiting for a response.</p>
       <div class="hero-ctas">
         <a class="btn btn-primary" href="/signup.html" data-i18n="heroCtaTrial">Start Your 7-Day Free Trial</a>
@@ -354,13 +363,13 @@
       <p data-i18n="howSub">One continuous flow, from first message to booked appointment.</p>
     </div>
     <div class="flow">
-      <div class="flow-step"><div class="flow-num">1</div><h3 data-i18n="flowCapture">Capture</h3><p data-i18n="flowCaptureBody">Every inbound message is logged as a lead the moment it arrives.</p></div>
+      <div class="flow-step"><div class="flow-num">1</div><h3 data-i18n="flowCapture">Capture</h3><p data-i18n="flowCaptureBody">Every website form submission is logged as a lead the moment it arrives.</p></div>
       <div class="flow-arrow">→</div>
       <div class="flow-step"><div class="flow-num">2</div><h3 data-i18n="flowAnalyze">Analyze</h3><p data-i18n="flowAnalyzeBody">AI reads the message for intent, urgency, and service needed.</p></div>
       <div class="flow-arrow">→</div>
       <div class="flow-step"><div class="flow-num">3</div><h3 data-i18n="flowQualify">Qualify</h3><p data-i18n="flowQualifyBody">Leads are scored against your service area and criteria.</p></div>
       <div class="flow-arrow">→</div>
-      <div class="flow-step"><div class="flow-num">4</div><h3 data-i18n="flowRespond">Respond</h3><p data-i18n="flowRespondBody">A tailored reply goes out automatically, 24/7.</p></div>
+      <div class="flow-step"><div class="flow-num">4</div><h3 data-i18n="flowRespond">Respond</h3><p data-i18n="flowRespondBody">A tailored email reply goes out automatically.</p></div>
       <div class="flow-arrow">→</div>
       <div class="flow-step"><div class="flow-num">5</div><h3 data-i18n="flowSchedule">Schedule</h3><p data-i18n="flowScheduleBody">Qualified leads get a booking link to lock in a time.</p></div>
       <div class="flow-arrow">→</div>
@@ -375,7 +384,7 @@
       <div>
         <span class="demo-tag" data-i18n="demoTag">Live Example</span>
         <h2 data-i18n="demoHeadline">See a qualified response in action</h2>
-        <p class="demo-company" data-i18n="demoCompany"><strong>ABC Roofing</strong> — Miami, FL. A storm-damage repair company using LeadFlow to handle inbound WhatsApp leads.</p>
+        <p class="demo-company" data-i18n="demoCompany"><strong>ABC Roofing</strong> — Miami, FL. A storm-damage repair company using LeadFlow to handle leads from its website form.</p>
         <p style="font-size:13.5px;color:var(--muted);" data-i18n="demoDesc">A new lead messages in describing their problem. LeadFlow reads the request, checks it against ABC Roofing's service area and rules, and replies — all before a human ever sees it.</p>
       </div>
       <div>
@@ -400,7 +409,7 @@
     <div class="grid-4">
       <div class="feat-card"><div class="feat-icon">🧠</div><h3 data-i18n="feat1Title">AI Analysis</h3><p data-i18n="feat1Body">Every message is read for intent, urgency, and the service being requested.</p></div>
       <div class="feat-card"><div class="feat-icon">📊</div><h3 data-i18n="feat2Title">Scoring</h3><p data-i18n="feat2Body">Leads are scored against your service area and criteria so the best ones stand out.</p></div>
-      <div class="feat-card"><div class="feat-icon">💬</div><h3 data-i18n="feat3Title">Automated Response</h3><p data-i18n="feat3Body">Tailored replies go out instantly, day or night, in your business's tone.</p></div>
+      <div class="feat-card"><div class="feat-icon">💬</div><h3 data-i18n="feat3Title">Automated Response</h3><p data-i18n="feat3Body">Tailored email replies go out automatically, in your business's tone.</p></div>
       <div class="feat-card"><div class="feat-icon">🧑‍💼</div><h3 data-i18n="feat4Title">Human Handoff</h3><p data-i18n="feat4Body">Sensitive, high-value, or uncertain conversations are escalated to your team.</p></div>
       <div class="feat-card"><div class="feat-icon">🗂️</div><h3 data-i18n="feat5Title">Pipeline / CRM</h3><p data-i18n="feat5Body">Every lead moves through a visual pipeline your team can track and manage.</p></div>
       <div class="feat-card"><div class="feat-icon">📅</div><h3 data-i18n="feat6Title">Booking</h3><p data-i18n="feat6Body">Qualified leads get a scheduling link so appointments book themselves.</p></div>
@@ -464,7 +473,7 @@
       <h2 data-i18n="faqHeadline">Frequently asked questions</h2>
     </div>
     <div class="faq-list">
-      <div class="faq-item"><h3 data-i18n="faq1Q">Does LeadFlow work with our existing phone number or WhatsApp Business account?</h3><p data-i18n="faq1A">Yes. LeadFlow connects to your existing number through the official WhatsApp Business API — no need to switch numbers.</p></div>
+      <div class="faq-item"><h3 data-i18n="faq1Q">How do leads get into LeadFlow?</h3><p data-i18n="faq1A">Through your website form. Add the form snippet from your dashboard, or connect the form you already use. Each lead gets a personalized reply by email.</p></div>
       <div class="faq-item"><h3 data-i18n="faq2Q">How does LeadFlow decide which leads are qualified?</h3><p data-i18n="faq2A">Each lead is scored against criteria you set — service area, service type, urgency, and how complete the request is — so your team can focus on the leads worth pursuing.</p></div>
       <div class="faq-item"><h3 data-i18n="faq3Q">Can a real person take over a conversation?</h3><p data-i18n="faq3A">Yes. When a conversation is sensitive, high-value, or the AI isn't confident, it's handed off to your team in the queue for review.</p></div>
       <div class="faq-item"><h3 data-i18n="faq4Q">How long does setup take?</h3><p data-i18n="faq4A">Most implementations are live within a few business days, depending on the details you share about your business and services.</p></div>
@@ -588,7 +597,7 @@
       navFeatures: 'Features', navHow: 'How it Works', navPricing: 'Pricing', navDemo: 'Request Demo', navTrial: 'Start Free Trial',
       heroEyebrow: 'AI Lead Response for Home Service & Local Businesses',
       heroHeadline: 'Turn more leads into booked appointments — automatically.',
-      heroSub: 'LeadFlow captures every lead from your website form, qualifies the opportunity, replies by email within moments, and helps move qualified customers toward an appointment — 24/7.',
+      heroSub: 'LeadFlow captures every lead from your website form, qualifies the opportunity, replies by email within moments, and helps move qualified customers toward an appointment.',
       heroEmphasis: 'Never leave a potential customer waiting for a response.',
       heroNote: 'No credit card required. Sign up with your Google account in minutes.',
       heroCtaTrial: 'Start Your 7-Day Free Trial', heroCtaPrimary: 'Request a Demo', heroCtaSecondary: 'See LeadFlow in Action',
@@ -603,14 +612,14 @@
       prob3Title: 'After-hours messages wait until morning', prob3Body: "A message sent at 9pm shouldn't sit unanswered until your team is back at their desk.",
       prob4Title: "Unqualified leads waste your team's time", prob4Body: "Without qualification up front, your team spends hours on conversations that were never going to close.",
       howHeadline: 'How LeadFlow works', howSub: 'One continuous flow, from first message to booked appointment.',
-      flowCapture: 'Capture', flowCaptureBody: 'Every inbound message is logged as a lead the moment it arrives.',
+      flowCapture: 'Capture', flowCaptureBody: 'Every website form submission is logged as a lead the moment it arrives.',
       flowAnalyze: 'Analyze', flowAnalyzeBody: 'AI reads the message for intent, urgency, and service needed.',
       flowQualify: 'Qualify', flowQualifyBody: 'Leads are scored against your service area and criteria.',
-      flowRespond: 'Respond', flowRespondBody: 'A tailored reply goes out automatically, 24/7.',
+      flowRespond: 'Respond', flowRespondBody: 'A tailored email reply goes out automatically.',
       flowSchedule: 'Schedule', flowScheduleBody: 'Qualified leads get a booking link to lock in a time.',
       flowHandoff: 'Human Handoff', flowHandoffBody: 'Anything sensitive or uncertain is escalated to your team.',
       demoTag: 'Live Example', demoHeadline: 'See a qualified response in action',
-      demoCompany: '<strong>ABC Roofing</strong> — Miami, FL. A storm-damage repair company using LeadFlow to handle inbound WhatsApp leads.',
+      demoCompany: '<strong>ABC Roofing</strong> — Miami, FL. A storm-damage repair company using LeadFlow to handle leads from its website form.',
       demoDesc: "A new lead messages in describing their problem. LeadFlow reads the request, checks it against ABC Roofing's service area and rules, and replies — all before a human ever sees it.",
       demoLeadLabel: 'Incoming lead message', demoLeadMsg: '"My roof is leaking after the storm, need someone this week."',
       demoSystemLabel: "LeadFlow's automated reply",
@@ -634,7 +643,7 @@
       featHeadline: 'Everything you need to convert more leads', featSub: "Built specifically for teams who can't afford to let a lead slip through.",
       feat1Title: 'AI Analysis', feat1Body: 'Every message is read for intent, urgency, and the service being requested.',
       feat2Title: 'Scoring', feat2Body: 'Leads are scored against your service area and criteria so the best ones stand out.',
-      feat3Title: 'Automated Response', feat3Body: "Tailored replies go out instantly, day or night, in your business's tone.",
+      feat3Title: 'Automated Response', feat3Body: "Tailored email replies go out automatically, in your business's tone.",
       feat4Title: 'Human Handoff', feat4Body: 'Sensitive, high-value, or uncertain conversations are escalated to your team.',
       feat5Title: 'Pipeline / CRM', feat5Body: 'Every lead moves through a visual pipeline your team can track and manage.',
       feat6Title: 'Booking', feat6Body: 'Qualified leads get a scheduling link so appointments book themselves.',
@@ -650,8 +659,8 @@
       priceGrowth1: 'Everything in Starter', priceGrowth2: 'Automated booking & scheduling', priceGrowth3: 'Human handoff queue', priceGrowth4: 'Bilingual (EN/ES) support',
       priceEnterprise1: 'Everything in Growth', priceEnterprise2: 'Multi-tenant / multi-location', priceEnterprise3: 'Priority support', priceEnterprise4: 'Custom onboarding',
       faqHeadline: 'Frequently asked questions',
-      faq1Q: 'Does LeadFlow work with our existing phone number or WhatsApp Business account?',
-      faq1A: 'Yes. LeadFlow connects to your existing number through the official WhatsApp Business API — no need to switch numbers.',
+      faq1Q: 'How do leads get into LeadFlow?',
+      faq1A: 'Through your website form. Add the form snippet from your dashboard, or connect the form you already use. Each lead gets a personalized reply by email.',
       faq2Q: 'How does LeadFlow decide which leads are qualified?',
       faq2A: 'Each lead is scored against criteria you set — service area, service type, urgency, and how complete the request is — so your team can focus on the leads worth pursuing.',
       faq3Q: 'Can a real person take over a conversation?',
@@ -684,7 +693,7 @@
       navFeatures: 'Funciones', navHow: 'Cómo Funciona', navPricing: 'Precios', navDemo: 'Solicitar Demo', navTrial: 'Prueba Gratis',
       heroEyebrow: 'Respuesta de Leads con IA para Negocios de Servicios y Locales',
       heroHeadline: 'Convierte más leads en citas agendadas — automáticamente.',
-      heroSub: 'LeadFlow captura cada lead del formulario de tu web, califica la oportunidad, responde por correo en instantes y ayuda a llevar a los clientes calificados hacia una cita — 24/7.',
+      heroSub: 'LeadFlow captura cada lead del formulario de tu web, califica la oportunidad, responde por correo en instantes y ayuda a llevar a los clientes calificados hacia una cita.',
       heroEmphasis: 'No dejes a ningún cliente potencial esperando una respuesta.',
       heroNote: 'No pedimos tarjeta de crédito. Regístrate con tu cuenta de Google en minutos.',
       heroCtaTrial: 'Empieza tu prueba gratis de 7 días', heroCtaPrimary: 'Solicitar una Demo', heroCtaSecondary: 'Ver LeadFlow en acción',
@@ -699,14 +708,14 @@
       prob3Title: 'Los mensajes fuera de horario esperan hasta el día siguiente', prob3Body: 'Un mensaje enviado a las 9pm no debería quedar sin respuesta hasta que tu equipo vuelva a su escritorio.',
       prob4Title: 'Los leads sin calificar le hacen perder tiempo a tu equipo', prob4Body: 'Sin calificación previa, tu equipo pasa horas en conversaciones que nunca iban a cerrar.',
       howHeadline: 'Cómo funciona LeadFlow', howSub: 'Un flujo continuo, desde el primer mensaje hasta la cita agendada.',
-      flowCapture: 'Captura', flowCaptureBody: 'Cada mensaje entrante se registra como lead en el momento en que llega.',
+      flowCapture: 'Captura', flowCaptureBody: 'Cada envío del formulario de tu web se registra como lead en el momento en que llega.',
       flowAnalyze: 'Analiza', flowAnalyzeBody: 'La IA lee el mensaje para identificar intención, urgencia y servicio solicitado.',
       flowQualify: 'Califica', flowQualifyBody: 'Los leads se puntúan según tu zona de servicio y tus criterios.',
-      flowRespond: 'Responde', flowRespondBody: 'Se envía una respuesta a la medida automáticamente, 24/7.',
+      flowRespond: 'Responde', flowRespondBody: 'Se envía automáticamente una respuesta a la medida por email.',
       flowSchedule: 'Agenda', flowScheduleBody: 'Los leads calificados reciben un link para agendar su cita.',
       flowHandoff: 'Transferencia Humana', flowHandoffBody: 'Todo lo sensible o incierto se escala a tu equipo.',
       demoTag: 'Ejemplo en Vivo', demoHeadline: 'Mira una respuesta calificada en acción',
-      demoCompany: '<strong>ABC Roofing</strong> — Miami, FL. Una empresa de reparación de techos por daños de tormenta que usa LeadFlow para manejar sus leads de WhatsApp.',
+      demoCompany: '<strong>ABC Roofing</strong> — Miami, FL. Una empresa de reparación de techos por daños de tormenta que usa LeadFlow para manejar los leads de su formulario web.',
       demoDesc: 'Un lead nuevo escribe describiendo su problema. LeadFlow lee la solicitud, la verifica contra la zona de servicio y las reglas de ABC Roofing, y responde — todo antes de que una persona lo vea.',
       demoLeadLabel: 'Mensaje entrante del lead', demoLeadMsg: '"Se me está filtrando el techo después de la tormenta, necesito a alguien esta semana."',
       demoSystemLabel: 'Respuesta automática de LeadFlow',
@@ -730,7 +739,7 @@
       featHeadline: 'Todo lo que necesitas para convertir más leads', featSub: 'Diseñado para equipos que no pueden darse el lujo de perder un lead.',
       feat1Title: 'Análisis de IA', feat1Body: 'Cada mensaje se lee para identificar intención, urgencia y el servicio solicitado.',
       feat2Title: 'Calificación', feat2Body: 'Los leads se puntúan según tu zona de servicio y criterios, para que los mejores destaquen.',
-      feat3Title: 'Respuesta Automática', feat3Body: 'Respuestas a la medida se envían al instante, de día o de noche, con el tono de tu negocio.',
+      feat3Title: 'Respuesta Automática', feat3Body: 'Respuestas por email a la medida se envían automáticamente, con el tono de tu negocio.',
       feat4Title: 'Transferencia Humana', feat4Body: 'Las conversaciones sensibles, de alto valor o inciertas se escalan a tu equipo.',
       feat5Title: 'Pipeline / CRM', feat5Body: 'Cada lead avanza por un pipeline visual que tu equipo puede seguir y administrar.',
       feat6Title: 'Agendamiento', feat6Body: 'Los leads calificados reciben un link para que la cita se agende sola.',
@@ -746,8 +755,8 @@
       priceGrowth1: 'Todo lo de Starter', priceGrowth2: 'Agendamiento automático', priceGrowth3: 'Cola de transferencia humana', priceGrowth4: 'Soporte bilingüe (EN/ES)',
       priceEnterprise1: 'Todo lo de Growth', priceEnterprise2: 'Multi-empresa / multi-sede', priceEnterprise3: 'Soporte prioritario', priceEnterprise4: 'Onboarding personalizado',
       faqHeadline: 'Preguntas frecuentes',
-      faq1Q: '¿LeadFlow funciona con nuestro número existente de WhatsApp Business?',
-      faq1A: 'Sí. LeadFlow se conecta a tu número existente a través de la API oficial de WhatsApp Business — no necesitas cambiar de número.',
+      faq1Q: '¿Cómo llegan los leads a LeadFlow?',
+      faq1A: 'A través del formulario de tu web. Agrega el formulario desde tu dashboard o conecta el que ya usas. Cada lead recibe una respuesta personalizada por email.',
       faq2Q: '¿Cómo decide LeadFlow qué leads están calificados?',
       faq2A: 'Cada lead se puntúa según criterios que tú defines — zona de servicio, tipo de servicio, urgencia y qué tan completa está la solicitud — para que tu equipo se enfoque en los leads que valen la pena.',
       faq3Q: '¿Puede una persona real tomar el control de una conversación?',
