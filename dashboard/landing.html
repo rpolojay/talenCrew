@@ -55,6 +55,10 @@
   .hero { padding: 72px 0 56px; }
   .hero-grid { display: grid; grid-template-columns: 1fr; gap: 40px; align-items: center; }
   @media (min-width: 960px) { .hero-grid { grid-template-columns: 1.05fr 1fr; gap: 48px; } }
+  /* Un item de grid tiene min-width:auto: el kanban (4 columnas fijas) imponía
+     su ancho, desbordaba la página en móvil y en desktop comprimía la columna
+     de texto. Con min-width:0 el kanban se desplaza dentro de su caja. */
+  .hero-grid > * { min-width: 0; }
   .hero h1 { font-size: clamp(32px, 4.6vw, 48px); line-height: 1.08; margin-bottom: 18px; }
   .hero p.sub { font-size: 17px; color: var(--muted); max-width: 520px; margin-bottom: 28px; }
   .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -175,11 +179,8 @@
   .footer-links a:hover { color: var(--pine-dark); }
   .footer-copy { font-size: 12px; color: var(--muted); }
 
-  /* RESPONSIVE — solo por debajo de 960px; el diseño desktop no cambia. */
+  /* RESPONSIVE — solo por debajo de 960px. */
   @media (max-width: 959px) {
-    /* Un item de grid tiene min-width:auto y crecía hasta el ancho del kanban
-       (4 columnas fijas), desbordando toda la página en móvil. */
-    .hero-grid > * { min-width: 0; }
     /* .nav-inner anulaba el padding lateral de .wrap: el logo quedaba pegado al borde. */
     .nav .nav-inner { padding: 12px 24px; }
     .hero { padding: 56px 0 48px; }
@@ -212,8 +213,23 @@
     .kanban-board { display: grid; grid-template-columns: 1fr 1fr; overflow: visible; }
     .kanban-col { min-width: 0; max-width: none; }
     .mockup-card { padding: 12px; }
+    /* Una tarjeta por columna: basta para transmitir el pipeline. */
+    .kanban-col-body .kanban-card:nth-child(n+2) { display: none; }
+    .hero .eyebrow { font-size: 11px; letter-spacing: 0.3px; }
+    /* "Cómo funciona": lista compacta con el número a la izquierda. */
+    .flow-arrow { display: none; }
+    .flow { gap: 10px; align-items: stretch; }
+    .flow-step { max-width: none; display: grid; grid-template-columns: 30px 1fr; column-gap: 14px; text-align: left; padding: 14px 16px; }
+    .flow-num { grid-row: span 2; margin: 0; }
+    .flow-step h3 { margin-bottom: 2px; }
+    /* Problemas y funcionalidades: icono a la izquierda. */
+    .prob-card, .feat-card { display: grid; grid-template-columns: 38px 1fr; column-gap: 14px; padding: 16px; }
+    .prob-icon, .feat-icon { grid-row: span 2; margin: 0; }
+    .prob-icon { font-size: 22px; line-height: 38px; text-align: center; }
+    .prob-card h3, .feat-card h3 { margin-bottom: 4px; }
+    .grid-4 { gap: 12px; }
+    .form-idle-panel { min-height: 72px; padding: 16px; }
     /* Cards, chat y formulario un poco más compactos. */
-    .prob-card, .feat-card { padding: 20px; }
     .price-card { padding: 26px 20px; }
     .faq-item { padding: 16px; }
     .chat-window { padding: 16px; }
