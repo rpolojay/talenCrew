@@ -109,6 +109,10 @@
   /* DEMO CHAT */
   .demo-grid { display: grid; grid-template-columns: 1fr; gap: 32px; align-items: center; }
   @media (min-width: 900px) { .demo-grid { grid-template-columns: 0.9fr 1.1fr; } }
+  /* La respuesta de la demo puede traer el link de reserva (URL larga sin
+     espacios): sin esto la columna crecía hasta su ancho y desbordaba la página. */
+  .demo-grid > * { min-width: 0; }
+  .chat-bubble { overflow-wrap: anywhere; }
   .demo-tag { display: inline-flex; align-items: center; gap: 8px; background: var(--sage); color: var(--pine-dark); font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 100px; margin-bottom: 14px; }
   .demo-company { font-size: 13.5px; color: var(--muted); margin-bottom: 18px; }
   .demo-company strong { color: var(--pine-dark); }
