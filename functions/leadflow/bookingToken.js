@@ -32,7 +32,23 @@ function computeBookingToken(companyId, leadId) {
     .slice(0, TOKEN_LENGTH);
 }
 
+// Solo proveedores de reservas conocidos: el link sale por email desde
+// nuestro dominio, así que un host arbitrario convertiría el email en un
+// vehículo de phishing. Se valida al registrar la empresa (trialSignup.js)
+// y otra vez justo antes de usarlo (pipeline.js, buildBookingLink).
+const ALLOWED_BOOKING_DOMAINS = ["cal.com", "calendly.com"];
+
+function isAllowedBookingUrl(value) {
+  if (typeof value !== "string" || !value) return false;
+  let url;
+  try { url = new URL(value); } catch { return false; }
+  if (url.protocol !== "https:" || url.username || url.password || url.port) return false;
+  const host = url.hostname.toLowerCase();
+  return ALLOWED_BOOKING_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`));
+}
+
 function buildBookingLink(company, companyId, leadId, name) {
+  if (!isAllowedBookingUrl(company.bookingLink)) throw new Error("bookingLink no permitido");
   const url = new URL(company.bookingLink);
   url.searchParams.set("metadata[leadId]", leadId);
   url.searchParams.set("metadata[companyId]", companyId);
@@ -61,4 +77,4 @@ function verifyBookingMetadata(metadata) {
   return { ok: true, leadId, companyId };
 }
 
-module.exports = { buildBookingLink, computeBookingToken, verifyBookingMetadata };
+module.exports = { buildBookingLink, computeBookingToken, verifyBookingMetadata, isAllowedBookingUrl };

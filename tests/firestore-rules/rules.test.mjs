@@ -7,6 +7,7 @@ import { test, before, after, beforeEach, describe } from "node:test";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import assert from "node:assert";
 import {
   initializeTestEnvironment, assertSucceeds, assertFails,
 } from "@firebase/rules-unit-testing";
@@ -345,5 +346,84 @@ describe("LeadFlow B3: aislamiento de escritura y lectura entre empresas", () =>
     await assertSucceeds(getDocs(qEvents(admin(), "lfB", "otra")));
     await assertSucceeds(updateDoc(doc(admin(), "leadflow_leads/lfB"), { status: "CLOSED", updatedAt: serverTimestamp() }));
     await assertSucceeds(updateDoc(doc(admin(), "leadflow_handoffs/hfB"), { status: "RESOLVED", resolvedBy: "hola@veloiapp.com", resolvedAt: serverTimestamp() }));
+  });
+});
+
+// Fase 1 de seguridad del email outbound: el permiso de envío
+// (outboundEmail) y los campos de control del trial solo los cambia un admin
+// o el backend. firestore.rules ya lo garantiza (leadflow_companies: write
+// solo admin; colecciones del servidor: denegadas por la regla final) — estos
+// tests lo fijan.
+describe("LeadFlow Fase 1: permiso de email outbound y campos protegidos de la empresa", () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "leadflow_companies/trialA"), {
+        name: "Trial A", allowedUsers: ["owner@a.com"], contactEmail: "owner@a.com",
+        isTrial: true, isActive: true, trialEndsAt: new Date(Date.now() + 864e5),
+        outboundEmail: { status: "PENDING_REVIEW" }, bookingLink: "https://cal.com/a/30min",
+      });
+      await setDoc(doc(db, "leadflow_companies/otra"), { name: "Otra", allowedUsers: ["owner@b.com"], outboundEmail: { status: "ENABLED" } });
+      await setDoc(doc(db, "leadflow_email_quota/trialA_2026-09-24"), { companyId: "trialA", count: 50 });
+      await setDoc(doc(db, "leadflow_rate_limits/capture_trialA_2026-09-24T10"), { companyId: "trialA", count: 20 });
+    });
+  });
+
+  test("31. el dueño NO puede cambiar outboundEmail.status (ni aprobarse ni reemplazar el objeto)", async () => {
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_companies/trialA"), { "outboundEmail.status": "ENABLED" }));
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_companies/trialA"), { outboundEmail: { status: "ENABLED", enabledAt: serverTimestamp() } }));
+    await assertFails(setDoc(doc(ownerA(), "leadflow_companies/trialA"), { outboundEmail: { status: "ENABLED" } }, { merge: true }));
+  });
+  test("32. el dueño NO puede modificar campos protegidos de su empresa", async () => {
+    const updates = [
+      { isTrial: false }, { isActive: true }, { demoMode: false }, { demoMode: true },
+      { trialEndsAt: new Date(Date.now() + 365 * 864e5) }, { bookingLink: "https://evil.com/cal.com" },
+      { contactEmail: "attacker@evil.test" }, { allowedUsers: ["owner@a.com", "x@evil.test"] }, { name: "PayPal" },
+    ];
+    for (const data of updates) {
+      await assertFails(updateDoc(doc(ownerA(), "leadflow_companies/trialA"), data));
+    }
+  });
+  test("el dueño NO puede escribir cuotas, rate limits ni configuración del servidor", async () => {
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_email_quota/trialA_2026-09-24"), { count: 0 }));
+    await assertFails(setDoc(doc(ownerA(), "leadflow_email_quota/trialA_2026-09-25"), { companyId: "trialA", count: 0 }));
+    await assertFails(deleteDoc(doc(ownerA(), "leadflow_rate_limits/capture_trialA_2026-09-24T10")));
+    await assertFails(setDoc(doc(ownerA(), "leadflow_config/email"), { killSwitch: false }));
+    await assertFails(getDoc(doc(ownerA(), "leadflow_email_quota/trialA_2026-09-24")), "tampoco las lee");
+  });
+  test("33. el admin sí puede cambiar outboundEmail (PENDING_REVIEW → ENABLED → SUSPENDED)", async () => {
+    await assertSucceeds(updateDoc(doc(admin(), "leadflow_companies/trialA"), {
+      "outboundEmail.status": "ENABLED", "outboundEmail.enabledAt": serverTimestamp(), "outboundEmail.updatedBy": "hola@veloiapp.com",
+    }));
+    await assertSucceeds(updateDoc(doc(admin(), "leadflow_companies/trialA"), { "outboundEmail.status": "SUSPENDED" }));
+  });
+  test("34. aislamiento intacto: el dueño lee su empresa (con su estado) pero no la de otro", async () => {
+    const snap = await assertSucceeds(getDoc(doc(ownerA(), "leadflow_companies/trialA")));
+    assert.strictEqual(snap.data().outboundEmail.status, "PENDING_REVIEW");
+    await assertFails(getDoc(doc(ownerA(), "leadflow_companies/otra")));
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_companies/otra"), { "outboundEmail.status": "SUSPENDED" }));
+    await assertFails(updateDoc(doc(ownerB(), "leadflow_companies/trialA"), { "outboundEmail.status": "ENABLED" }));
+    await assertFails(getDoc(doc(stranger(), "leadflow_companies/trialA")));
+    await assertFails(updateDoc(doc(anon(), "leadflow_companies/trialA"), { "outboundEmail.status": "ENABLED" }));
+  });
+});
+
+// Auditoría de acciones de admin (leadflow_admin_events): la escribe solo el
+// backend (leadflowSetOutboundEmailStatus, Admin SDK). Desde el navegador
+// nadie la lee ni la escribe — ni el dueño ni el admin — por la regla final.
+describe("LeadFlow: leadflow_admin_events es solo del backend", () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "leadflow_admin_events/ev1"), {
+        type: "OUTBOUND_EMAIL_STATUS_CHANGED", companyId: "acme", from: "PENDING_REVIEW", to: "ENABLED", actor: "hola@veloiapp.com",
+      });
+    });
+  });
+  test("nadie la lee ni la escribe desde el navegador", async () => {
+    for (const db of [ownerA(), admin(), stranger(), anon()]) {
+      await assertFails(getDoc(doc(db, "leadflow_admin_events/ev1")));
+      await assertFails(setDoc(doc(db, "leadflow_admin_events/ev2"), { type: "OUTBOUND_EMAIL_STATUS_CHANGED", companyId: "acme" }));
+      await assertFails(updateDoc(doc(db, "leadflow_admin_events/ev1"), { to: "SUSPENDED" }));
+    }
   });
 });

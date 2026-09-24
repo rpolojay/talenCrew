@@ -11,6 +11,13 @@ const COLLECTIONS = {
   // Una por reserva de Cal.com (id = booking uid): idempotencia del webhook
   // e historial de reservas por lead.
   BOOKINGS: "leadflow_bookings",
+  // Auditoría de acciones de admin sobre empresas (p. ej. aprobar el envío
+  // de emails). Solo backend: firestore.rules la deniega al navegador.
+  ADMIN_EVENTS: "leadflow_admin_events",
+};
+
+const ADMIN_EVENT_TYPE = {
+  OUTBOUND_EMAIL_STATUS_CHANGED: "OUTBOUND_EMAIL_STATUS_CHANGED",
 };
 
 const LEAD_STATUS = {
@@ -41,6 +48,12 @@ const EVENT_TYPE = {
   HANDOFF_CREATED: "HANDOFF_CREATED",
   BOOKING_CONFIRMED: "BOOKING_CONFIRMED",
   MANUAL_EDIT: "MANUAL_EDIT",
+  // Email automático al lead que NO salió por la política de envío
+  // (./emailPolicy.js). detail: { channel, reason } — sin el contenido del email.
+  EMAIL_BLOCKED: "EMAIL_BLOCKED",
+  // La empresa tiene un bookingLink fuera de la allowlist de proveedores
+  // (./bookingToken.js): el lead calificado no recibió link. detail: { reason, host }.
+  BOOKING_LINK_REJECTED: "BOOKING_LINK_REJECTED",
 };
 
-module.exports = { COLLECTIONS, LEAD_STATUS, HANDOFF_TRIGGER, EVENT_TYPE };
+module.exports = { COLLECTIONS, LEAD_STATUS, HANDOFF_TRIGGER, EVENT_TYPE, ADMIN_EVENT_TYPE };

@@ -1,6 +1,7 @@
 const { FieldValue } = require("firebase-admin/firestore");
 const { COLLECTIONS, LEAD_STATUS, HANDOFF_TRIGGER } = require("./constants");
 const { resolveHandoffRules, isBelowConfidenceThreshold } = require("./handoffRules");
+const { isAllowedBookingUrl } = require("./bookingToken");
 
 // El análisis de IA solo devuelve needs_human + un texto libre en `reason`,
 // sin categoría — el trigger del handoff se deduce del texto (mismo criterio
@@ -41,12 +42,19 @@ function decideRoute({ analysis, score, company }) {
 
   const minScore = company.scoringRules?.minScoreToQualify ?? 60;
   if (score.adjusted >= minScore) {
-    // Empresas sin bookingLink (el link es opcional en signup.html): el lead
+    // Empresas sin bookingLink (el link es opcional en signup.html) — o con
+    // uno fuera de la allowlist de proveedores (./bookingToken.js): el lead
     // califica igual, pero la respuesta promete contacto del equipo en vez
     // de un link, y no entra al flujo de follow-ups de BOOKING_SENT.
-    return company.bookingLink ? "QUALIFIED" : "QUALIFIED_NO_BOOKING";
+    return isAllowedBookingUrl(company.bookingLink) ? "QUALIFIED" : "QUALIFIED_NO_BOOKING";
   }
   return "NEEDS_INFO"; // fallback conservador: nunca empuja booking si el score no alcanza
+}
+
+// La empresa tiene un bookingLink configurado pero fuera de la allowlist: se
+// trata como sin link (nunca se envía), y capture.js lo deja registrado.
+function hasRejectedBookingLink(company) {
+  return Boolean(company?.bookingLink) && !isAllowedBookingUrl(company.bookingLink);
 }
 
 const ROUTE_STATUS = {
@@ -81,4 +89,4 @@ async function logEvent(db, event) {
   await db.collection(COLLECTIONS.EVENTS).add(buildEventDoc(event));
 }
 
-module.exports = { decideRoute, humanReviewDecision, triggerForReason, statusForRoute, logEvent, buildEventDoc, ROUTE_STATUS };
+module.exports = { decideRoute, humanReviewDecision, triggerForReason, statusForRoute, logEvent, buildEventDoc, hasRejectedBookingLink, ROUTE_STATUS };

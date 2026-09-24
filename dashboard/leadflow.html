@@ -212,6 +212,7 @@
   <div class="main">
 
     <div class="trial-banner hidden" id="trialBanner"></div>
+    <div class="trial-banner hidden" id="emailStatusBanner"></div>
 
     <div class="stats-grid">
       <div class="stat-card">
@@ -404,6 +405,15 @@
       trialDaysLeft: (n) => n === 1 ? 'Tu prueba gratis termina hoy.' : `Te quedan ${n} días de prueba gratis.`,
       trialExpired: 'Tu prueba gratis terminó: LeadFlow ya no está respondiendo leads nuevos.',
       trialUpgrade: 'Escríbenos para continuar',
+      emailPending: 'El envío de emails está en revisión: LeadFlow captura y califica tus leads, pero todavía no les envía respuestas por email.',
+      emailSuspended: 'El envío de emails está pausado: LeadFlow sigue capturando y calificando tus leads, pero no les envía respuestas por email.',
+      emailEnabledAdmin: 'Envío de emails a leads: habilitado.',
+      emailNotSentPending: 'Email no enviado (envío en revisión)',
+      emailNotSentSuspended: 'Email no enviado (envío pausado)',
+      modalReplyNotSent: 'Respuesta automática (no enviada)',
+      adminApprove: 'Aprobar envío de emails',
+      adminSuspend: 'Pausar envío de emails',
+      adminError: 'No se pudo actualizar el estado.',
       installTitle: 'Conecta tu formulario',
       installSub: 'Pega este código en tu sitio web para que LeadFlow reciba y responda tus leads.',
       installCompanyId: 'ID de tu empresa',
@@ -471,6 +481,15 @@
       trialDaysLeft: (n) => n === 1 ? 'Your free trial ends today.' : `${n} days left in your free trial.`,
       trialExpired: 'Your free trial has ended: LeadFlow is no longer replying to new leads.',
       trialUpgrade: 'Contact us to continue',
+      emailPending: 'Email sending is under review: LeadFlow is capturing and qualifying your leads, but is not emailing replies to them yet.',
+      emailSuspended: 'Email sending is paused: LeadFlow is still capturing and qualifying your leads, but is not emailing replies to them.',
+      emailEnabledAdmin: 'Email sending to leads: enabled.',
+      emailNotSentPending: 'Email not sent (sending under review)',
+      emailNotSentSuspended: 'Email not sent (sending paused)',
+      modalReplyNotSent: 'Auto-reply (not sent)',
+      adminApprove: 'Approve email sending',
+      adminSuspend: 'Pause email sending',
+      adminError: 'Could not update the status.',
       installTitle: 'Connect your form',
       installSub: 'Paste this code on your website so LeadFlow receives and replies to your leads.',
       installCompanyId: 'Your company ID',
@@ -557,6 +576,7 @@
   function renderAll() {
     applyStaticI18n();
     renderTrialBanner();
+    renderEmailStatusBanner();
     renderInstall();
     renderStats();
     renderKanban();
@@ -668,6 +688,7 @@
     }
 
     renderTrialBanner();
+    renderEmailStatusBanner();
     renderInstall();
     renderStats();
     renderKanban();
@@ -696,6 +717,58 @@
     link.textContent = t('trialUpgrade');
     el.append(' ', link);
     el.classList.remove('hidden');
+  }
+
+  // ===== Envío de emails a leads (outboundEmail) =====
+  // Mismo criterio que resolveOutboundEmailStatus en functions/leadflow/emailPolicy.js
+  // (el servidor es la autoridad; esto solo decide qué se muestra).
+  const OUTBOUND_URL = 'https://us-central1-gen-lang-client-0598503352.cloudfunctions.net/leadflowSetOutboundEmailStatus';
+  const EMAIL_BLOCKED_BY_STATUS = { EMAIL_PENDING_REVIEW: 'emailNotSentPending', EMAIL_SUSPENDED: 'emailNotSentSuspended' };
+
+  function outboundStatus(company) {
+    const status = company?.outboundEmail?.status;
+    if (status === undefined || status === null) return company?.createdVia === 'self_signup' ? 'PENDING_REVIEW' : 'ENABLED';
+    return ['PENDING_REVIEW', 'ENABLED', 'SUSPENDED'].includes(status) ? status : 'PENDING_REVIEW';
+  }
+
+  function renderEmailStatusBanner() {
+    const el = document.getElementById('emailStatusBanner');
+    const company = currentCompany();
+    const status = company ? outboundStatus(company) : 'ENABLED';
+    if (!company || (status === 'ENABLED' && !isAdminUser)) { el.classList.add('hidden'); return; }
+    el.textContent = status === 'PENDING_REVIEW' ? t('emailPending') : status === 'SUSPENDED' ? t('emailSuspended') : t('emailEnabledAdmin');
+    // Solo admins ven el botón; el servidor vuelve a verificar que lo sea.
+    if (isAdminUser) {
+      const target = status === 'ENABLED' ? 'SUSPENDED' : 'ENABLED';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = target === 'ENABLED' ? t('adminApprove') : t('adminSuspend');
+      btn.style.marginLeft = '8px';
+      btn.onclick = () => setOutboundStatus(company.id, target, btn);
+      el.append(' ', btn);
+    }
+    el.classList.remove('hidden');
+  }
+
+  async function setOutboundStatus(companyId, status, btn) {
+    btn.disabled = true;
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const resp = await fetch(OUTBOUND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ companyId, status }),
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const result = await resp.json();
+      const company = allCompanies.find((c) => c.id === companyId);
+      if (company) company.outboundEmail = { ...(company.outboundEmail || {}), status: result.to };
+      renderEmailStatusBanner();
+    } catch (err) {
+      console.error('Error actualizando outboundEmail:', err);
+      btn.disabled = false;
+      alert(t('adminError'));
+    }
   }
 
   // El snippet se arma con el companyId y textos fijos (nunca con datos
@@ -789,6 +862,8 @@ document.getElementById("leadflow-form").addEventListener("submit", async functi
             const name = l.contact?.name || l.contact?.phone || l.contact?.email || t('noName');
             const contact = l.contact?.phone || l.contact?.email || '—';
             const score = l.score?.adjusted;
+            const notSentKey = EMAIL_BLOCKED_BY_STATUS[l.autoReply?.sendError];
+            const notSent = notSentKey ? `<div class="kanban-card-meta">⚠️ ${escapeHtml(t(notSentKey))}</div>` : '';
             const scoreBadge = typeof score === 'number'
               ? `<span class="badge ${scoreBadgeClass(score)}">${score}/100</span>`
               : '';
@@ -796,6 +871,7 @@ document.getElementById("leadflow-form").addEventListener("submit", async functi
               <div class="kanban-card" draggable="true" data-lead-id="${l.id}" onclick="openLeadDetail('${l.id}')">
                 <div class="kanban-card-name">${escapeHtml(name)}</div>
                 <div class="kanban-card-meta">${escapeHtml(l.serviceRequested || contact)}</div>
+                ${notSent}
                 <div class="kanban-card-foot">
                   <span class="kanban-card-meta" style="margin:0;">${escapeHtml(contact)}</span>
                   ${scoreBadge}
@@ -952,6 +1028,9 @@ document.getElementById("leadflow-form").addEventListener("submit", async functi
     const replyBlock = document.getElementById('modalReplyBlock');
     if (lead.autoReply?.text) {
       replyBlock.classList.remove('hidden');
+      const notSentKey = EMAIL_BLOCKED_BY_STATUS[lead.autoReply.sendError];
+      document.getElementById('lblModalReply').textContent = lead.autoReply.sentAt ? t('modalReply')
+        : notSentKey ? `${t('modalReplyNotSent')} — ${t(notSentKey)}` : t('modalReplyNotSent');
       document.getElementById('modalReplyText').textContent = lead.autoReply.text;
     } else {
       replyBlock.classList.add('hidden');

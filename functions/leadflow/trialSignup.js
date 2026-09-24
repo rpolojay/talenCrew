@@ -4,6 +4,8 @@ const cors = require("cors")({ origin: true });
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
 const { COLLECTIONS } = require("./constants");
+const { isAllowedBookingUrl } = require("./bookingToken");
+const { OUTBOUND_EMAIL_STATUS } = require("./emailPolicy");
 
 // Autoregistro público de LeadFlow (dashboard/signup.html). Mismo patrón que
 // createTrialSignup de VeloiApp (validación estricta, 409 por duplicado,
@@ -66,14 +68,14 @@ function readPayload(body) {
   out.language = body.language;
 
   // Opcional. capture.js lo pasa por new URL() y le agrega query params, así
-  // que tiene que ser una URL https válida.
+  // que tiene que ser una URL https válida — y de un proveedor de reservas
+  // permitido (cal.com / calendly.com, ver ./bookingToken.js): el link sale
+  // por email desde nuestro dominio.
   const link = typeof body.bookingLink === "string" ? body.bookingLink.trim() : "";
   if (link) {
     if (link.length > MAX_BOOKING_LINK) return { error: "Field too long: bookingLink" };
-    let parsed;
-    try { parsed = new URL(link); } catch { return { error: "Invalid bookingLink" }; }
-    if (parsed.protocol !== "https:") return { error: "Invalid bookingLink" };
-    out.bookingLink = parsed.toString();
+    if (!isAllowedBookingUrl(link)) return { error: "Invalid bookingLink" };
+    out.bookingLink = new URL(link).toString();
   }
   return { data: out };
 }
@@ -137,6 +139,9 @@ exports.createLeadflowTrialSignup = onRequest((req, res) => {
         allowedUsers: [email],
         isTrial: true,
         isActive: true,
+        // Procesa leads desde ya, pero no envía emails a los leads hasta que
+        // un admin lo apruebe (./emailPolicy.js).
+        outboundEmail: { status: OUTBOUND_EMAIL_STATUS.PENDING_REVIEW, updatedAt: FieldValue.serverTimestamp() },
         trialEndsAt: Timestamp.fromMillis(now + TRIAL_DAYS * 24 * 60 * 60 * 1000),
         createdVia: "self_signup",
         createdAt: FieldValue.serverTimestamp(),

@@ -4,9 +4,10 @@ const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { COLLECTIONS, LEAD_STATUS, EVENT_TYPE } = require("./constants");
 const { GEMINI_API_KEY, RESEND_API_KEY, BOOKING_TOKEN_SECRET } = require("./secrets");
 const { generateReply } = require("./generateReply");
-const { buildBookingLink } = require("./bookingToken");
+const { buildBookingLink, isAllowedBookingUrl } = require("./bookingToken");
 const { logEvent } = require("./pipeline");
 const { sendLeadEmailWithQuota } = require("./quota");
+const { evaluateLeadEmailPolicy, validateReplyText, POLICY_BLOCK_REASONS, EMAIL_BLOCK_REASON } = require("./emailPolicy");
 
 const MS_PER_HOUR = 60 * 60 * 1000;
 
@@ -31,6 +32,7 @@ function evaluateFollowUp(lead, followUpConfig) {
       stage: "first",
       route: "FOLLOW_UP_FIRST",
       thresholdHours: followUpConfig.delayHoursFirst,
+      reference: lead.autoReply?.generatedAt,
       hoursElapsed: hoursSince(lead.autoReply?.generatedAt),
     };
   }
@@ -39,10 +41,23 @@ function evaluateFollowUp(lead, followUpConfig) {
       stage: "second",
       route: "FOLLOW_UP_SECOND",
       thresholdHours: followUpConfig.delayHoursSecond,
+      reference: lead.followUp?.lastSentAt,
       hoursElapsed: hoursSince(lead.followUp?.lastSentAt),
     };
   }
   return null;
+}
+
+// Sin catch-up después de una aprobación: si la empresa pasó a ENABLED
+// (outboundEmail.enabledAt, ver ./emailPolicy.js setOutboundEmailStatus)
+// después del email de referencia de esta etapa, el recordatorio quedó
+// "atrasado" mientras no se podía enviar y no sale. El lead no se detiene:
+// un mensaje nuevo suyo recibe respuesta y abre un ciclo nuevo.
+function predatesEmailApproval(reference, company) {
+  const enabledAt = company.outboundEmail?.enabledAt;
+  if (!enabledAt || typeof enabledAt.toMillis !== "function") return false;
+  if (!reference || typeof reference.toMillis !== "function") return true;
+  return reference.toMillis() < enabledAt.toMillis();
 }
 
 async function stopFollowUp(db, lead, reason) {
@@ -114,6 +129,19 @@ exports.leadflowFollowUpScheduler = onSchedule(
         await stopFollowUp(db, lead, "follow_up_disabled_for_company");
         continue;
       }
+      // Permiso de envío de la empresa (./emailPolicy.js): PENDING_REVIEW,
+      // SUSPENDED o trial vencido por fecha → no se envía ahora, sin gastar
+      // IA. El lead NO se detiene: el permiso puede volver.
+      if (!evaluateLeadEmailPolicy(company).allowed) continue;
+      // La respuesta inicial nunca le llegó al lead por la política: no se
+      // le recuerda algo que no recibió.
+      if (POLICY_BLOCK_REASONS.includes(lead.autoReply?.sendError)) continue;
+      // Link fuera de la allowlist de proveedores: el recordatorio es sobre
+      // ese link, así que no sale (el lead no se detiene).
+      if (company.bookingLink && !isAllowedBookingUrl(company.bookingLink)) {
+        console.error(`Follow-up omitido: bookingLink no permitido en la empresa ${lead.companyId}`);
+        continue;
+      }
 
       const followUpConfig = company.followUpConfig;
       const maxAttempts = followUpConfig.maxAttempts ?? 2;
@@ -132,6 +160,7 @@ exports.leadflowFollowUpScheduler = onSchedule(
         continue;
       }
       if (evalResult.hoursElapsed < evalResult.thresholdHours) continue; // todavía no toca
+      if (predatesEmailApproval(evalResult.reference, company)) continue;
 
       try {
         const leadForAI = {
@@ -145,6 +174,19 @@ exports.leadflowFollowUpScheduler = onSchedule(
         // guardado, generateReply cae a company.language.
         const detectedLanguage = lead.detectedLanguage ?? lead.analysis?.detected_language ?? null;
         const replyResult = await generateReply(leadForAI, evalResult.route, company, detectedLanguage);
+
+        // Mismo control de salida que capture.js, antes de agregar el link.
+        // Si el texto no pasa, este follow-up se detiene (no se reintenta
+        // cada 30 min gastando IA).
+        const check = validateReplyText(replyResult.text, { businessName: company.name });
+        if (!check.ok) {
+          await logEvent(db, {
+            leadId: lead.id, companyId: lead.companyId, type: EVENT_TYPE.EMAIL_BLOCKED, actor: "system:email_policy",
+            detail: { channel: "follow_up", reason: EMAIL_BLOCK_REASON.AI_OUTPUT_REJECTED, violations: check.violations },
+          });
+          await stopFollowUp(db, lead, "ai_output_rejected");
+          continue;
+        }
 
         // Link firmado regenerado (determinístico): los leads de antes de B4
         // tienen guardado un link sin token que el webhook ya no acepta.
@@ -197,7 +239,8 @@ exports.leadflowFollowUpScheduler = onSchedule(
         // teléfono se queda con sentAt: null (sin SMS/WhatsApp todavía para
         // leads de formulario). Una falla de envío no reintenta ni detiene
         // el follow-up: queda en sendError para verlo en el dashboard.
-        // Empresas en trial: sujeto al tope diario de ./quota.js.
+        // Empresas en trial: sujeto al tope diario de ./quota.js. La política
+        // de envío (./emailPolicy.js) se vuelve a evaluar dentro del envío.
         if (lead.contact?.email) {
           const emailResult = await sendLeadEmailWithQuota({
             db,
@@ -207,6 +250,8 @@ exports.leadflowFollowUpScheduler = onSchedule(
             language: replyResult.language,
             text: finalText,
             logContext: `follow-up ${evalResult.stage} lead ${lead.id}`,
+            leadId: lead.id,
+            channel: "follow_up",
           });
           await leadRef.update({
             "followUp.lastMessage.sentAt": emailResult.sentAt,

@@ -12,13 +12,14 @@ const { buildDedupeKey } = require("./dedupe");
 const { analyzeLead } = require("./analyzeLead");
 const { validateAnalysis } = require("./geminiSchemas");
 const { scoreLead } = require("./scoring");
-const { decideRoute, humanReviewDecision, triggerForReason, statusForRoute, logEvent } = require("./pipeline");
+const { decideRoute, humanReviewDecision, triggerForReason, statusForRoute, logEvent, hasRejectedBookingLink } = require("./pipeline");
 const { generateReply } = require("./generateReply");
 const { createHandoff } = require("./handoff");
 const { classifyAdditionalMessage } = require("./detectLanguage");
 const { sendLeadEmailWithQuota } = require("./quota");
 const { validateCapturePayload } = require("./captureValidation");
 const { reserveCompanyCapture } = require("./rateLimit");
+const { validateReplyText, EMAIL_BLOCK_REASON } = require("./emailPolicy");
 
 const THROTTLE_WINDOW_MS = 60 * 1000;
 const THROTTLE_MAX = 5;
@@ -26,24 +27,27 @@ const DEMO_MODE_NO_EMAIL = "demo_mode_no_email";
 
 const REPLY_FAILURE_REASON = "The automatic reply could not be generated, so the lead has not received a response yet.";
 const REPLY_FAILURE_ACTION = "Reply to this lead personally — the automatic reply could not be generated.";
+const REPLY_REJECTED_REASON = "The automatic reply was withheld because it did not pass the safety check, so the lead has not received a response yet.";
 const HUMAN_REVIEW_ACTION = "Review the conversation and follow up personally.";
 
-// generateReply falló (Gemini caído, timeout, cuota...). El lead no puede
-// quedar atascado ni sin que nadie se entere: pasa a HUMAN_REVIEW, queda el
-// evento y se abre (o se reutiliza, ver createHandoff) un handoff. Al lead no
-// se le envía nada — no hay texto que enviar — y el error solo va a los logs:
-// ni la respuesta HTTP ni Firestore guardan su mensaje.
-async function escalateReplyFailure(db, { leadRef, leadId, companyId, company, lead, analysis, score, fromStatus, route, humanDecision, extraUpdate = {} }) {
+// generateReply falló (Gemini caído, timeout, cuota...) o su texto no pasó
+// la validación de salida (./emailPolicy.js validateReplyText). El lead no
+// puede quedar atascado ni sin que nadie se entere: pasa a HUMAN_REVIEW,
+// queda el evento y se abre (o se reutiliza, ver createHandoff) un handoff.
+// Al lead no se le envía nada, y ni el error ni el texto rechazado se
+// guardan en Firestore ni vuelven en la respuesta HTTP.
+async function escalateReplyFailure(db, { leadRef, leadId, companyId, company, lead, analysis, score, fromStatus, route, humanDecision, extraUpdate = {}, rejected = false }) {
+  const failureReason = rejected ? REPLY_REJECTED_REASON : REPLY_FAILURE_REASON;
   await leadRef.update({ ...extraUpdate, status: LEAD_STATUS.HUMAN_REVIEW, updatedAt: FieldValue.serverTimestamp() });
   await logEvent(db, {
     leadId, companyId, type: EVENT_TYPE.STATUS_CHANGE,
     fromStatus, toStatus: LEAD_STATUS.HUMAN_REVIEW, actor: "system:reply_failure",
-    detail: { note: "reply_generation_failed", route },
+    detail: { note: rejected ? "reply_output_rejected" : "reply_generation_failed", route },
   });
   const { handoffId, created } = await createHandoff(db, {
     leadId, companyId, company, lead, analysis, score,
     triggeredBy: humanDecision?.triggeredBy || HANDOFF_TRIGGER.AI_LOW_CONFIDENCE,
-    reason: humanDecision?.reason ? `${REPLY_FAILURE_REASON} ${humanDecision.reason}` : REPLY_FAILURE_REASON,
+    reason: humanDecision?.reason ? `${failureReason} ${humanDecision.reason}` : failureReason,
     recommendedNextAction: REPLY_FAILURE_ACTION,
   });
   if (created) {
@@ -65,11 +69,44 @@ function toMillis(ts) {
 // responde igual — la landing muestra el texto en pantalla — pero nunca se
 // envía el email, así nadie puede usar la demo para mandar correos a
 // direcciones arbitrarias.
+// El resto de los permisos (empresa aprobada para enviar, trial vigente,
+// cuota) los decide la política central dentro de sendLeadEmailWithQuota:
+// si bloquea, el lead igual queda con su respuesta generada, sentAt: null y
+// sendError con el motivo (p. ej. EMAIL_PENDING_REVIEW).
 async function sendAutoReplyEmail(db, companyId, contact, company, language, text, leadId) {
   if (!contact?.email) return { sentAt: null, emailId: null, error: null };
   if (company?.demoMode === true) return { sentAt: null, emailId: null, error: DEMO_MODE_NO_EMAIL };
   return sendLeadEmailWithQuota({
     db, companyId, company, to: contact.email, language, text, logContext: `autoReply lead ${leadId}`,
+    leadId, channel: "auto_reply",
+  });
+}
+
+// El texto de la IA se valida ANTES de agregar el link de reserva (que lo
+// agrega el código). Si no pasa, se registra el motivo (sin el texto) y el
+// caso va a una persona.
+async function rejectedReply(db, { leadId, companyId, text, businessName }) {
+  const check = validateReplyText(text, { businessName });
+  if (check.ok) return false;
+  await logEvent(db, {
+    leadId, companyId, type: EVENT_TYPE.EMAIL_BLOCKED, actor: "system:email_policy",
+    detail: { channel: "auto_reply", reason: EMAIL_BLOCK_REASON.AI_OUTPUT_REJECTED, violations: check.violations },
+  });
+  console.warn(`Respuesta de IA rechazada para lead ${leadId}: ${check.violations.join(",")}`);
+  return true;
+}
+
+// Un lead calificado se quedó sin link porque el bookingLink de la empresa
+// no está en la allowlist (pipeline.js lo trata como "sin link" — nunca se
+// envía). No debe pasar en silencio: error en los logs + evento en el lead.
+async function recordRejectedBookingLink(db, { leadId, companyId, company, route }) {
+  if (route !== "QUALIFIED_NO_BOOKING" || !hasRejectedBookingLink(company)) return;
+  let host = null;
+  try { host = new URL(company.bookingLink).hostname; } catch { /* no es una URL */ }
+  console.error(`bookingLink no permitido en la empresa ${companyId} (host ${host ?? "inválido"}): el lead ${leadId} calificado no recibe link`);
+  await logEvent(db, {
+    leadId, companyId, type: EVENT_TYPE.BOOKING_LINK_REJECTED, actor: "system:pipeline",
+    detail: { reason: "booking_host_not_allowed", host },
   });
 }
 
@@ -226,6 +263,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
   const nextStatus = statusForRoute(route);
 
   await leadRef.update({ score, updatedAt: FieldValue.serverTimestamp() });
+  await recordRejectedBookingLink(db, { leadId, companyId, company, route });
 
   let replyResult;
   try {
@@ -235,6 +273,16 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
     const handoffId = await escalateReplyFailure(db, {
       leadRef, leadId, companyId, company, lead: baseLead, analysis: analysisResult.analysis, score,
       fromStatus: LEAD_STATUS.ANALYZING, route, humanDecision,
+    });
+    return res.status(201).json({
+      leadId, status: LEAD_STATUS.HUMAN_REVIEW, merged: false, handoffId, analysis: analysisResult.analysis, autoReply: null,
+    });
+  }
+  if (await rejectedReply(db, { leadId, companyId, text: replyResult.text, businessName: company.name })) {
+    const handoffId = await escalateReplyFailure(db, {
+      leadRef, leadId, companyId, company, lead: baseLead, analysis: analysisResult.analysis, score,
+      fromStatus: LEAD_STATUS.ANALYZING, route, humanDecision, rejected: true,
+      extraUpdate: { aiUsage: FieldValue.arrayUnion(replyResult.usage) },
     });
     return res.status(201).json({
       leadId, status: LEAD_STATUS.HUMAN_REVIEW, merged: false, handoffId, analysis: analysisResult.analysis, autoReply: null,
@@ -336,6 +384,7 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
   const route = humanDecision ? "NEEDS_HUMAN"
     : analysis ? decideRoute({ analysis, score, company })
     : "NEEDS_INFO";
+  await recordRejectedBookingLink(db, { leadId, companyId, company, route });
 
   let replyResult;
   try {
@@ -345,6 +394,16 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
     const handoffId = await escalateReplyFailure(db, {
       leadRef, leadId, companyId, company, lead: leadForHandoff, analysis, score, fromStatus, route, humanDecision,
       extraUpdate: { detectedLanguage, ...(langUsage ? { aiUsage: FieldValue.arrayUnion(langUsage) } : {}) },
+    });
+    return res.status(201).json({
+      leadId, status: LEAD_STATUS.HUMAN_REVIEW, merged: true, handoffId, analysis, autoReply: null,
+    });
+  }
+  if (await rejectedReply(db, { leadId, companyId, text: replyResult.text, businessName: company.name })) {
+    const usage = langUsage ? FieldValue.arrayUnion(replyResult.usage, langUsage) : FieldValue.arrayUnion(replyResult.usage);
+    const handoffId = await escalateReplyFailure(db, {
+      leadRef, leadId, companyId, company, lead: leadForHandoff, analysis, score, fromStatus, route, humanDecision,
+      extraUpdate: { detectedLanguage, aiUsage: usage }, rejected: true,
     });
     return res.status(201).json({
       leadId, status: LEAD_STATUS.HUMAN_REVIEW, merged: true, handoffId, analysis, autoReply: null,

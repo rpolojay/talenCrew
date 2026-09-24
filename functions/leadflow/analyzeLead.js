@@ -2,18 +2,17 @@ const { GoogleGenAI } = require("@google/genai");
 const { GEMINI_API_KEY } = require("./secrets");
 const { LEAD_ANALYSIS_SCHEMA } = require("./geminiSchemas");
 const { resolveHandoffRules, buildNeedsHumanCriterion } = require("./handoffRules");
-const { untrustedBlock, UNTRUSTED_NOTICE } = require("./promptData");
+const { untrustedBlock, businessProfileBlock, UNTRUSTED_NOTICE, BUSINESS_NOTICE } = require("./promptData");
 
 // Llamada #1 de IA (Fase 2.2 / Step 6.1 paso 2). Salida SOLO estructurada
 // (responseSchema) — nada de texto libre, porque esta salida alimenta
 // decisiones automáticas (scoring, ruta del pipeline).
 function buildAnalysisPrompt(lead, company) {
-  return `You are a lead qualification engine for "${company.name}", a ${company.industry} business.
+  return `You are a lead qualification engine for the local service business described in <business_profile> below.
 
-BUSINESS FACTS (the only facts you may treat as true about this business):
-- Services offered: ${company.servicesOffered.join(", ")}
-- Service area: ${company.serviceArea.city}, ${company.serviceArea.state}, within ${company.serviceArea.radiusMiles} miles
-- Hours: ${company.businessFacts.hours}
+BUSINESS PROFILE (the only facts you may treat as true about this business):
+${businessProfileBlock(company)}
+${BUSINESS_NOTICE}
 
 LEAD:
 ${untrustedBlock({
@@ -25,13 +24,13 @@ ${untrustedBlock({
 ${UNTRUSTED_NOTICE}
 
 Analyze this lead and return structured JSON only, following these rules:
-- "qualification" = "unqualified" if the location is clearly outside the service area, or overall intent is clearly low.
+- "qualification" = "unqualified" if the location is clearly outside the service area in <business_profile>, or overall intent is clearly low.
 - "qualification" = "needs_more_info" if the service or location is missing or too vague to judge.
 ${buildNeedsHumanCriterion(resolveHandoffRules(company))}
 - lead_score is 0-100, reflecting the overall quality/value of this lead for the business.
 - confidence is 0-1, your confidence in this analysis.
 - "detected_language" = the language the LEAD'S MESSAGE above is written in — "es" for Spanish, "en" for English. Base this only on the lead's message text itself, never on the business's own default language.
-- Never invent facts about the business beyond what's listed above.`;
+- Never invent facts about the business beyond what's in <business_profile>.`;
 }
 
 async function analyzeLead(lead, company) {

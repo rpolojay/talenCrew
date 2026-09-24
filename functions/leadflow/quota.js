@@ -1,6 +1,8 @@
 const { FieldValue } = require("firebase-admin/firestore");
-const { COLLECTIONS } = require("./constants");
+const { COLLECTIONS, EVENT_TYPE } = require("./constants");
 const { sendLeadEmail } = require("./sendEmail");
+const { evaluateLeadEmailPolicy, EMAIL_BLOCK_REASON } = require("./emailPolicy");
+const { logEvent } = require("./pipeline");
 
 // Tope diario de emails automáticos (autoReply + follow-ups) para empresas en
 // trial. Las empresas de trial se crean solas desde signup.html, así que sin
@@ -36,11 +38,35 @@ async function reserveTrialEmail(db, companyId, company) {
   }
 }
 
-// Igual que sendLeadEmail, pero respetando el tope de trial. Mismo formato de
-// respuesta ({ sentAt, emailId, error }) y nunca lanza.
-async function sendLeadEmailWithQuota({ db, companyId, company, to, language, text, logContext }) {
+// Evento EMAIL_BLOCKED: solo el canal y el motivo, nunca el contenido del
+// email ni el destinatario. Si falla la escritura no se rompe el pipeline.
+async function logEmailBlocked(db, { leadId, companyId, channel, reason }) {
+  if (!leadId) return;
+  try {
+    await logEvent(db, { leadId, companyId, type: EVENT_TYPE.EMAIL_BLOCKED, actor: "system:email_policy", detail: { channel, reason } });
+  } catch (err) {
+    console.error(`No se pudo registrar EMAIL_BLOCKED (${reason}) del lead ${leadId}:`, err);
+  }
+}
+
+// ÚNICO camino para enviar un email automático a un LEAD (autoReply de
+// capture.js y follow-ups de followUp.js). Orden:
+//   1) política de envío (./emailPolicy.js) — sin escrituras: un email
+//      bloqueado aquí no consume cuota;
+//   2) cuota diaria de la empresa (trials);
+//   3) envío por Resend con From fijo y Reply-To del dueño (./sendEmail.js).
+// Misma forma de respuesta de siempre ({ sentAt, emailId, error }) — error
+// lleva el motivo estable del bloqueo — y nunca lanza.
+async function sendLeadEmailWithQuota({ db, companyId, company, to, language, text, logContext, leadId, channel = "lead_email" }) {
+  const decision = evaluateLeadEmailPolicy(company);
+  if (!decision.allowed) {
+    console.log(`Email al lead bloqueado por la política (${decision.reason}, ${logContext}, empresa ${companyId})`);
+    await logEmailBlocked(db, { leadId, companyId, channel, reason: decision.reason });
+    return { sentAt: null, emailId: null, error: decision.reason };
+  }
   if (!(await reserveTrialEmail(db, companyId, company))) {
     console.error(`Tope diario de emails de trial alcanzado (${logContext}, empresa ${companyId})`);
+    await logEmailBlocked(db, { leadId, companyId, channel, reason: EMAIL_BLOCK_REASON.COMPANY_EMAIL_QUOTA });
     return { sentAt: null, emailId: null, error: QUOTA_EXCEEDED };
   }
   return sendLeadEmail({ to, company, language, text, logContext });
