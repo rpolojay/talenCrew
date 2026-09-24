@@ -174,6 +174,70 @@
   .footer-links { display: flex; gap: 20px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
   .footer-links a:hover { color: var(--pine-dark); }
   .footer-copy { font-size: 12px; color: var(--muted); }
+
+  /* RESPONSIVE — solo por debajo de 960px; el diseño desktop no cambia. */
+  @media (max-width: 959px) {
+    /* Un item de grid tiene min-width:auto y crecía hasta el ancho del kanban
+       (4 columnas fijas), desbordando toda la página en móvil. */
+    .hero-grid > * { min-width: 0; }
+    /* .nav-inner anulaba el padding lateral de .wrap: el logo quedaba pegado al borde. */
+    .nav .nav-inner { padding: 12px 24px; }
+    .hero { padding: 56px 0 48px; }
+    .hero-grid { gap: 36px; }
+  }
+  @media (max-width: 780px) {
+    /* Controles táctiles de la nav y del formulario. */
+    .lang-btn { min-height: 40px; min-width: 40px; padding: 8px 12px; font-size: 12px; }
+    .nav .btn-small { min-height: 40px; }
+    /* 16px evita el zoom automático de iOS al enfocar un campo. */
+    .form-row input, .form-row textarea { font-size: 16px; padding: 12px 14px; }
+    .form-row input { min-height: 46px; }
+    .btn { min-height: 46px; }
+  }
+  @media (max-width: 640px) {
+    section { padding: 48px 0; }
+    .hero { padding: 40px 0 44px; }
+    .section-head { margin-bottom: 28px; }
+    .section-head h2 { font-size: 26px; }
+    .hero h1 { font-size: clamp(28px, 8.4vw, 34px); line-height: 1.12; }
+    .hero p.sub { font-size: 16px; margin-bottom: 24px; }
+    h1, h2, h3 { overflow-wrap: break-word; }
+    /* Botones: el texto puede partirse y los CTAs principales ocupan el ancho. */
+    .btn { white-space: normal; text-align: center; line-height: 1.25; }
+    .hero-ctas { flex-direction: column; }
+    .hero-ctas .btn { width: 100%; }
+    #free-trial .btn, .cta-band .btn { width: 100%; max-width: 380px; }
+    #free-trial .price-list { font-size: 14px; gap: 12px; }
+    /* Kanban del hero: rejilla compacta 2×2 en lugar de 4 columnas con scroll. */
+    .kanban-board { display: grid; grid-template-columns: 1fr 1fr; overflow: visible; }
+    .kanban-col { min-width: 0; max-width: none; }
+    .mockup-card { padding: 12px; }
+    /* Cards, chat y formulario un poco más compactos. */
+    .prob-card, .feat-card { padding: 20px; }
+    .price-card { padding: 26px 20px; }
+    .faq-item { padding: 16px; }
+    .chat-window { padding: 16px; }
+    .chat-bubble { max-width: 92%; }
+    .form-row-2 { grid-template-columns: 1fr; gap: 0; }
+    .cta-band { padding: 48px 0; }
+    .cta-band .cta-demo { margin-left: 0; }
+    footer { padding: 32px 0; }
+  }
+  @media (max-width: 480px) {
+    .wrap { padding: 0 20px; }
+    .nav .nav-inner { padding: 10px 20px; gap: 10px; }
+    .nav-right { gap: 8px; }
+    .nav-logo small { display: none; }
+    .nav .btn-small { padding: 9px 12px; }
+    .section-head h2 { font-size: 24px; }
+  }
+  @media (max-width: 360px) {
+    .wrap { padding: 0 16px; }
+    .nav .nav-inner { padding: 10px 16px; }
+    .nav-logo { font-size: 17px; }
+    .lang-btn { min-width: 36px; padding: 8px 9px; }
+    .nav .btn-small { font-size: 12px; padding: 9px 10px; }
+  }
 </style>
 </head>
 <body>
@@ -201,13 +265,14 @@
   <div class="wrap hero-grid">
     <div>
       <div class="eyebrow" data-i18n="heroEyebrow">AI Lead Response for Home Service &amp; Local Businesses</div>
-      <h1 data-i18n="heroHeadline">Never lose another lead to a slow response</h1>
-      <p class="sub" data-i18n="heroSub">LeadFlow automatically captures, qualifies, responds to, and schedules appointments with your leads — 24/7, with a human always one step away.</p>
+      <h1 data-i18n="heroHeadline">Turn more leads into booked appointments — automatically.</h1>
+      <p class="sub" data-i18n="heroSub">LeadFlow captures every lead from your website form, qualifies the opportunity, replies by email within moments, and helps move qualified customers toward an appointment — 24/7.</p>
+      <p style="font-weight:700; margin:-12px 0 24px;" data-i18n="heroEmphasis">Never leave a potential customer waiting for a response.</p>
       <div class="hero-ctas">
-        <a class="btn btn-primary" href="/signup.html" data-i18n="heroCtaTrial">Start Free Trial</a>
-        <a class="btn btn-secondary" href="mailto:hola@veloiapp.com?subject=LeadFlow%20Demo%20Request" data-i18n="heroCtaPrimary">Request a Demo</a>
-        <a class="btn btn-secondary" href="#how-it-works" data-i18n="heroCtaSecondary">See How It Works</a>
+        <a class="btn btn-primary" href="/signup.html" data-i18n="heroCtaTrial">Start Your 7-Day Free Trial</a>
+        <a class="btn btn-secondary" href="#try-demo" data-i18n="heroCtaSecondary">See LeadFlow in Action</a>
       </div>
+      <p style="font-size:13px; color:var(--muted); margin-top:14px;" data-i18n="heroNote">No credit card required. Sign up with your Google account in minutes.</p>
     </div>
     <div>
       <div class="mockup-card">
@@ -445,12 +510,42 @@
   </div>
 </section>
 
+<section id="free-trial">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 data-i18n="trialHeadline">Try LeadFlow free for 7 days.</h2>
+      <p data-i18n="trialSub">See how LeadFlow works with your own type of business before you commit.</p>
+    </div>
+    <div style="max-width:620px; margin:0 auto;">
+      <p style="font-weight:700; margin-bottom:14px;" data-i18n="trialIntro">During your trial, you can experience:</p>
+      <ul class="price-list">
+        <li><span><strong data-i18n="trial1Title">AI lead analysis</strong> — <span data-i18n="trial1Body">understand intent, urgency, and lead quality.</span></span></li>
+        <li><span><strong data-i18n="trial2Title">Fast email responses</strong> — <span data-i18n="trial2Body">reply to new website inquiries without waiting for your team.</span></span></li>
+        <li><span><strong data-i18n="trial3Title">Lead qualification</strong> — <span data-i18n="trial3Body">identify opportunities based on your service area and criteria.</span></span></li>
+        <li><span><strong data-i18n="trial4Title">Pipeline management</strong> — <span data-i18n="trial4Body">keep your leads organized in one place.</span></span></li>
+        <li><span><strong data-i18n="trial5Title">Appointment scheduling</strong> — <span data-i18n="trial5Body">send qualified prospects your booking link, if you add one.</span></span></li>
+        <li><span><strong data-i18n="trial6Title">Human handoff</strong> — <span data-i18n="trial6Body">bring your team in whenever human judgment is needed.</span></span></li>
+      </ul>
+      <div style="text-align:center;">
+        <h3 style="margin-bottom:14px;" data-i18n="trialStartHeadline">Start with your first lead today.</h3>
+        <a class="btn btn-primary" href="/signup.html" data-i18n="trialCta">Start Your 7-Day Free Trial</a>
+        <p style="font-weight:700; margin-top:12px;" data-i18n="trialNote">No credit card required. No long-term commitment.</p>
+        <p style="font-size:13px; color:var(--muted); margin-top:6px;" data-i18n="trialAfter">When your trial ends, new lead capture pauses until you choose a plan — your leads stay in your dashboard.</p>
+        <p style="margin-top:18px;" data-i18n="trialDemoPrompt">Prefer to see it first?</p>
+        <a class="btn btn-secondary" style="margin-top:8px;" href="mailto:hola@veloiapp.com?subject=LeadFlow%20Demo%20Request" data-i18n="trialDemoCta">Request a Demo</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 <div class="cta-band">
   <div class="wrap">
-    <h2 data-i18n="ctaHeadline">Ready to stop losing leads to slow responses?</h2>
-    <p data-i18n="ctaSub">Tell us about your business and we'll show you LeadFlow working with a scenario close to yours.</p>
-    <a class="btn btn-primary" href="/signup.html" data-i18n="ctaTrial">Start Free Trial</a>
-    <a class="btn btn-secondary cta-demo" href="mailto:hola@veloiapp.com?subject=LeadFlow%20Demo%20Request" data-i18n="ctaButton">Request a Demo</a>
+    <h2 data-i18n="ctaHeadline">Your next lead could arrive at any time.</h2>
+    <p data-i18n="ctaSub">When a customer reaches out through your website after hours, while your team is busy, or when follow-up gets forgotten, LeadFlow replies right away.</p>
+    <p style="font-weight:700; color:#fff;" data-i18n="ctaFlow">Capture → Qualify → Respond → Book → Hand off when needed</p>
+    <p data-i18n="ctaSub2">Let LeadFlow handle the repetitive first response while your team focuses on the customers who need you most.</p>
+    <a class="btn btn-primary" href="/signup.html" data-i18n="ctaTrial">Start Your 7-Day Free Trial</a>
+    <p style="font-size:13px; margin-top:16px; margin-bottom:0;" data-i18n="ctaNote">7 days free · No credit card required · No commitment</p>
   </div>
 </div>
 
@@ -472,9 +567,11 @@
     en: {
       navFeatures: 'Features', navHow: 'How it Works', navPricing: 'Pricing', navDemo: 'Request Demo', navTrial: 'Start Free Trial',
       heroEyebrow: 'AI Lead Response for Home Service & Local Businesses',
-      heroHeadline: 'Never lose another lead to a slow response',
-      heroSub: 'LeadFlow automatically captures, qualifies, responds to, and schedules appointments with your leads — 24/7, with a human always one step away.',
-      heroCtaTrial: 'Start Free Trial', heroCtaPrimary: 'Request a Demo', heroCtaSecondary: 'See How It Works',
+      heroHeadline: 'Turn more leads into booked appointments — automatically.',
+      heroSub: 'LeadFlow captures every lead from your website form, qualifies the opportunity, replies by email within moments, and helps move qualified customers toward an appointment — 24/7.',
+      heroEmphasis: 'Never leave a potential customer waiting for a response.',
+      heroNote: 'No credit card required. Sign up with your Google account in minutes.',
+      heroCtaTrial: 'Start Your 7-Day Free Trial', heroCtaPrimary: 'Request a Demo', heroCtaSecondary: 'See LeadFlow in Action',
       heroMockupTitle: 'Pipeline', heroMockupCaption: 'Sample pipeline — illustrative data.',
       colNew: 'New', colQualified: 'Qualified', colBooking: 'Booking Sent', colBooked: 'Booked',
       cardRoofLeak: 'Roof leak — storm', cardInspection: 'Inspection request', cardReplacement: 'Roof replacement',
@@ -541,17 +638,36 @@
       faq3A: "Yes. When a conversation is sensitive, high-value, or the AI isn't confident, it's handed off to your team in the queue for review.",
       faq4Q: 'How long does setup take?',
       faq4A: 'Most implementations are live within a few business days, depending on the details you share about your business and services.',
-      ctaHeadline: 'Ready to stop losing leads to slow responses?',
-      ctaSub: "Tell us about your business and we'll show you LeadFlow working with a scenario close to yours.",
-      ctaButton: 'Request a Demo', ctaTrial: 'Start Free Trial',
+      ctaHeadline: 'Your next lead could arrive at any time.',
+      ctaSub: 'When a customer reaches out through your website after hours, while your team is busy, or when follow-up gets forgotten, LeadFlow replies right away.',
+      ctaFlow: 'Capture → Qualify → Respond → Book → Hand off when needed',
+      ctaSub2: 'Let LeadFlow handle the repetitive first response while your team focuses on the customers who need you most.',
+      ctaNote: '7 days free · No credit card required · No commitment',
+      ctaButton: 'Request a Demo', ctaTrial: 'Start Your 7-Day Free Trial',
+      trialHeadline: 'Try LeadFlow free for 7 days.',
+      trialSub: 'See how LeadFlow works with your own type of business before you commit.',
+      trialIntro: 'During your trial, you can experience:',
+      trial1Title: 'AI lead analysis', trial1Body: 'understand intent, urgency, and lead quality.',
+      trial2Title: 'Fast email responses', trial2Body: 'reply to new website inquiries without waiting for your team.',
+      trial3Title: 'Lead qualification', trial3Body: 'identify opportunities based on your service area and criteria.',
+      trial4Title: 'Pipeline management', trial4Body: 'keep your leads organized in one place.',
+      trial5Title: 'Appointment scheduling', trial5Body: 'send qualified prospects your booking link, if you add one.',
+      trial6Title: 'Human handoff', trial6Body: 'bring your team in whenever human judgment is needed.',
+      trialStartHeadline: 'Start with your first lead today.',
+      trialCta: 'Start Your 7-Day Free Trial',
+      trialNote: 'No credit card required. No long-term commitment.',
+      trialAfter: 'When your trial ends, new lead capture pauses until you choose a plan — your leads stay in your dashboard.',
+      trialDemoPrompt: 'Prefer to see it first?', trialDemoCta: 'Request a Demo',
       footerContact: 'Contact', footerCopy: 'VeloiApp — LeadFlow. All rights reserved.',
     },
     es: {
       navFeatures: 'Funciones', navHow: 'Cómo Funciona', navPricing: 'Precios', navDemo: 'Solicitar Demo', navTrial: 'Prueba Gratis',
       heroEyebrow: 'Respuesta de Leads con IA para Negocios de Servicios y Locales',
-      heroHeadline: 'No vuelvas a perder un lead por responder tarde',
-      heroSub: 'LeadFlow captura, califica, responde y agenda citas con tus leads automáticamente — 24/7, con una persona siempre a un paso de distancia.',
-      heroCtaTrial: 'Empezar Prueba Gratis', heroCtaPrimary: 'Solicitar una Demo', heroCtaSecondary: 'Ver Cómo Funciona',
+      heroHeadline: 'Convierte más leads en citas agendadas — automáticamente.',
+      heroSub: 'LeadFlow captura cada lead del formulario de tu web, califica la oportunidad, responde por correo en instantes y ayuda a llevar a los clientes calificados hacia una cita — 24/7.',
+      heroEmphasis: 'No dejes a ningún cliente potencial esperando una respuesta.',
+      heroNote: 'No pedimos tarjeta de crédito. Regístrate con tu cuenta de Google en minutos.',
+      heroCtaTrial: 'Empieza tu prueba gratis de 7 días', heroCtaPrimary: 'Solicitar una Demo', heroCtaSecondary: 'Ver LeadFlow en acción',
       heroMockupTitle: 'Pipeline', heroMockupCaption: 'Pipeline de ejemplo — datos ilustrativos.',
       colNew: 'Nuevo', colQualified: 'Calificado', colBooking: 'Link Enviado', colBooked: 'Agendado',
       cardRoofLeak: 'Fuga — tormenta', cardInspection: 'Solicitud de inspección', cardReplacement: 'Reemplazo de techo',
@@ -618,9 +734,26 @@
       faq3A: 'Sí. Cuando una conversación es sensible, de alto valor, o la IA no tiene suficiente confianza, se transfiere a tu equipo en la cola de revisión.',
       faq4Q: '¿Cuánto tarda la implementación?',
       faq4A: 'La mayoría de las implementaciones quedan listas en pocos días hábiles, dependiendo de los detalles que compartas sobre tu negocio y servicios.',
-      ctaHeadline: '¿Listo para dejar de perder leads por responder tarde?',
-      ctaSub: 'Cuéntanos sobre tu negocio y te mostramos LeadFlow funcionando con un escenario parecido al tuyo.',
-      ctaButton: 'Solicitar una Demo', ctaTrial: 'Empezar Prueba Gratis',
+      ctaHeadline: 'Tu próximo lead puede llegar en cualquier momento.',
+      ctaSub: 'Cuando un cliente te escribe desde tu web fuera de horario, mientras tu equipo está ocupado o cuando el seguimiento se olvida, LeadFlow responde de inmediato.',
+      ctaFlow: 'Capturar → Calificar → Responder → Agendar → Derivar a una persona cuando haga falta',
+      ctaSub2: 'Deja que LeadFlow se encargue de la primera respuesta repetitiva mientras tu equipo se enfoca en los clientes que más te necesitan.',
+      ctaNote: '7 días gratis · Sin tarjeta de crédito · Sin compromiso',
+      ctaButton: 'Solicitar una Demo', ctaTrial: 'Empieza tu prueba gratis de 7 días',
+      trialHeadline: 'Prueba LeadFlow gratis durante 7 días.',
+      trialSub: 'Descubre cómo funciona LeadFlow con tu propio tipo de negocio antes de comprometerte.',
+      trialIntro: 'Durante tu prueba podrás experimentar:',
+      trial1Title: 'Análisis de leads con IA', trial1Body: 'entiende la intención, la urgencia y la calidad de cada lead.',
+      trial2Title: 'Respuestas rápidas por correo', trial2Body: 'responde a las nuevas consultas de tu web sin esperar a tu equipo.',
+      trial3Title: 'Calificación de leads', trial3Body: 'identifica oportunidades según tu zona de servicio y tus criterios.',
+      trial4Title: 'Gestión del pipeline', trial4Body: 'mantén tus leads organizados en un solo lugar.',
+      trial5Title: 'Agendamiento de citas', trial5Body: 'envía tu link de reservas a los prospectos calificados, si lo agregas.',
+      trial6Title: 'Derivación a una persona', trial6Body: 'incorpora a tu equipo cuando haga falta criterio humano.',
+      trialStartHeadline: 'Empieza hoy con tu primer lead.',
+      trialCta: 'Empieza tu prueba gratis de 7 días',
+      trialNote: 'Sin tarjeta de crédito. Sin compromisos a largo plazo.',
+      trialAfter: 'Cuando termina tu prueba, la captura de nuevos leads se pausa hasta que elijas un plan — tus leads siguen en tu dashboard.',
+      trialDemoPrompt: '¿Prefieres verlo primero?', trialDemoCta: 'Solicitar una Demo',
       footerContact: 'Contacto', footerCopy: 'VeloiApp — LeadFlow. Todos los derechos reservados.',
     },
   };
