@@ -7,6 +7,9 @@ const { CAL_WEBHOOK_SECRET, BOOKING_TOKEN_SECRET } = require("./secrets");
 const { buildEventDoc } = require("./pipeline");
 const { verifyBookingMetadata } = require("./bookingToken");
 const { EMAIL_RE } = require("./captureValidation");
+const { getWebhookRouting, LEGACY_GLOBAL_WEBHOOK_COMPANIES } = require("./bookingWebhookRouting");
+const { resolveBookingConnection } = require("./bookingConnectionResolver");
+const { normalizeCalBookingEvent } = require("./providers/cal");
 
 // Webhook de Cal.com (BOOKING_CREATED → APPOINTMENT_BOOKED).
 //
@@ -200,37 +203,197 @@ exports.leadflowCalBookingWebhook = onRequest({ secrets: [CAL_WEBHOOK_SECRET, BO
   if (!isPlainObject(body) || typeof body.triggerEvent !== "string" || !body.triggerEvent) {
     return res.status(400).json({ error: "Invalid payload" });
   }
+
   if (!SUPPORTED_EVENTS.includes(body.triggerEvent)) {
-    // PING, BOOKING_CANCELLED, BOOKING_RESCHEDULED, etc. — ver TODO arriba.
     return res.status(200).json({ result: "ignored_unsupported_event" });
   }
 
+  const routing = getWebhookRouting(body);
+
+  /*
+   * H1.5: cuando Cal.com identifica explícitamente el webhook,
+   * la booking connection es la autoridad para determinar la empresa.
+   */
+  if (routing.route === "connection") {
+    try {
+      const resolved = await resolveBookingConnection(
+        getFirestore(),
+        "cal",
+        routing.externalWebhookId
+      );
+
+      if (resolved.result === "not_found") {
+        console.warn(
+          `Webhook Cal.com ${routing.externalWebhookId} sin booking connection conocida.`
+        );
+        return res.status(200).json({
+          result: "ignored_unknown_booking_connection",
+        });
+      }
+
+      const connection = resolved.connection;
+
+      if (connection.status !== "VERIFIED") {
+        console.warn(
+          `Booking connection ${connection.connectionId} no está VERIFIED.`
+        );
+        return res.status(200).json({
+          result: "ignored_unverified_booking_connection",
+        });
+      }
+
+      /*
+       * El envelope aporta triggerEvent y webhookId.
+       * payload contiene los datos de la reserva.
+       */
+      const providerPayload = {
+        ...body,
+        ...(isPlainObject(body.payload) ? body.payload : {}),
+        triggerEvent: body.triggerEvent,
+        webhookId: body.webhookId,
+      };
+
+      const normalized = normalizeCalBookingEvent(providerPayload, {
+        connectionId: connection.connectionId,
+      });
+
+      const link = verifyBookingMetadata(normalized.metadata);
+
+      if (!link.ok) {
+        console.warn(
+          `Reserva ${
+            normalized.providerBookingUid ||
+            normalized.providerBookingId ||
+            "sin UID"
+          } sin vínculo verificable (${link.reason}).`
+        );
+        return res.status(200).json({
+          result: "ignored_unlinked_booking",
+        });
+      }
+
+      if (link.companyId !== connection.companyId) {
+        console.warn(
+          `Booking connection ${connection.connectionId}: companyId del token no coincide con la conexión.`
+        );
+        return res.status(200).json({
+          result: "ignored_unlinked_booking",
+        });
+      }
+
+      const bookingUid =
+        normalized.providerBookingUid ||
+        normalized.providerBookingId ||
+        normalized.providerIcalUid;
+
+      if (!bookingUid || !UID_RE.test(bookingUid)) {
+        console.warn(
+          `Reserva Cal.com con identidad incompatible: ${
+            bookingUid || "ausente"
+          }.`
+        );
+        return res.status(200).json({
+          result: "ignored_invalid_booking_identity",
+        });
+      }
+
+      const normalizedBooking = {
+        uid: bookingUid,
+        startTime: normalized.start,
+        endTime: normalized.end,
+        attendeeName: normalized.attendee?.name || null,
+        attendeeEmail:
+          typeof normalized.attendee?.email === "string"
+            ? normalized.attendee.email.trim().toLowerCase()
+            : null,
+        location: normalized.location,
+      };
+
+      const outcome = await applyBookingCreated(getFirestore(), {
+        leadId: link.leadId,
+        companyId: connection.companyId,
+        booking: normalizedBooking,
+      });
+
+      if (
+        outcome.result !== "applied" &&
+        outcome.result !== "applied_additional_booking"
+      ) {
+        console.warn(
+          `Reserva ${bookingUid} (lead ${link.leadId}, empresa ${connection.companyId}): ${outcome.result}${
+            outcome.status ? ` (${outcome.status})` : ""
+          }`
+        );
+      }
+
+      return res.status(200).json({ result: outcome.result });
+    } catch (error) {
+      console.error(
+        `Error procesando webhook de booking con conexión ${routing.externalWebhookId}:`,
+        error
+      );
+      return res.status(500).json({ error: "Internal error" });
+    }
+  }
+
+  /*
+   * LEGACY:
+   * parseBookingCreated solamente se ejecuta en esta ruta.
+   * abc-roofing continúa siendo la única empresa autorizada.
+   */
   const parsed = parseBookingCreated(body.payload);
+
   if (parsed.error) {
     return res.status(400).json({ error: `Invalid field: ${parsed.error}` });
   }
+
   const { booking } = parsed;
 
   try {
     const link = verifyBookingMetadata(parsed.metadata);
+
     if (!link.ok) {
-      // Reserva auténtica de Cal.com que no salió de un link firmado (o con
-      // metadata manipulada): no se identifica ningún lead.
-      console.warn(`Reserva ${booking.uid} sin vínculo verificable (${link.reason}) — no se modifica ningún lead.`);
-      return res.status(200).json({ result: "ignored_unlinked_booking" });
+      console.warn(
+        `Reserva ${booking.uid} sin vínculo verificable (${link.reason}) — no se modifica ningún lead.`
+      );
+      return res.status(200).json({
+        result: "ignored_unlinked_booking",
+      });
     }
 
-    const outcome = await applyBookingCreated(getFirestore(), { leadId: link.leadId, companyId: link.companyId, booking });
-    if (outcome.result !== "applied" && outcome.result !== "applied_additional_booking") {
-      console.warn(`Reserva ${booking.uid} (lead ${link.leadId}, empresa ${link.companyId}): ${outcome.result}${outcome.status ? ` (${outcome.status})` : ""}`);
+    if (!LEGACY_GLOBAL_WEBHOOK_COMPANIES.has(link.companyId)) {
+      console.warn(
+        `Reserva ${booking.uid}: la empresa ${link.companyId} no está habilitada en el webhook legacy — no se modifica ningún lead.`
+      );
+      return res.status(200).json({
+        result: "ignored_unlinked_booking",
+      });
     }
+
+    const outcome = await applyBookingCreated(getFirestore(), {
+      leadId: link.leadId,
+      companyId: link.companyId,
+      booking,
+    });
+
+    if (
+      outcome.result !== "applied" &&
+      outcome.result !== "applied_additional_booking"
+    ) {
+      console.warn(
+        `Reserva ${booking.uid} (lead ${link.leadId}, empresa ${link.companyId}): ${outcome.result}${
+          outcome.status ? ` (${outcome.status})` : ""
+        }`
+      );
+    }
+
     return res.status(200).json({ result: outcome.result });
   } catch (error) {
-    // Transitorio (Firestore) o de configuración (secreto): 500 para que
-    // Cal.com pueda reintentar — la idempotencia por uid lo hace seguro.
-    console.error(`Error procesando la reserva ${booking.uid} de Cal.com:`, error);
+    console.error(
+      `Error procesando la reserva ${booking.uid} de Cal.com:`,
+      error
+    );
     return res.status(500).json({ error: "Internal error" });
   }
 });
-
 module.exports.BOOKABLE_STATUSES = BOOKABLE_STATUSES;

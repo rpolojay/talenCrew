@@ -195,6 +195,12 @@ service cloud.firestore {
     }
 
     // Cualquier otra colección no listada arriba: denegado explícitamente.
+    // leadflow_booking_connections - calendar integration metadata
+    // Never accessible from the browser; Cloud Functions only via Admin SDK.
+    match /leadflow_booking_connections/{connectionId} {
+      allow read, write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

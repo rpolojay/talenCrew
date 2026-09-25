@@ -11,6 +11,7 @@ const COLLECTIONS = {
   // Una por reserva de Cal.com (id = booking uid): idempotencia del webhook
   // e historial de reservas por lead.
   BOOKINGS: "leadflow_bookings",
+  BOOKING_CONNECTIONS: "leadflow_booking_connections",
   // Auditoría de acciones de admin sobre empresas (p. ej. aprobar el envío
   // de emails). Solo backend: firestore.rules la deniega al navegador.
   ADMIN_EVENTS: "leadflow_admin_events",
