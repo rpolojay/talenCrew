@@ -2327,6 +2327,24 @@ describe("Fase A1 � follow-ups de reserva y la integración", () => {
     assert.deepStrictEqual(blockEvents("y1").map((e) => e.detail), [{ stage: "first", integrationStatus: "DEGRADED" }]);
   });
 
+  test("race: qualified lead with VERIFIED booking integration degrades while AI generates - auto-reply blocked before Resend", async () => {
+    let flipped = false;
+
+    replyHook = async () => {
+      replyHook = null;
+      flipped = true;
+      setIntegration({ status: "DEGRADED" });
+    };
+
+    const r = await firstMessage("booking-race@example.com");
+
+    assert.ok(flipped, "booking integration must degrade during reply generation");
+    assert.strictEqual(replyCalls[0].route, "QUALIFIED", "route was decided while integration was VERIFIED");
+    assert.strictEqual(resendCalls.length, 0, "qualified auto-reply must be blocked before Resend");
+
+    const lead = store.leadflow_leads[r.body.leadId];
+    assert.strictEqual(lead.autoReply.sendError, "BOOKING_INTEGRATION_NOT_HEALTHY");
+  });
   test("lead en BOOKING_SENT con un handoff ABIERTO �  ningún follow-up automático, sin IA", async () => {
     setIntegration({ status: "VERIFIED" });
     seedDue("h1");

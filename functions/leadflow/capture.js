@@ -77,12 +77,13 @@ function toMillis(ts) {
 // cuota) los decide la política central dentro de sendLeadEmailWithQuota:
 // si bloquea, el lead igual queda con su respuesta generada, sentAt: null y
 // sendError con el motivo (p. ej. EMAIL_PENDING_REVIEW).
-async function sendAutoReplyEmail(db, companyId, contact, company, language, text, leadId) {
+async function sendAutoReplyEmail(db, companyId, contact, company, language, text, leadId, requiresBookingAutomation = false) {
   if (!contact?.email) return { sentAt: null, emailId: null, error: null };
   if (company?.demoMode === true) return { sentAt: null, emailId: null, error: DEMO_MODE_NO_EMAIL };
   return sendLeadEmailWithQuota({
     db, companyId, company, to: contact.email, language, text, logContext: `autoReply lead ${leadId}`,
     leadId, channel: "auto_reply",
+    requiresBookingAutomation,
   });
 }
 
@@ -304,7 +305,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
   const reviewLocked = nextStatus !== LEAD_STATUS.HUMAN_REVIEW && await leadUnderHumanReview(db, leadId, companyId);
   const emailResult = reviewLocked
     ? { sentAt: null, emailId: null, error: HUMAN_REVIEW_ACTIVE }
-    : await sendAutoReplyEmail(db, companyId, contact, company, replyResult.language, replyText, leadId);
+    : await sendAutoReplyEmail(db, companyId, contact, company, replyResult.language, replyText, leadId, route === "QUALIFIED");
 
   const final = await writeAutomatedResult(db, {
     leadId, companyId, nextStatus,
@@ -453,7 +454,7 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
   const reviewLocked = nextStatus !== LEAD_STATUS.HUMAN_REVIEW && await leadUnderHumanReview(db, leadId, companyId);
   const emailResult = reviewLocked
     ? { sentAt: null, emailId: null, error: HUMAN_REVIEW_ACTIVE }
-    : await sendAutoReplyEmail(db, companyId, existingLead.contact, company, replyResult.language, replyText, leadId);
+    : await sendAutoReplyEmail(db, companyId, existingLead.contact, company, replyResult.language, replyText, leadId, route === "QUALIFIED");
 
   const final = await writeAutomatedResult(db, {
     leadId, companyId, nextStatus,
