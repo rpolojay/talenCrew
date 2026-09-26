@@ -4,6 +4,7 @@ const crypto = require("crypto");
 
 const { COLLECTIONS, LEAD_STATUS, EVENT_TYPE } = require("./constants");
 const { CAL_WEBHOOK_SECRET, BOOKING_TOKEN_SECRET } = require("./secrets");
+const { getProviderWebhookSecret } = require("./bookingSecret");
 const { buildEventDoc } = require("./pipeline");
 const { verifyBookingMetadata } = require("./bookingToken");
 const { EMAIL_RE } = require("./captureValidation");
@@ -194,7 +195,7 @@ exports.leadflowCalBookingWebhook = onRequest({ secrets: [CAL_WEBHOOK_SECRET, BO
     return res.status(405).send("Method not allowed");
   }
 
-  if (!isValidCalSignature(req, CAL_WEBHOOK_SECRET.value())) {
+  if (!isValidCalSignature(req, getProviderWebhookSecret("cal"))) {
     console.error("Firma X-Cal-Signature-256 inválida o ausente — payload rechazado.");
     return res.status(401).send("Invalid signature");
   }
@@ -397,3 +398,4 @@ exports.leadflowCalBookingWebhook = onRequest({ secrets: [CAL_WEBHOOK_SECRET, BO
   }
 });
 module.exports.BOOKABLE_STATUSES = BOOKABLE_STATUSES;
+module.exports.LEGACY_GLOBAL_WEBHOOK_COMPANIES = LEGACY_GLOBAL_WEBHOOK_COMPANIES;
