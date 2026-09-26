@@ -2,6 +2,7 @@
 
 const crypto = require("crypto");
 const { BOOKING_INTEGRATION_STATUS } = require("./bookingIntegration");
+const { validateSecretRef } = require("./bookingSecretManager");
 
 const BOOKING_PROVIDER = {
   CAL: "cal",
@@ -119,6 +120,14 @@ function validateBookingConnection(connection) {
           (value) => !isNonEmptyString(value, MAX_EXTERNAL_ID_LENGTH)
         ))) {
     errors.push("providerEventTypeIds_invalid");
+  }
+
+  if (connection.webhookSecretRef != null) {
+    try {
+      validateSecretRef(connection.webhookSecretRef);
+    } catch (error) {
+      errors.push("webhookSecretRef_invalid");
+    }
   }
 
   /*

@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 /*
  * Capa interna para acceder a secretos relacionados con booking.
@@ -16,6 +16,7 @@
  */
 
 const { CAL_WEBHOOK_SECRET } = require("./secrets");
+const { accessBookingSecret } = require("./bookingSecretManager");
 
 const BOOKING_SECRET_PROVIDER = {
   CAL: "cal",
@@ -41,8 +42,12 @@ function getCalWebhookSecret() {
  * persistida. Este punto de entrada evita que el resto del dominio conozca
  * cómo se almacenan o recuperan secretos.
  */
-function getProviderWebhookSecret(provider) {
+async function getProviderWebhookSecret(provider, secretRef = null) {
   if (provider === BOOKING_SECRET_PROVIDER.CAL) {
+    if (secretRef) {
+      return accessBookingSecret(secretRef);
+    }
+
     return getCalWebhookSecret();
   }
 

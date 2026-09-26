@@ -1077,6 +1077,79 @@ describe("B4 — webhook de Cal.com", () => {
     };
   });
 
+  test("conexión VERIFIED sin webhookSecretRef → 500 y sin escrituras", async () => {
+    store.leadflow_booking_connections = {
+      bc_missing_secret_ref: {
+        connectionId: "bc_33333333333333333333333333333333",
+        companyId: "abc-roofing",
+        provider: "cal",
+        status: "VERIFIED",
+        externalWebhookId: "wh_missing_secret_ref",
+        providerUserId: "user_h15_test",
+        providerUsername: "test-h15",
+      },
+    };
+
+    const payload = bookingCreated(
+      linkMeta("abc-roofing", "leadA"),
+      {
+        uid: "bkg_missing_secret_ref",
+      }
+    );
+    payload.webhookId = "wh_missing_secret_ref";
+
+    const beforeLeads = snapshotOf("leadflow_leads");
+    const beforeBookings = snapshotOf("leadflow_bookings");
+    const beforeEvents = snapshotOf("leadflow_lead_events");
+
+    const result = await calWebhook(payload);
+
+    assert.strictEqual(result.code, 500);
+    assert.deepStrictEqual(result.body, {
+      error: "booking_webhook_secret_unavailable",
+    });
+
+    assert.strictEqual(snapshotOf("leadflow_leads"), beforeLeads);
+    assert.strictEqual(snapshotOf("leadflow_bookings"), beforeBookings);
+    assert.strictEqual(snapshotOf("leadflow_lead_events"), beforeEvents);
+  });
+  test("conexión VERIFIED con webhookSecretRef inválido → 500 y sin escrituras", async () => {
+    store.leadflow_booking_connections = {
+      bc_invalid_secret_ref: {
+        connectionId: "bc_44444444444444444444444444444444",
+        companyId: "abc-roofing",
+        provider: "cal",
+        status: "VERIFIED",
+        externalWebhookId: "wh_invalid_secret_ref",
+        providerUserId: "user_h15_test",
+        providerUsername: "test-h15",
+        webhookSecretRef: "projects/demo/secrets/invalid/ref",
+      },
+    };
+
+    const payload = bookingCreated(
+      linkMeta("abc-roofing", "leadA"),
+      {
+        uid: "bkg_invalid_secret_ref",
+      }
+    );
+    payload.webhookId = "wh_invalid_secret_ref";
+
+    const beforeLeads = snapshotOf("leadflow_leads");
+    const beforeBookings = snapshotOf("leadflow_bookings");
+    const beforeEvents = snapshotOf("leadflow_lead_events");
+
+    const result = await calWebhook(payload);
+
+    assert.strictEqual(result.code, 500);
+    assert.deepStrictEqual(result.body, {
+      error: "booking_webhook_secret_unavailable",
+    });
+
+    assert.strictEqual(snapshotOf("leadflow_leads"), beforeLeads);
+    assert.strictEqual(snapshotOf("leadflow_bookings"), beforeBookings);
+    assert.strictEqual(snapshotOf("leadflow_lead_events"), beforeEvents);
+  });
   test("firma válida + BOOKING_CREATED con token válido → APPOINTMENT_BOOKED, cita, eventos, follow-up detenido", async () => {
     const r = await calWebhook(bookingCreated(linkMeta("abc-roofing", "leadA")));
     assert.strictEqual(r.code, 200);

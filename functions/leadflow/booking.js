@@ -195,10 +195,6 @@ exports.leadflowCalBookingWebhook = onRequest({ secrets: [CAL_WEBHOOK_SECRET, BO
     return res.status(405).send("Method not allowed");
   }
 
-  if (!isValidCalSignature(req, getProviderWebhookSecret("cal"))) {
-    console.error("Firma X-Cal-Signature-256 inválida o ausente — payload rechazado.");
-    return res.status(401).send("Invalid signature");
-  }
 
   const body = req.body;
   if (!isPlainObject(body) || typeof body.triggerEvent !== "string" || !body.triggerEvent) {
@@ -241,6 +237,41 @@ exports.leadflowCalBookingWebhook = onRequest({ secrets: [CAL_WEBHOOK_SECRET, BO
         return res.status(200).json({
           result: "ignored_unverified_booking_connection",
         });
+      }
+
+      if (
+        typeof connection.webhookSecretRef !== "string" ||
+        !connection.webhookSecretRef.trim()
+      ) {
+        console.error("Booking connection secret reference missing", {
+          connectionId: connection.connectionId,
+        });
+        return res.status(500).json({
+          error: "booking_webhook_secret_unavailable",
+        });
+      }
+
+      let connectionWebhookSecret;
+      try {
+        connectionWebhookSecret = await getProviderWebhookSecret(
+          "cal",
+          connection.webhookSecretRef
+        );
+      } catch (error) {
+        console.error("Booking connection secret unavailable", {
+          connectionId: connection.connectionId,
+          code: error?.code || null,
+        });
+        return res.status(500).json({
+          error: "booking_webhook_secret_unavailable",
+        });
+      }
+
+      if (!isValidCalSignature(req, connectionWebhookSecret)) {
+        console.error(
+          `Firma X-Cal-Signature-256 inválida para booking connection ${connection.connectionId}.`
+        );
+        return res.status(401).send("Invalid signature");
       }
 
       /*
@@ -333,6 +364,19 @@ exports.leadflowCalBookingWebhook = onRequest({ secrets: [CAL_WEBHOOK_SECRET, BO
         `Error procesando webhook de booking con conexión ${routing.externalWebhookId}:`,
         error
       );
+
+      if (
+        error?.code === "BOOKING_SECRET_REF_REQUIRED" ||
+        error?.code === "BOOKING_SECRET_REF_INVALID" ||
+        (error?.code === "INVALID_BOOKING_CONNECTION" &&
+          Array.isArray(error?.validationErrors) &&
+          error.validationErrors.includes("webhookSecretRef_invalid"))
+      ) {
+        return res.status(500).json({
+          error: "booking_webhook_secret_unavailable",
+        });
+      }
+
       return res.status(500).json({ error: "Internal error" });
     }
   }
@@ -341,7 +385,26 @@ exports.leadflowCalBookingWebhook = onRequest({ secrets: [CAL_WEBHOOK_SECRET, BO
    * LEGACY:
    * parseBookingCreated solamente se ejecuta en esta ruta.
    * abc-roofing continúa siendo la única empresa autorizada.
+   *
+   * Este flujo conserva temporalmente CAL_WEBHOOK_SECRET global.
    */
+  let legacyCalWebhookSecret;
+  try {
+    legacyCalWebhookSecret = await getProviderWebhookSecret("cal");
+  } catch (error) {
+    console.error("Legacy booking webhook secret unavailable", {
+      code: error?.code || null,
+    });
+    return res.status(500).json({
+      error: "booking_webhook_secret_unavailable",
+    });
+  }
+
+  if (!isValidCalSignature(req, legacyCalWebhookSecret)) {
+    console.error("Firma X-Cal-Signature-256 inválida o ausente — payload legacy rechazado.");
+    return res.status(401).send("Invalid signature");
+  }
+
   const parsed = parseBookingCreated(body.payload);
 
   if (parsed.error) {

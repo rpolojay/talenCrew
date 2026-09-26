@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "@google-cloud/firestore": "^9.1.0",
+    "@google-cloud/secret-manager": "^6.3.0",
     "@google/genai": "^2.22.0",
     "cors": "^2.8.6",
     "firebase-admin": "^14.4.0",
