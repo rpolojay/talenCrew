@@ -5,11 +5,25 @@ const { COLLECTIONS, LEAD_STATUS, EVENT_TYPE } = require("./constants");
 const { GEMINI_API_KEY, RESEND_API_KEY, BOOKING_TOKEN_SECRET } = require("./secrets");
 const { generateReply } = require("./generateReply");
 const { buildBookingLink, isAllowedBookingUrl } = require("./bookingToken");
-const { logEvent } = require("./pipeline");
+const { logEvent, buildEventDoc } = require("./pipeline");
 const { sendLeadEmailWithQuota } = require("./quota");
 const { evaluateLeadEmailPolicy, validateReplyText, POLICY_BLOCK_REASONS, EMAIL_BLOCK_REASON } = require("./emailPolicy");
+const { bookingIntegrationStatus, isBookingAutomationHealthy } = require("./bookingIntegration");
+const { findOpenHandoffs } = require("./handoff");
+const { isUnderHumanReview } = require("./humanReview");
 
 const MS_PER_HOUR = 60 * 60 * 1000;
+
+// Tipos de follow-up. Hoy solo existen los dos recordatorios de reserva de
+// leads en BOOKING_SENT: los dos piden agendar y llevan el link de reserva,
+// así que ambos dependen de que la integración de reservas esté VERIFIED
+// (./bookingIntegration.js) — si LeadFlow no se entera de las reservas, le
+// estaría recordando reservar a quien ya reservó. Un follow-up informativo
+// futuro que no dependa de reservas se declara con pushesBooking: false.
+const FOLLOW_UP_STAGES = {
+  first: { route: "FOLLOW_UP_FIRST", pushesBooking: true },
+  second: { route: "FOLLOW_UP_SECOND", pushesBooking: true },
+};
 
 // Si falta el timestamp de referencia (no debería pasar para un lead en
 // BOOKING_SENT, pero es un dato externo/legado posible) devuelve -1 en vez
@@ -30,7 +44,7 @@ function evaluateFollowUp(lead, followUpConfig) {
   if (attempts === 0) {
     return {
       stage: "first",
-      route: "FOLLOW_UP_FIRST",
+      ...FOLLOW_UP_STAGES.first,
       thresholdHours: followUpConfig.delayHoursFirst,
       reference: lead.autoReply?.generatedAt,
       hoursElapsed: hoursSince(lead.autoReply?.generatedAt),
@@ -39,7 +53,7 @@ function evaluateFollowUp(lead, followUpConfig) {
   if (attempts === 1) {
     return {
       stage: "second",
-      route: "FOLLOW_UP_SECOND",
+      ...FOLLOW_UP_STAGES.second,
       thresholdHours: followUpConfig.delayHoursSecond,
       reference: lead.followUp?.lastSentAt,
       hoursElapsed: hoursSince(lead.followUp?.lastSentAt),
@@ -58,6 +72,71 @@ function predatesEmailApproval(reference, company) {
   if (!enabledAt || typeof enabledAt.toMillis !== "function") return false;
   if (!reference || typeof reference.toMillis !== "function") return true;
   return reference.toMillis() < enabledAt.toMillis();
+}
+
+// Lo mismo para la integración de reservas: si se verificó
+// (bookingIntegration.verifiedAt) después del email de referencia, el
+// recordatorio quedó atrasado mientras LeadFlow no se enteraba de las
+// reservas — el lead pudo haber reservado en ese tiempo — y no sale.
+function predatesBookingVerification(reference, company) {
+  const verifiedAt = company.bookingIntegration?.verifiedAt;
+  if (!verifiedAt || typeof verifiedAt.toMillis !== "function") return false;
+  if (!reference || typeof reference.toMillis !== "function") return true;
+  return reference.toMillis() < verifiedAt.toMillis();
+}
+
+// ---------- follow-up bloqueado por la integración de reservas ----------
+// No detiene el follow-up (la integración puede volver) ni toca el estado del
+// lead. Deja followUp.blocked en el lead y un evento
+// FOLLOWUP_BLOCKED_BOOKING_INTEGRATION — solo cuando el bloqueo es nuevo
+// (otra etapa u otro estado de la integración): el scheduler corre cada 30
+// min y no debe llenar el historial con el mismo evento.
+function bookingBlockDetail(stage, company) {
+  return { stage, integrationStatus: bookingIntegrationStatus(company) ?? "MISSING" };
+}
+
+// Dentro de una transacción: registra el bloqueo (si es nuevo) y aplica, en
+// UNA sola escritura del lead, el marcador junto con `extraUpdate`.
+function writeBookingBlock(tx, db, leadRef, current, { leadId, companyId, detail, extraUpdate = {} }) {
+  const prev = current.followUp?.blocked;
+  const isNew = !(prev && prev.stage === detail.stage && prev.integrationStatus === detail.integrationStatus);
+  const update = { ...extraUpdate, ...(isNew ? { "followUp.blocked": { ...detail, at: FieldValue.serverTimestamp() } } : {}) };
+  if (Object.keys(update).length > 0) tx.update(leadRef, update);
+  if (isNew) {
+    tx.set(db.collection(COLLECTIONS.EVENTS).doc(), buildEventDoc({
+      leadId, companyId, type: EVENT_TYPE.FOLLOWUP_BLOCKED_BOOKING_INTEGRATION, actor: "system:follow_up_scheduler", detail,
+    }));
+  }
+}
+
+async function recordBookingBlock(db, { leadId, companyId, detail }) {
+  const leadRef = db.collection(COLLECTIONS.LEADS).doc(leadId);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(leadRef);
+    if (snap.exists) writeBookingBlock(tx, db, leadRef, snap.data(), { leadId, companyId, detail });
+  });
+}
+
+// El envío se bloqueó en la autorización final (la integración dejó de estar
+// VERIFIED entre la reserva del intento y el envío): se devuelve el intento
+// — no salió nada — para que el follow-up siga pendiente, y se registra el
+// bloqueo. Solo si el lead sigue exactamente como lo dejó la reserva.
+async function releaseBookingBlockedAttempt(db, { leadRef, leadId, companyId, attempts, newAttempts, stage, prevFollowUp, detail }) {
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(leadRef);
+    if (!snap.exists) return;
+    const current = snap.data();
+    const f = current.followUp || {};
+    if (f.attempts !== newAttempts || f.lastMessage?.stage !== stage || f.lastMessage?.sentAt) return;
+    writeBookingBlock(tx, db, leadRef, current, {
+      leadId, companyId, detail,
+      extraUpdate: {
+        "followUp.attempts": attempts,
+        "followUp.lastSentAt": prevFollowUp.lastSentAt,
+        "followUp.lastMessage": prevFollowUp.lastMessage,
+      },
+    });
+  });
 }
 
 async function stopFollowUp(db, lead, reason) {
@@ -161,6 +240,20 @@ exports.leadflowFollowUpScheduler = onSchedule(
       }
       if (evalResult.hoursElapsed < evalResult.thresholdHours) continue; // todavía no toca
       if (predatesEmailApproval(evalResult.reference, company)) continue;
+      // Integración de reservas no verificada: el recordatorio empujaría a
+      // reservar sin que LeadFlow se entere de la reserva. No sale, sin
+      // gastar IA, y el follow-up sigue pendiente. La misma comprobación se
+      // repite con datos frescos al reservar el intento y justo antes de
+      // enviar (sendLeadEmailWithQuota).
+      if (evalResult.pushesBooking && !isBookingAutomationHealthy(company)) {
+        await recordBookingBlock(db, { leadId: lead.id, companyId: lead.companyId, detail: bookingBlockDetail(evalResult.stage, company) });
+        continue;
+      }
+      if (evalResult.pushesBooking && predatesBookingVerification(evalResult.reference, company)) continue;
+      // Revisión humana (./humanReview.js): un handoff abierto o la marca
+      // humanControl — aunque el lead figure en BOOKING_SENT porque alguien
+      // movió la tarjeta — frena toda automatización.
+      if (isUnderHumanReview(lead, await findOpenHandoffs(db, lead.id, lead.companyId))) continue;
 
       try {
         const leadForAI = {
@@ -178,7 +271,7 @@ exports.leadflowFollowUpScheduler = onSchedule(
         // Mismo control de salida que capture.js, antes de agregar el link.
         // Si el texto no pasa, este follow-up se detiene (no se reintenta
         // cada 30 min gastando IA).
-        const check = validateReplyText(replyResult.text, { businessName: company.name });
+        const check = validateReplyText(replyResult.text, { businessName: company.name, bookingLink: company.bookingLink });
         if (!check.ok) {
           await logEvent(db, {
             leadId: lead.id, companyId: lead.companyId, type: EVENT_TYPE.EMAIL_BLOCKED, actor: "system:email_policy",
@@ -209,8 +302,16 @@ exports.leadflowFollowUpScheduler = onSchedule(
         // viene de la consulta del inicio de la corrida, y entre tanto pudo
         // llegar una reserva (webhook de Cal.com → APPOINTMENT_BOOKED +
         // followUp.stopped), una respuesta del lead, u otra corrida. En ese
-        // caso no se envía nada. Queda una ventana mínima entre este commit y
-        // el envío del email.
+        // caso no se envía nada.
+        //
+        // La misma transacción relee la empresa y los handoffs abiertos: si
+        // la empresa dejó de poder enviar, cambió su bookingLink, el lead
+        // pasó a revisión humana, o la integración de reservas dejó de estar
+        // VERIFIED, no se consume el intento. Queda una ventana mínima entre
+        // este commit y el envío; la integración se vuelve a comprobar dentro
+        // de sendLeadEmailWithQuota justo antes de llamar a Resend.
+        const companyRef = db.collection(COLLECTIONS.COMPANIES).doc(lead.companyId);
+        let prevFollowUp = null;
         const reserved = await db.runTransaction(async (tx) => {
           const fresh = await tx.get(leadRef);
           const current = fresh.exists ? fresh.data() : null;
@@ -218,7 +319,22 @@ exports.leadflowFollowUpScheduler = onSchedule(
             (current.followUp?.attempts ?? 0) !== attempts) {
             return false;
           }
+          const companySnap = await tx.get(companyRef);
+          const freshCompany = companySnap.exists ? companySnap.data() : null;
+          const open = await findOpenHandoffs(db, lead.id, lead.companyId, tx);
+          if (!freshCompany || !evaluateLeadEmailPolicy(freshCompany).allowed || isUnderHumanReview(current, open) ||
+            (freshCompany.bookingLink ?? null) !== (company.bookingLink ?? null)) {
+            return false;
+          }
+          if (evalResult.pushesBooking && !isBookingAutomationHealthy(freshCompany)) {
+            writeBookingBlock(tx, db, leadRef, current, {
+              leadId: lead.id, companyId: lead.companyId, detail: bookingBlockDetail(evalResult.stage, freshCompany),
+            });
+            return false;
+          }
+          prevFollowUp = { lastSentAt: current.followUp?.lastSentAt ?? null, lastMessage: current.followUp?.lastMessage ?? null };
           tx.update(leadRef, {
+            "followUp.blocked": null,
             "followUp.attempts": newAttempts,
             "followUp.lastSentAt": FieldValue.serverTimestamp(),
             "followUp.lastMessage": {
@@ -252,7 +368,18 @@ exports.leadflowFollowUpScheduler = onSchedule(
             logContext: `follow-up ${evalResult.stage} lead ${lead.id}`,
             leadId: lead.id,
             channel: "follow_up",
+            requiresBookingAutomation: evalResult.pushesBooking,
           });
+          if (emailResult.bookingBlocked) {
+            // Autorización final: la integración dejó de estar VERIFIED justo
+            // antes del envío. No salió nada: se devuelve el intento y no se
+            // registra FOLLOW_UP_SENT.
+            await releaseBookingBlockedAttempt(db, {
+              leadRef, leadId: lead.id, companyId: lead.companyId, attempts, newAttempts, stage: evalResult.stage, prevFollowUp,
+              detail: { stage: evalResult.stage, integrationStatus: emailResult.integrationStatus ?? "MISSING" },
+            });
+            continue;
+          }
           await leadRef.update({
             "followUp.lastMessage.sentAt": emailResult.sentAt,
             "followUp.lastMessage.emailId": emailResult.emailId,

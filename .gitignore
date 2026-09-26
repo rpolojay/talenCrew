@@ -8,6 +8,11 @@ node_modules/
 # Firebase
 .firebase/
 firebase-debug.log
+*-debug.log
+
+# Firebase Emulator — secretos falsos solo para desarrollo local
+.secret.local
+functions/.secret.local
 
 # Environment
 .env

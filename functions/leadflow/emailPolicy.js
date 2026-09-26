@@ -156,11 +156,29 @@ function hasPhone(text) {
   return Boolean(ctx && phoneLikeDigits(ctx[1]));
 }
 
+// --- Link de reserva ---
+// La IA nunca escribe el link de reserva: lo agrega el código, y solo en la
+// ruta QUALIFIED (integración de reservas VERIFIED, ver pipeline.js). Un
+// texto de la IA que traiga un link firmado de LeadFlow o el link de reserva
+// de la empresa (host + ruta, con o sin esquema) no sale.
+const SIGNED_BOOKING_PARAM_RE = /metadata(?:\[|%5b)bookingtoken(?:\]|%5d)/i;
+
+function mentionsBookingLink(text, bookingLink) {
+  if (SIGNED_BOOKING_PARAM_RE.test(text)) return true;
+  if (typeof bookingLink !== "string" || !bookingLink) return false;
+  let url;
+  try { url = new URL(bookingLink); } catch { return false; }
+  const hostAndPath = `${url.hostname}${url.pathname}`.replace(/\/+$/, "").toLowerCase();
+  return Boolean(hostAndPath) && text.toLowerCase().includes(hostAndPath);
+}
+
 // El texto que escribió la IA, ANTES de que el código agregue el link de
 // reserva. Si falla, no se envía nada (capture.js lo escala a una persona).
 // businessName (opcional): el nombre de la empresa, para no rechazar su
 // propia mención cuando el nombre es un dominio (ver businessNameDomains).
-function validateReplyText(text, { businessName } = {}) {
+// bookingLink (opcional): el link de reserva de la empresa, que la IA nunca
+// debe repetir (ver mentionsBookingLink).
+function validateReplyText(text, { businessName, bookingLink } = {}) {
   const violations = [];
   if (typeof text !== "string" || !text.trim()) violations.push("empty");
   else {
@@ -168,6 +186,7 @@ function validateReplyText(text, { businessName } = {}) {
     if (hasUrl(text, businessName)) violations.push("url");
     if (EMAIL_RE.test(text)) violations.push("email");
     if (hasPhone(text)) violations.push("phone");
+    if (mentionsBookingLink(text, bookingLink)) violations.push("booking_link");
   }
   return { ok: violations.length === 0, violations };
 }
@@ -236,5 +255,6 @@ module.exports = {
   resolveOutboundEmailStatus,
   evaluateLeadEmailPolicy,
   validateReplyText,
+  mentionsBookingLink,
   setOutboundEmailStatus,
 };

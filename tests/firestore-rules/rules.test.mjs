@@ -427,3 +427,86 @@ describe("LeadFlow: leadflow_admin_events es solo del backend", () => {
     }
   });
 });
+
+// Revisión humana: mientras un lead está en HUMAN_REVIEW (o con la marca
+// humanControl.active que solo escribe el backend) el navegador de un miembro
+// no cambia su status — la salida es leadflowResumeAutomation, con
+// autorización y auditoría en el servidor. Tampoco puede apagar humanControl.
+describe("LeadFlow: status bloqueado durante la revisión humana", () => {
+  const seedLead = (id, data) => env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), `leadflow_leads/${id}`), { companyId: "acme", contact: { email: "lead@x.com" }, ...data });
+  });
+  const move = (db, id, status) => updateDoc(doc(db, `leadflow_leads/${id}`), { status, updatedAt: serverTimestamp() });
+
+  beforeEach(async () => {
+    await seedLead("normal", { status: "CONTACTED" });
+    await seedLead("review", { status: "HUMAN_REVIEW", humanControl: { active: true } });
+    await seedLead("legacyReview", { status: "HUMAN_REVIEW" }); // lead anterior a humanControl
+    await seedLead("flagOnly", { status: "CONTACTED", humanControl: { active: true } });
+    await seedLead("resumed", { status: "CONTACTED", humanControl: { active: false } });
+  });
+
+  test("1. fuera de revisión humana el miembro sigue moviendo la tarjeta (también HACIA HUMAN_REVIEW)", async () => {
+    await assertSucceeds(move(ownerA(), "normal", "QUALIFIED"));
+    await assertSucceeds(move(ownerA(), "normal", "HUMAN_REVIEW"));
+    await assertSucceeds(move(ownerA(), "resumed", "NURTURE"));
+  });
+
+  for (const target of ["CONTACTED", "QUALIFIED", "NURTURE", "CLOSED", "BOOKING_SENT", "APPOINTMENT_BOOKED", "NEW"]) {
+    test(`2-5. HUMAN_REVIEW → ${target}: denegado al miembro`, async () => {
+      await assertFails(move(ownerA(), "review", target));
+    });
+  }
+
+  test("6. el miembro no puede apagar humanControl (ni solo, ni junto al status, ni reemplazando el mapa)", async () => {
+    for (const id of ["review", "flagOnly"]) {
+      await assertFails(updateDoc(doc(ownerA(), `leadflow_leads/${id}`), { "humanControl.active": false }));
+      await assertFails(updateDoc(doc(ownerA(), `leadflow_leads/${id}`), { humanControl: { active: false } }));
+      await assertFails(updateDoc(doc(ownerA(), `leadflow_leads/${id}`), { humanControl: null }));
+      await assertFails(updateDoc(doc(ownerA(), `leadflow_leads/${id}`), { "humanControl.active": false, status: "CONTACTED", updatedAt: serverTimestamp() }));
+    }
+    // Tampoco puede prenderla ni inventarla en un lead normal.
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_leads/normal"), { "humanControl.active": true }));
+  });
+
+  test("7. status CONTACTED con humanControl.active → el miembro no cambia el status", async () => {
+    for (const target of ["QUALIFIED", "CLOSED", "BOOKING_SENT", "HUMAN_REVIEW"]) {
+      await assertFails(move(ownerA(), "flagOnly", target));
+    }
+  });
+
+  test("8. lead antiguo en HUMAN_REVIEW sin humanControl sigue protegido", async () => {
+    for (const target of ["CONTACTED", "CLOSED", "BOOKING_SENT"]) {
+      await assertFails(move(ownerA(), "legacyReview", target));
+    }
+  });
+
+  test("9. durante la revisión, la única otra escritura que ya permitían las reglas (updatedAt del servidor) sigue permitida; nada más", async () => {
+    await assertSucceeds(updateDoc(doc(ownerA(), "leadflow_leads/review"), { updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(ownerA(), "leadflow_leads/legacyReview"), { updatedAt: serverTimestamp() }));
+    // Reescribir el mismo status no es un cambio de status (no está en affectedKeys).
+    await assertSucceeds(move(ownerA(), "review", "HUMAN_REVIEW"));
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_leads/review"), { updatedAt: new Date(0) }));
+    await assertFails(updateDoc(doc(ownerA(), "leadflow_leads/review"), { "contact.email": "x@evil.test" }));
+  });
+
+  test("otra empresa ni un email sin verificar pueden tocarlo (aislamiento intacto)", async () => {
+    await assertFails(move(ownerB(), "review", "CONTACTED"));
+    await assertFails(move(ownerB(), "normal", "CLOSED"));
+    await assertFails(move(user("owner@a.com", false), "normal", "CLOSED"));
+    await assertFails(move(anon(), "review", "CONTACTED"));
+  });
+
+  test("10. backend y admin sin cambios: el Admin SDK (sin reglas) aplica la reanudación; el admin conserva su override", async () => {
+    // Lo que escribe resumeAutomation (Admin SDK: no pasa por las reglas).
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "leadflow_leads/review"), {
+        status: "CONTACTED", humanControl: { active: false, resumedBy: "owner@a.com" },
+      });
+    });
+    // Ya fuera de revisión: el miembro vuelve a mover la tarjeta.
+    await assertSucceeds(move(ownerA(), "review", "QUALIFIED"));
+    // El admin de LeadFlow mantiene su override desde el navegador (regla existente).
+    await assertSucceeds(move(admin(), "legacyReview", "CONTACTED"));
+  });
+});

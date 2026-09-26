@@ -11,7 +11,11 @@ const COLLECTIONS = {
   // Una por reserva de Cal.com (id = booking uid): idempotencia del webhook
   // e historial de reservas por lead.
   BOOKINGS: "leadflow_bookings",
+  // Conexiones de calendario por empresa. Solo Cloud Functions (Admin SDK).
   BOOKING_CONNECTIONS: "leadflow_booking_connections",
+  // Recibos internos de webhooks de booking. Solo Cloud Functions (Admin SDK).
+  // Se usan para idempotencia y no contienen secretos ni payloads crudos.
+  WEBHOOK_RECEIPTS: "leadflow_webhook_receipts",
   // Auditoría de acciones de admin sobre empresas (p. ej. aprobar el envío
   // de emails). Solo backend: firestore.rules la deniega al navegador.
   ADMIN_EVENTS: "leadflow_admin_events",
@@ -55,6 +59,19 @@ const EVENT_TYPE = {
   // La empresa tiene un bookingLink fuera de la allowlist de proveedores
   // (./bookingToken.js): el lead calificado no recibió link. detail: { reason, host }.
   BOOKING_LINK_REJECTED: "BOOKING_LINK_REJECTED",
+  // Un follow-up que empuja a reservar no salió porque la integración de
+  // reservas de la empresa no está VERIFIED (./bookingIntegration.js). El
+  // follow-up no se detiene. detail: { stage, integrationStatus }.
+  FOLLOWUP_BLOCKED_BOOKING_INTEGRATION: "FOLLOWUP_BLOCKED_BOOKING_INTEGRATION",
+  // Mensaje del lead mientras está en revisión humana (./humanReview.js): se
+  // guarda para la persona a cargo, sin IA ni respuesta automática.
+  // detail: { message, handoffId, notified }.
+  MESSAGE_RECEIVED_DURING_REVIEW: "MESSAGE_RECEIVED_DURING_REVIEW",
+  // Una persona autorizada devolvió el lead a la automatización
+  // (leadflowResumeAutomation). detail: { resolvedHandoffIds }.
+  AUTOMATION_RESUMED: "AUTOMATION_RESUMED",
 };
 
 module.exports = { COLLECTIONS, LEAD_STATUS, HANDOFF_TRIGGER, EVENT_TYPE, ADMIN_EVENT_TYPE };
+
+

@@ -20,10 +20,14 @@ const { sendLeadEmailWithQuota } = require("./quota");
 const { validateCapturePayload } = require("./captureValidation");
 const { reserveCompanyCapture } = require("./rateLimit");
 const { validateReplyText, EMAIL_BLOCK_REASON } = require("./emailPolicy");
+const { captureMessageDuringReview, enterHumanReviewFields, leadUnderHumanReview, writeAutomatedResult } = require("./humanReview");
 
 const THROTTLE_WINDOW_MS = 60 * 1000;
 const THROTTLE_MAX = 5;
 const DEMO_MODE_NO_EMAIL = "demo_mode_no_email";
+// La respuesta automática no salió porque, mientras la IA escribía, el lead
+// pasó a revisión humana por otro camino (./humanReview.js).
+const HUMAN_REVIEW_ACTIVE = "HUMAN_REVIEW_ACTIVE";
 
 const REPLY_FAILURE_REASON = "The automatic reply could not be generated, so the lead has not received a response yet.";
 const REPLY_FAILURE_ACTION = "Reply to this lead personally — the automatic reply could not be generated.";
@@ -38,7 +42,7 @@ const HUMAN_REVIEW_ACTION = "Review the conversation and follow up personally.";
 // guardan en Firestore ni vuelven en la respuesta HTTP.
 async function escalateReplyFailure(db, { leadRef, leadId, companyId, company, lead, analysis, score, fromStatus, route, humanDecision, extraUpdate = {}, rejected = false }) {
   const failureReason = rejected ? REPLY_REJECTED_REASON : REPLY_FAILURE_REASON;
-  await leadRef.update({ ...extraUpdate, status: LEAD_STATUS.HUMAN_REVIEW, updatedAt: FieldValue.serverTimestamp() });
+  await leadRef.update({ ...extraUpdate, ...enterHumanReviewFields(), updatedAt: FieldValue.serverTimestamp() });
   await logEvent(db, {
     leadId, companyId, type: EVENT_TYPE.STATUS_CHANGE,
     fromStatus, toStatus: LEAD_STATUS.HUMAN_REVIEW, actor: "system:reply_failure",
@@ -85,8 +89,8 @@ async function sendAutoReplyEmail(db, companyId, contact, company, language, tex
 // El texto de la IA se valida ANTES de agregar el link de reserva (que lo
 // agrega el código). Si no pasa, se registra el motivo (sin el texto) y el
 // caso va a una persona.
-async function rejectedReply(db, { leadId, companyId, text, businessName }) {
-  const check = validateReplyText(text, { businessName });
+async function rejectedReply(db, { leadId, companyId, text, company }) {
+  const check = validateReplyText(text, { businessName: company.name, bookingLink: company.bookingLink });
   if (check.ok) return false;
   await logEvent(db, {
     leadId, companyId, type: EVENT_TYPE.EMAIL_BLOCKED, actor: "system:email_policy",
@@ -228,7 +232,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
     analysisResult = result;
   } catch (err) {
     console.error(`Fallo el analisis de IA para lead ${leadId}:`, err);
-    await leadRef.update({ status: LEAD_STATUS.HUMAN_REVIEW, updatedAt: FieldValue.serverTimestamp() });
+    await leadRef.update({ ...enterHumanReviewFields(), updatedAt: FieldValue.serverTimestamp() });
     await logEvent(db, {
       leadId, companyId, type: EVENT_TYPE.STATUS_CHANGE,
       fromStatus: LEAD_STATUS.ANALYZING, toStatus: LEAD_STATUS.HUMAN_REVIEW, actor: "system:analysis_failure",
@@ -278,7 +282,7 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
       leadId, status: LEAD_STATUS.HUMAN_REVIEW, merged: false, handoffId, analysis: analysisResult.analysis, autoReply: null,
     });
   }
-  if (await rejectedReply(db, { leadId, companyId, text: replyResult.text, businessName: company.name })) {
+  if (await rejectedReply(db, { leadId, companyId, text: replyResult.text, company })) {
     const handoffId = await escalateReplyFailure(db, {
       leadRef, leadId, companyId, company, lead: baseLead, analysis: analysisResult.analysis, score,
       fromStatus: LEAD_STATUS.ANALYZING, route, humanDecision, rejected: true,
@@ -295,23 +299,32 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
     replyText = `${replyText}\n\n${bookingLinkSent}`;
   }
 
-  const emailResult = await sendAutoReplyEmail(db, companyId, contact, company, replyResult.language, replyText, leadId);
+  // Si mientras la IA escribía el lead pasó a revisión humana (otro mensaje
+  // suyo, concurrente), no se le envía nada y su estado no se toca.
+  const reviewLocked = nextStatus !== LEAD_STATUS.HUMAN_REVIEW && await leadUnderHumanReview(db, leadId, companyId);
+  const emailResult = reviewLocked
+    ? { sentAt: null, emailId: null, error: HUMAN_REVIEW_ACTIVE }
+    : await sendAutoReplyEmail(db, companyId, contact, company, replyResult.language, replyText, leadId);
 
-  await leadRef.update({
-    autoReply: {
-      text: replyText, language: replyResult.language, generatedAt: FieldValue.serverTimestamp(),
-      sentAt: emailResult.sentAt, emailId: emailResult.emailId, sendError: emailResult.error,
+  const final = await writeAutomatedResult(db, {
+    leadId, companyId, nextStatus,
+    update: {
+      autoReply: {
+        text: replyText, language: replyResult.language, generatedAt: FieldValue.serverTimestamp(),
+        sentAt: emailResult.sentAt, emailId: emailResult.emailId, sendError: emailResult.error,
+      },
+      bookingLinkSent: reviewLocked ? null : bookingLinkSent,
+      aiUsage: FieldValue.arrayUnion(replyResult.usage),
+      updatedAt: FieldValue.serverTimestamp(),
     },
-    bookingLinkSent,
-    status: nextStatus,
-    aiUsage: FieldValue.arrayUnion(replyResult.usage),
-    updatedAt: FieldValue.serverTimestamp(),
   });
   await logEvent(db, { leadId, companyId, type: EVENT_TYPE.AI_REPLY_GENERATED, actor: "system:reply", detail: { route } });
-  await logEvent(db, {
-    leadId, companyId, type: EVENT_TYPE.STATUS_CHANGE,
-    fromStatus: LEAD_STATUS.ANALYZING, toStatus: nextStatus, actor: "system:pipeline",
-  });
+  if (!final.locked) {
+    await logEvent(db, {
+      leadId, companyId, type: EVENT_TYPE.STATUS_CHANGE,
+      fromStatus: LEAD_STATUS.ANALYZING, toStatus: nextStatus, actor: "system:pipeline",
+    });
+  }
 
   let handoffId = null;
   if (route === "NEEDS_HUMAN") {
@@ -328,9 +341,9 @@ async function handleNewLead(db, { companyId, company, contact, dedupeKey, body 
   }
 
   return res.status(201).json({
-    leadId, status: nextStatus, merged: false, handoffId,
+    leadId, status: final.status, merged: false, handoffId,
     analysis: analysisResult.analysis,
-    autoReply: { text: replyText, language: replyResult.language },
+    autoReply: reviewLocked ? null : { text: replyText, language: replyResult.language },
   });
 }
 
@@ -338,6 +351,17 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
   const leadId = existingLead.id;
   const companyId = existingLead.companyId;
   const leadRef = db.collection(COLLECTIONS.LEADS).doc(leadId);
+
+  // Revisión humana (./humanReview.js): si el lead está en HUMAN_REVIEW o
+  // tiene un handoff abierto, el mensaje se guarda para la persona a cargo y
+  // se le avisa — sin Gemini, sin respuesta ni email al lead, sin link de
+  // reserva. Se decide antes de cualquier llamada a la IA.
+  const review = await captureMessageDuringReview(db, { leadId, companyId, company, message: body.message });
+  if (review) {
+    return res.status(201).json({
+      leadId, status: review.status, merged: true, handoffId: review.handoffId, analysis: existingLead.analysis ?? null, autoReply: null,
+    });
+  }
 
   if (!existingLead.followUp?.stopped) {
     await leadRef.update({
@@ -374,7 +398,7 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
     langUsage = classification.usage;
     if (classification.detectedLanguage) detectedLanguage = classification.detectedLanguage;
     if (classification.needsHuman) {
-      messageDecision = { triggeredBy: triggerForReason(classification.reason), reason: classification.reason };
+      messageDecision = { triggeredBy: triggerForReason(classification.reason, company), reason: classification.reason };
     }
   } catch (err) {
     console.error(`No se pudo clasificar el mensaje adicional para lead ${leadId}:`, err);
@@ -399,7 +423,7 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
       leadId, status: LEAD_STATUS.HUMAN_REVIEW, merged: true, handoffId, analysis, autoReply: null,
     });
   }
-  if (await rejectedReply(db, { leadId, companyId, text: replyResult.text, businessName: company.name })) {
+  if (await rejectedReply(db, { leadId, companyId, text: replyResult.text, company })) {
     const usage = langUsage ? FieldValue.arrayUnion(replyResult.usage, langUsage) : FieldValue.arrayUnion(replyResult.usage);
     const handoffId = await escalateReplyFailure(db, {
       leadRef, leadId, companyId, company, lead: leadForHandoff, analysis, score, fromStatus, route, humanDecision,
@@ -423,21 +447,29 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
     : existingLead.status === LEAD_STATUS.APPOINTMENT_BOOKED ? existingLead.status
     : statusForRoute(route);
 
-  const emailResult = await sendAutoReplyEmail(db, companyId, existingLead.contact, company, replyResult.language, replyText, leadId);
+  // Revisión humana concurrente (ver handleNewLead): sin envío y sin tocar
+  // el estado. La revisión de la entrada (captureMessageDuringReview) ya
+  // cubre el caso normal; esto cubre la carrera mientras la IA escribía.
+  const reviewLocked = nextStatus !== LEAD_STATUS.HUMAN_REVIEW && await leadUnderHumanReview(db, leadId, companyId);
+  const emailResult = reviewLocked
+    ? { sentAt: null, emailId: null, error: HUMAN_REVIEW_ACTIVE }
+    : await sendAutoReplyEmail(db, companyId, existingLead.contact, company, replyResult.language, replyText, leadId);
 
-  await leadRef.update({
-    autoReply: {
-      text: replyText, language: replyResult.language, generatedAt: FieldValue.serverTimestamp(),
-      sentAt: emailResult.sentAt, emailId: emailResult.emailId, sendError: emailResult.error,
+  const final = await writeAutomatedResult(db, {
+    leadId, companyId, nextStatus,
+    update: {
+      autoReply: {
+        text: replyText, language: replyResult.language, generatedAt: FieldValue.serverTimestamp(),
+        sentAt: emailResult.sentAt, emailId: emailResult.emailId, sendError: emailResult.error,
+      },
+      detectedLanguage,
+      bookingLinkSent: reviewLocked ? existingLead.bookingLinkSent ?? null : bookingLinkSent,
+      aiUsage: langUsage ? FieldValue.arrayUnion(replyResult.usage, langUsage) : FieldValue.arrayUnion(replyResult.usage),
+      updatedAt: FieldValue.serverTimestamp(),
     },
-    detectedLanguage,
-    bookingLinkSent,
-    status: nextStatus,
-    aiUsage: langUsage ? FieldValue.arrayUnion(replyResult.usage, langUsage) : FieldValue.arrayUnion(replyResult.usage),
-    updatedAt: FieldValue.serverTimestamp(),
   });
   await logEvent(db, { leadId, companyId, type: EVENT_TYPE.AI_REPLY_GENERATED, actor: "system:reply", detail: { route, merged: true } });
-  if (nextStatus !== fromStatus) {
+  if (!final.locked && nextStatus !== fromStatus) {
     await logEvent(db, {
       leadId, companyId, type: EVENT_TYPE.STATUS_CHANGE,
       fromStatus, toStatus: nextStatus, actor: "system:pipeline", detail: { merged: true },
@@ -465,7 +497,7 @@ async function handleAdditionalMessage(db, existingLead, body, company, res) {
   }
 
   return res.status(201).json({
-    leadId, status: nextStatus, merged: true, handoffId,
-    analysis, autoReply: { text: replyText, language: replyResult.language },
+    leadId, status: final.status, merged: true, handoffId,
+    analysis, autoReply: reviewLocked ? null : { text: replyText, language: replyResult.language },
   });
 }

@@ -723,6 +723,7 @@
   // Mismo criterio que resolveOutboundEmailStatus en functions/leadflow/emailPolicy.js
   // (el servidor es la autoridad; esto solo decide qué se muestra).
   const OUTBOUND_URL = 'https://us-central1-gen-lang-client-0598503352.cloudfunctions.net/leadflowSetOutboundEmailStatus';
+  const RESUME_URL = 'https://us-central1-gen-lang-client-0598503352.cloudfunctions.net/leadflowResumeAutomation';
   const EMAIL_BLOCKED_BY_STATUS = { EMAIL_PENDING_REVIEW: 'emailNotSentPending', EMAIL_SUSPENDED: 'emailNotSentSuspended' };
 
   function outboundStatus(company) {
@@ -912,6 +913,34 @@ document.getElementById("leadflow-form").addEventListener("submit", async functi
 
         const lead = currentLeads.find((l) => l.id === leadId);
         if (!lead || lead.status === newStatus) return;
+        // Sacar una tarjeta de revisión humana devuelve el lead a la
+        // automatización: pasa por leadflowResumeAutomation (servidor, con
+        // auditoría), nunca por una escritura directa. El servidor rechaza
+        // BOOKING_SENT y los estados del pipeline; la tarjeta vuelve atrás.
+        if ((lead.status === 'HUMAN_REVIEW' || lead.humanControl?.active === true) && newStatus !== 'HUMAN_REVIEW') {
+          const previous = lead.status;
+          lead.status = newStatus;
+          renderKanban();
+          renderStats();
+          try {
+            const token = await auth.currentUser.getIdToken();
+            const resp = await fetch(RESUME_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ leadId, toStatus: newStatus }),
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const result = await resp.json();
+            lead.status = result.status;
+            lead.humanControl = { active: false };
+          } catch (err) {
+            console.error('No se pudo reanudar la automatización del lead:', err);
+            lead.status = previous;
+          }
+          renderKanban();
+          renderStats();
+          return;
+        }
         lead.status = newStatus;
         renderKanban();
         renderStats();

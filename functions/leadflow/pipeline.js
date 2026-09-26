@@ -2,15 +2,28 @@ const { FieldValue } = require("firebase-admin/firestore");
 const { COLLECTIONS, LEAD_STATUS, HANDOFF_TRIGGER } = require("./constants");
 const { resolveHandoffRules, isBelowConfidenceThreshold } = require("./handoffRules");
 const { isAllowedBookingUrl } = require("./bookingToken");
+const { isBookingAutomationHealthy } = require("./bookingIntegration");
 
 // El análisis de IA solo devuelve needs_human + un texto libre en `reason`,
-// sin categoría — el trigger del handoff se deduce del texto (mismo criterio
-// que capture.js tenía inline).
-function triggerForReason(reason) {
+// sin categoría — el trigger del handoff se deduce del texto. Solo es la
+// etiqueta del caso (la decisión de escalar ya se tomó): precio primero,
+// como siempre; después pedido explícito de hablar con una persona; después
+// un tema sensible de la empresa (handoffRules, o los de por defecto); si
+// nada coincide, AI_LOW_CONFIDENCE.
+const HUMAN_REQUEST_RE = new RegExp([
+  String.raw`\b(?:talk|speak|chat|call|contact|connect)\w*\b[^.]{0,30}\b(?:person|human|someone|somebody|representative|agent|staff|team member)\b`,
+  String.raw`\b(?:ask|asks|asked|asking|request|requests|requested|want|wants|wanted|need|needs)\b[^.]{0,20}\b(?:person|human|representative|agent)\b`,
+  String.raw`\b(?:real|actual|live) (?:person|human)\b`,
+  String.raw`\b(?:hablar|conversar|comunicarse)\b[^.]{0,30}\b(?:persona|alguien|humano|asesor|agente)\b`,
+  String.raw`\bpersona real\b`,
+].join("|"), "i");
+
+function triggerForReason(reason, company = null) {
   const r = (reason || "").toLowerCase();
-  return r.includes("price") || r.includes("negotiat")
-    ? HANDOFF_TRIGGER.PRICE_NEGOTIATION
-    : HANDOFF_TRIGGER.AI_LOW_CONFIDENCE;
+  if (r.includes("price") || r.includes("negotiat")) return HANDOFF_TRIGGER.PRICE_NEGOTIATION;
+  if (HUMAN_REQUEST_RE.test(r)) return HANDOFF_TRIGGER.CUSTOMER_REQUEST;
+  if (resolveHandoffRules(company).sensitiveTopics.some((t) => r.includes(t.toLowerCase()))) return HANDOFF_TRIGGER.SENSITIVE_TOPIC;
+  return HANDOFF_TRIGGER.AI_LOW_CONFIDENCE;
 }
 
 // ¿Este análisis tiene que ir a una persona? null si no; si sí, el
@@ -20,7 +33,7 @@ function triggerForReason(reason) {
 // analysis.needs_human.
 function humanReviewDecision(analysis, company) {
   if (analysis.needs_human) {
-    return { triggeredBy: triggerForReason(analysis.reason), reason: analysis.reason };
+    return { triggeredBy: triggerForReason(analysis.reason, company), reason: analysis.reason };
   }
   const rules = resolveHandoffRules(company);
   if (isBelowConfidenceThreshold(analysis, rules)) {
@@ -42,11 +55,14 @@ function decideRoute({ analysis, score, company }) {
 
   const minScore = company.scoringRules?.minScoreToQualify ?? 60;
   if (score.adjusted >= minScore) {
-    // Empresas sin bookingLink (el link es opcional en signup.html) — o con
-    // uno fuera de la allowlist de proveedores (./bookingToken.js): el lead
-    // califica igual, pero la respuesta promete contacto del equipo en vez
-    // de un link, y no entra al flujo de follow-ups de BOOKING_SENT.
-    return isAllowedBookingUrl(company.bookingLink) ? "QUALIFIED" : "QUALIFIED_NO_BOOKING";
+    // Empresas sin bookingLink (el link es opcional en signup.html), con uno
+    // fuera de la allowlist de proveedores (./bookingToken.js), o cuya
+    // integración de reservas no está VERIFIED (./bookingIntegration.js —
+    // tener un link no prueba que LeadFlow se entere de las reservas): el
+    // lead califica igual, pero la respuesta promete contacto del equipo en
+    // vez de un link, y no entra al flujo de follow-ups de BOOKING_SENT.
+    // QUALIFIED es la ÚNICA ruta en la que el código agrega el link.
+    return isAllowedBookingUrl(company.bookingLink) && isBookingAutomationHealthy(company) ? "QUALIFIED" : "QUALIFIED_NO_BOOKING";
   }
   return "NEEDS_INFO"; // fallback conservador: nunca empuja booking si el score no alcanza
 }

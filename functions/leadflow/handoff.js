@@ -31,6 +31,15 @@ const ACTION_LABELS = {
 // equipo todavía tiene que atenderlo (o ya lo está atendiendo).
 const OPEN_HANDOFF_STATUSES = ["OPEN", "ACKNOWLEDGED"];
 
+// ÚNICA definición de "handoff abierto": un doc de leadflow_handoffs con ese
+// leadId, de esa empresa, en OPEN/ACKNOWLEDGED. Con `tx` la consulta va dentro
+// de la transacción del caller. Devuelve los docs (normalmente 0 o 1).
+async function findOpenHandoffs(db, leadId, companyId, tx = null) {
+  const query = db.collection(COLLECTIONS.HANDOFFS).where("leadId", "==", leadId);
+  const snap = tx ? await tx.get(query) : await query.get();
+  return snap.docs.filter((d) => d.data().companyId === companyId && OPEN_HANDOFF_STATUSES.includes(d.data().status));
+}
+
 // Los datos del lead vienen de un formulario público: sin saltos de línea
 // en el asunto y con largo acotado.
 function oneLine(value, max) {
@@ -95,9 +104,7 @@ async function createHandoff(db, { leadId, companyId, company, lead, analysis, s
   const leadRef = db.collection(COLLECTIONS.LEADS).doc(leadId);
   const { handoffId, created } = await db.runTransaction(async (tx) => {
     await tx.get(leadRef);
-    const existing = await tx.get(handoffs.where("leadId", "==", leadId));
-    const open = existing.docs.find((d) =>
-      d.data().companyId === companyId && OPEN_HANDOFF_STATUSES.includes(d.data().status));
+    const [open] = await findOpenHandoffs(db, leadId, companyId, tx);
     if (open) return { handoffId: open.id, created: false };
 
     const newRef = handoffs.doc();
@@ -159,4 +166,46 @@ async function notifyHandoff(ref, { leadId, companyId, company, lead, triggeredB
   }
 }
 
-module.exports = { createHandoff, buildNotification, OPEN_HANDOFF_STATUSES };
+// Aviso al equipo de que un lead que ya está en revisión humana volvió a
+// escribir (./humanReview.js decide si toca avisar — con un intervalo mínimo
+// por handoff para no mandar un email por cada mensaje). Mismo remitente y
+// destinatarios que el aviso del handoff; el resultado queda en el handoff.
+function buildReviewMessageNotification({ lead, message }) {
+  const contact = lead.contact || {};
+  const name = oneLine(contact.name, 80) || oneLine(contact.email || contact.phone, 80) || "Lead sin nombre";
+  const contactLine = [contact.email, contact.phone].filter(Boolean).join(" · ");
+  const text = [
+    "Un lead que está en revisión humana volvió a escribir. La IA no respondió: el caso sigue a cargo de tu equipo.",
+    "",
+    `Lead: ${name}`,
+    contactLine ? `Contacto: ${contactLine}` : null,
+    "",
+    "Mensaje nuevo:",
+    message || "",
+    "",
+    "Atiéndelo en el dashboard:",
+    DASHBOARD_URL,
+  ].filter((line) => line !== null).join("\n");
+  return { subject: `💬 Nuevo mensaje de un lead en revisión: ${name}`, text };
+}
+
+async function notifyReviewMessage(db, { handoffId, leadId, companyId, company, lead, message }) {
+  const ref = db.collection(COLLECTIONS.HANDOFFS).doc(handoffId);
+  try {
+    const recipients = notificationRecipients(company);
+    if (recipients.length === 0) {
+      await ref.update({ lastMessageNotification: { sentAt: null, emailId: null, error: "no_allowed_users" } });
+      return;
+    }
+    const { subject, text } = buildReviewMessageNotification({ lead, message });
+    const result = await sendEmail({
+      from: buildFrom(null), to: recipients, subject, text,
+      logContext: `mensaje en revisión, handoff ${handoffId} lead ${leadId} (empresa ${companyId})`,
+    });
+    await ref.update({ lastMessageNotification: { sentAt: result.sentAt, emailId: result.emailId, error: result.error } });
+  } catch (err) {
+    console.error(`Error registrando el aviso de mensaje en revisión del handoff ${handoffId}:`, err);
+  }
+}
+
+module.exports = { createHandoff, buildNotification, notifyReviewMessage, findOpenHandoffs, OPEN_HANDOFF_STATUSES };

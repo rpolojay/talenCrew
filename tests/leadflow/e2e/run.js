@@ -417,12 +417,13 @@ async function main() {
 
   // Cada camino ejercitado hace un número fijo de llamadas a los SDK:
   //   análisis fallido (escenario 1 y preparación del 2): 1 Gemini + 1 Resend (notificación)
-  //   mensaje adicional ×2 (concurrencia): 2 Gemini c/u (clasificación + respuesta);
+  //   mensaje adicional ×2 (concurrencia): el lead está en HUMAN_REVIEW, así
+  //   que 0 Gemini (Fase A2: sin IA durante la revisión humana);
   //   1 sola notificación Resend entre las dos (el handoff se crea una vez)
   // Si el mock recibió exactamente esas llamadas, ninguna fue a otro destino.
   console.log(`\nMocks: Gemini recibió ${geminiRequests.length} petición(es), Resend recibió ${resendRequests.length}`);
-  check("Gemini: el mock atendió las 6 llamadas que hace el código (ninguna salió a Google)", () => {
-    assert.strictEqual(geminiRequests.length, 6);
+  check("Gemini: el mock atendió las 2 llamadas que hace el código (ninguna salió a Google, ninguna durante la revisión humana)", () => {
+    assert.strictEqual(geminiRequests.length, 2);
     assert.ok(geminiRequests.every((g) => g.apiKey === FAKE_GEMINI_KEY), "alguna petición no usó la clave falsa");
   });
   check("Resend: el mock atendió los 3 envíos que hace el código, ninguno a un lead", () => {

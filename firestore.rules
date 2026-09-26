@@ -2,21 +2,21 @@ rules_version = '2';
 
 // ============================================================================
 // Aislamiento por tenant de bots / conversations / leads:
-// el dueño de un bot es quien aparece en `bots/{botId}.allowedUsers`.
-// conversations y leads no guardan dueño propio: heredan el de su bot vía el
+// el dueÃ±o de un bot es quien aparece en `bots/{botId}.allowedUsers`.
+// conversations y leads no guardan dueÃ±o propio: heredan el de su bot vÃ­a el
 // campo `botId` (que escriben talencrew-bot y whatsappWebhook). Un documento
 // sin botId, o cuyo bot no existe, solo lo ve el admin.
 //
 // Las Cloud Functions escriben con Admin SDK / service account, que no pasa
-// por estas reglas — solo aplican al navegador (client.html, admin.html).
+// por estas reglas â€” solo aplican al navegador (client.html, admin.html).
 // ============================================================================
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // email_verified: los tokens de Google siempre lo traen en true; evita
-    // que una cuenta email/contraseña con el email de otro (sin verificar)
-    // pase como esa persona si algún día se habilita ese proveedor.
+    // que una cuenta email/contraseÃ±a con el email de otro (sin verificar)
+    // pase como esa persona si algÃºn dÃ­a se habilita ese proveedor.
     function isVerifiedUser() {
       return request.auth != null && request.auth.token.email_verified == true;
     }
@@ -36,8 +36,8 @@ service cloud.firestore {
           get(/databases/$(database)/documents/bots/$(botId)).data.allowedUsers;
     }
 
-    // clients — se crean desde admin.html (admin) o desde la Cloud Function
-    // createTrialSignup (Admin SDK); ya no hay creación pública desde el
+    // clients â€” se crean desde admin.html (admin) o desde la Cloud Function
+    // createTrialSignup (Admin SDK); ya no hay creaciÃ³n pÃºblica desde el
     // navegador. Un cliente autenticado solo lee su propio documento
     // (client.html lo busca por email).
     match /clients/{clientId} {
@@ -46,7 +46,7 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // bots — mismo criterio de creación que clients. Lectura: admin, o un
+    // bots â€” mismo criterio de creaciÃ³n que clients. Lectura: admin, o un
     // usuario listado en allowedUsers (client.html consulta con
     // array-contains sobre ese campo).
     match /bots/{botId} {
@@ -55,16 +55,16 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // conversations — las escriben las Cloud Functions; el navegador solo
+    // conversations â€” las escriben las Cloud Functions; el navegador solo
     // lee, y solo las de sus propios bots (client.html consulta por botId).
     match /conversations/{convId} {
       allow read: if isAdmin() || ownsBot(resource.data.botId);
       allow create, update, delete: if isAdmin();
     }
 
-    // leads — igual que conversations, más lo que client.html necesita sobre
+    // leads â€” igual que conversations, mÃ¡s lo que client.html necesita sobre
     // sus propios leads: mover la tarjeta del embudo (solo el campo `stage`)
-    // y el botón de borrar.
+    // y el botÃ³n de borrar.
     match /leads/{leadId} {
       allow read, delete: if isAdmin() || ownsBot(resource.data.botId);
       allow update: if isAdmin() ||
@@ -73,39 +73,39 @@ service cloud.firestore {
       allow create: if isAdmin();
     }
 
-    // onboarding_submissions — formulario público de intake (onboarding.html),
-    // sin login. Mismo criterio que trial.html: crear es público, leer/editar
+    // onboarding_submissions â€” formulario pÃºblico de intake (onboarding.html),
+    // sin login. Mismo criterio que trial.html: crear es pÃºblico, leer/editar
     // solo admin.
     match /onboarding_submissions/{subId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
     }
 
-    // leads_landing — modal "Solicitar demo" en index.html (sección de
-    // precios), sin login, mismo patrón que trial.html/onboarding_submissions:
-    // crear es público, leer/editar solo admin.
+    // leads_landing â€” modal "Solicitar demo" en index.html (secciÃ³n de
+    // precios), sin login, mismo patrÃ³n que trial.html/onboarding_submissions:
+    // crear es pÃºblico, leer/editar solo admin.
     match /leads_landing/{leadId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
     }
 
     // ==========================================================================
-    // VELOIAPP LEADFLOW — producto nuevo y separado, colecciones propias
+    // VELOIAPP LEADFLOW â€” producto nuevo y separado, colecciones propias
     // (leadflow_*), sin tocar clients/bots/conversations/leads de arriba.
     //
-    // Mismo modelo de aislamiento que bots/conversations/leads, pero aquí
-    // desde el día uno: cada doc de leads/events/handoffs lleva `companyId`,
+    // Mismo modelo de aislamiento que bots/conversations/leads, pero aquÃ­
+    // desde el dÃ­a uno: cada doc de leads/events/handoffs lleva `companyId`,
     // y el acceso de un usuario no-admin se valida contra
     // `leadflow_companies/{companyId}.allowedUsers`.
     //
     // Nada de esto lo crea un cliente/browser directamente salvo las
     // actualizaciones puntuales del dashboard (mover una tarjeta del embudo,
-    // resolver un handoff) — la creación real de leads/events la hacen las
+    // resolver un handoff) â€” la creaciÃ³n real de leads/events la hacen las
     // Cloud Functions con el Admin SDK, que no pasa por estas reglas.
     // ==========================================================================
 
     // Mismo criterio de identidad que el resto del archivo: el email del
-    // token solo cuenta si está verificado (un token sin verificar con el
+    // token solo cuenta si estÃ¡ verificado (un token sin verificar con el
     // email de un miembro no obtiene acceso).
     function isLeadflowCompanyMember(companyId) {
       return isVerifiedUser() &&
@@ -113,7 +113,7 @@ service cloud.firestore {
           get(/databases/$(database)/documents/leadflow_companies/$(companyId)).data.allowedUsers;
     }
 
-    // Un update desde el navegador nunca mueve un doc de empresa — ni siquiera
+    // Un update desde el navegador nunca mueve un doc de empresa â€” ni siquiera
     // el admin: companyId solo lo escribe el backend al crear.
     function leadflowCompanyIdUnchanged() {
       return request.resource.data.companyId == resource.data.companyId;
@@ -123,23 +123,35 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
-    // Mismos valores que LEAD_STATUS (functions/leadflow/constants.js) — todas
+    // Mismos valores que LEAD_STATUS (functions/leadflow/constants.js) â€” todas
     // las columnas del kanban de leadflow.html.
     function isLeadflowLeadStatus(status) {
       return status in ['NEW', 'ANALYZING', 'QUALIFIED', 'CONTACTED', 'BOOKING_SENT',
         'APPOINTMENT_BOOKED', 'HUMAN_REVIEW', 'NURTURE', 'CLOSED'];
     }
 
-    // Lo único que leadflow.html cambia en un lead: mover la tarjeta del
-    // embudo → { status, updatedAt: serverTimestamp() }. Contacto, análisis,
+    // Lo Ãºnico que leadflow.html cambia en un lead: mover la tarjeta del
+    // embudo â†’ { status, updatedAt: serverTimestamp() }. Contacto, anÃ¡lisis,
     // respuesta, routing, follow-up, etc. son del backend.
     function isLeadflowLeadStatusUpdate() {
       return leadflowChangedKeys().hasOnly(['status', 'updatedAt']) &&
         isLeadflowLeadStatus(request.resource.data.status) &&
-        (!('updatedAt' in leadflowChangedKeys()) || request.resource.data.updatedAt == request.time);
+        (!('updatedAt' in leadflowChangedKeys()) || request.resource.data.updatedAt == request.time) &&
+        (!('status' in leadflowChangedKeys()) || !isLeadflowLeadUnderHumanControl());
     }
 
-    // Lo único que leadflow.html cambia en un handoff: reconocerlo
+    // Lead en revisiÃ³n humana: status HUMAN_REVIEW (tambiÃ©n leads antiguos sin
+    // humanControl) o la marca humanControl.active que solo escribe el backend.
+    // Mientras tanto el navegador de un miembro no cambia su status: la salida
+    // es leadflowResumeAutomation (Cloud Function con autorizaciÃ³n, transacciÃ³n
+    // y auditorÃ­a). humanControl no estÃ¡ entre los campos que un miembro puede
+    // tocar (isLeadflowLeadStatusUpdate), asÃ­ que tampoco puede apagarla.
+    function isLeadflowLeadUnderHumanControl() {
+      return resource.data.get('status', null) == 'HUMAN_REVIEW' ||
+        resource.data.get('humanControl', {}).get('active', false) == true;
+    }
+
+    // Lo Ãºnico que leadflow.html cambia en un handoff: reconocerlo
     // ({ status: ACKNOWLEDGED }) o resolverlo ({ status: RESOLVED, resolvedBy:
     // su propio email, resolvedAt: serverTimestamp() }).
     function isLeadflowHandoffUpdate() {
@@ -149,23 +161,24 @@ service cloud.firestore {
         (!('resolvedAt' in leadflowChangedKeys()) || request.resource.data.resolvedAt == request.time);
     }
 
-    // leadflow_companies — configuración del tenant (idioma, reglas de
+    // leadflow_companies â€” configuraciÃ³n del tenant (idioma, reglas de
     // negocio, scoring, booking). Solo admin escribe hoy (se siembra a mano
-    // o vía script); los usuarios del negocio solo leen su propia empresa.
+    // o vÃ­a script); los usuarios del negocio solo leen su propia empresa.
     // La lectura compara contra resource.data.allowedUsers (el propio doc)
-    // y no vía isLeadflowCompanyMember(): leadflow.html lista sus empresas
+    // y no vÃ­a isLeadflowCompanyMember(): leadflow.html lista sus empresas
     // con where('allowedUsers', 'array-contains', email), y Firestore solo
     // autoriza una consulta si puede probar la regla con los filtros de la
-    // consulta — un get() por el ID de cada resultado no se puede probar así.
+    // consulta â€” un get() por el ID de cada resultado no se puede probar asÃ­.
     match /leadflow_companies/{companyId} {
       allow read: if isAdmin() ||
         (isVerifiedUser() && request.auth.token.email in resource.data.allowedUsers);
       allow write: if isAdmin();
     }
 
-    // leadflow_leads — creados/analizados solo por las Cloud Functions
-    // (Admin SDK). Un miembro de la empresa dueña solo puede mover la tarjeta
-    // del embudo (isLeadflowLeadStatusUpdate); companyId es inmutable.
+    // leadflow_leads â€” creados/analizados solo por las Cloud Functions
+    // (Admin SDK). Un miembro de la empresa dueÃ±a solo puede mover la tarjeta
+    // del embudo (isLeadflowLeadStatusUpdate) â€” salvo si el lead estÃ¡ en
+    // revisiÃ³n humana (isLeadflowLeadUnderHumanControl); companyId es inmutable.
     match /leadflow_leads/{leadId} {
       allow read: if isAdmin() || isLeadflowCompanyMember(resource.data.companyId);
       allow update: if leadflowCompanyIdUnchanged() &&
@@ -173,8 +186,8 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
     }
 
-    // leadflow_lead_events — historial append-only. Nunca se edita ni se
-    // borra desde el cliente; solo lectura para auditoría en el dashboard.
+    // leadflow_lead_events â€” historial append-only. Nunca se edita ni se
+    // borra desde el cliente; solo lectura para auditorÃ­a en el dashboard.
     // Firestore solo autoriza una consulta si puede probar la regla con sus
     // filtros: el dashboard consulta por leadId Y companyId (un filtro solo
     // por leadId no se puede probar contra la empresa y se deniega).
@@ -183,9 +196,9 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // leadflow_handoffs — cola de casos escalados a humano. Un miembro de la
-    // empresa dueña solo puede reconocerlo o resolverlo
-    // (isLeadflowHandoffUpdate); companyId es inmutable; create solo vía
+    // leadflow_handoffs â€” cola de casos escalados a humano. Un miembro de la
+    // empresa dueÃ±a solo puede reconocerlo o resolverlo
+    // (isLeadflowHandoffUpdate); companyId es inmutable; create solo vÃ­a
     // Cloud Function.
     match /leadflow_handoffs/{handoffId} {
       allow read: if isAdmin() || isLeadflowCompanyMember(resource.data.companyId);
@@ -194,15 +207,17 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
     }
 
-    // Cualquier otra colección no listada arriba: denegado explícitamente.
-    // leadflow_booking_connections - calendar integration metadata
-    // Never accessible from the browser; Cloud Functions only via Admin SDK.
+    // leadflow_booking_connections — credenciales/metadatos de integraciones
+    // de calendario. Nunca accesible desde el navegador; solo Cloud Functions
+    // mediante Admin SDK.
     match /leadflow_booking_connections/{connectionId} {
       allow read, write: if false;
     }
 
+    // Cualquier otra colecciÃ³n no listada arriba: denegado explÃ­citamente.
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
+
